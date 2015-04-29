@@ -62,7 +62,9 @@
 //--------------------------------------------------------------------------------
 __forceinline size_t SAFE_SHIFT_LEFT(size_t x, size_t count)
 {
+#ifdef STANDALONE_BUILD
     LIMITED_METHOD_DAC_CONTRACT;
+#endif
     _ASSERTE(count <= BITS_PER_SIZE_T);
     return (x << 1) << (count-1);
 }

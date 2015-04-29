@@ -9,7 +9,7 @@
  *
  */
 
-#include "gcinfoencoder.h"
+#include "gcinfoencoderr.h"
 
 #ifdef VERIFY_GCINFO
 #include "dbggcinfoencoder.h"
@@ -20,8 +20,12 @@
         #define LOGGING
     #endif
 #endif
+
+#ifdef STANDALONE_BUILD
 #include "log.h"
 #include "simplerhash.h"
+#endif
+
 
 #ifdef MDIL
 #define MUST_CALL_JITALLOCATOR_FREE 1
@@ -84,7 +88,7 @@ void GcInfoSize::Log(DWORD level, const char * header)
 
 #endif
 
-
+#ifndef DISABLE_EH_VECTORS
 inline BOOL IsEssential(EE_ILEXCEPTION_CLAUSE *pClause)
 {
     _ASSERTE(pClause->TryEndPC >= pClause->TryStartPC);
@@ -93,6 +97,7 @@ inline BOOL IsEssential(EE_ILEXCEPTION_CLAUSE *pClause)
 
      return TRUE;
 }
+#endif
 
 GcInfoEncoder::GcInfoEncoder(
             ICorJitInfo*                pCorJitInfo,
@@ -101,12 +106,19 @@ GcInfoEncoder::GcInfoEncoder(
             )
     :   m_Info1( pJitAllocator ),
         m_Info2( pJitAllocator ),
+#ifdef STANDALONE_BUILD
         m_InterruptibleRanges(),
         m_LifetimeTransitions()
+#endif
 #ifdef VERIFY_GCINFO
         , m_DbgEncoder(pCorJitInfo, pMethodInfo, pJitAllocator)
 #endif    
 {
+#ifndef STANDALONE_BUILD
+  m_InterruptibleRanges = new std::vector<InterruptibleRange>;
+  m_LifetimeTransitions = std::vector<LifetimeTransition>;
+#endif
+
 #ifdef MEASURE_GCINFO
     // This causes multiple complus.log files in JIT64.  TODO: consider using ICorJitInfo::logMsg instead.
     InitializeLogging();
@@ -275,8 +287,12 @@ void GcInfoEncoder::DefineInterruptibleRange( UINT32 startInstructionOffset, UIN
             InterruptibleRange range;
             range.NormStartOffset = normStartOffset;
             range.NormStopOffset = normStopOffset;
+#ifdef STANDALONE_BUILD
             m_pLastInterruptibleRange = m_InterruptibleRanges.AppendThrowing();
             *m_pLastInterruptibleRange = range;
+#else
+            m_InterruptibleRanges.push_back(range);
+#endif
         }
     }
 
@@ -307,7 +323,11 @@ void GcInfoEncoder::SetSlotState(
     transition.BecomesLive = ( slotState == GC_SLOT_LIVE );
     transition.IsDeleted = FALSE;
 
+#ifdef STANDALONE_BUILD
     *( m_LifetimeTransitions.AppendThrowing() ) = transition;
+#else
+    m_LifetimeTransitions.push_back(transition);
+#endif
 
     LOG((LF_GCINFO, LL_INFO1000000, LOG_GCSLOTDESC_FMT " %s at %x\n", LOG_GCSLOTDESC_ARGS(&m_SlotTable[slotId]), slotState == GC_SLOT_LIVE ? "live" : "dead", instructionOffset));
 }
@@ -768,13 +788,23 @@ void GcInfoEncoder::Build()
     }
 #endif // FIXED_STACK_PARAMETER_SCRATCH_AREA
 
+#ifdef STANDALONE_BUILD
     UINT32 numInterruptibleRanges = (UINT32) m_InterruptibleRanges.Count();
+#else
+    UINT32 numInterruptibleRanges = (UINT32)m_InterruptibleRanges.size();
+#endif
 
     InterruptibleRange *pRanges = NULL;
     if(numInterruptibleRanges)
     {
         pRanges = (InterruptibleRange*) m_pAllocator->Alloc(numInterruptibleRanges * sizeof(InterruptibleRange));
+#ifdef STANDALONE_BUILD
         m_InterruptibleRanges.CopyTo(pRanges);
+#else
+        for (size_t i = 0; i < m_InterruptibleRanges.size(); i++) {
+          pRanges[i] = m_InterruptibleRanges[i];
+        }
+#endif
     }
 
     int size_tCount = (m_NumSlots + BITS_PER_SIZE_T - 1) / BITS_PER_SIZE_T;
@@ -887,9 +917,20 @@ void GcInfoEncoder::Build()
     ///////////////////////////////////////////////////////////////////////
 
 
+#ifdef STANDALONE_BUILD
     size_t numTransitions = m_LifetimeTransitions.Count();
+#else
+    size_t numTransitions = m_LifetimeTransitions.size();
+#endif
     LifetimeTransition *pTransitions = (LifetimeTransition*)m_pAllocator->Alloc(numTransitions * sizeof(LifetimeTransition));
+
+#ifdef STANDALONE_BUILD
     m_LifetimeTransitions.CopyTo(pTransitions);
+#else
+    for (size_t i = 0; i < m_InterruptibleRanges.size(); i++) {
+      pTransitions[i] = m_LifetimeTransitions[i];
+    }
+#endif
 
     LifetimeTransition* pEndTransitions = pTransitions + numTransitions;
     LifetimeTransition* pCurrent;
@@ -2337,12 +2378,27 @@ void BitStreamWriter::CopyTo( BYTE* buffer )
     int i,c;
     BYTE* source = NULL;
 
+#ifdef STANDALONE_BUILD
     MemoryBlockDesc* pMemBlockDesc = m_MemoryBlocks.GetHead();
-    if( pMemBlockDesc == NULL )
-        return;
+
+    if (pMemBlockDesc == NULL)
+      return;
+#else
+    std::list<MemoryBlockDesc*>::iterator memBlocksIterator = m_MemoryBlocks.begin();
+    MemoryBlockDesc* pMemBlockDesc = *memBlocksIterator;
+
+    if (memBlocksIterator == m_MemoryBlocks.end()) {
+      return;
+    }
+#endif
+
         
-    while( m_MemoryBlocks.GetNext( pMemBlockDesc ) != NULL )
+#ifdef STANDALONE_BUILD
+    while (m_MemoryBlocks.GetNext(pMemBlockDesc) != NULL)
     {
+#else
+    while (memBlocksIterator != m_MemoryBlocks.end()) {
+#endif
         source = (BYTE*) pMemBlockDesc->StartAddress;
         // @TODO: use memcpy instead
         for( i = 0; i < m_MemoryBlockSize; i++ )
@@ -2350,7 +2406,11 @@ void BitStreamWriter::CopyTo( BYTE* buffer )
             *( buffer++ ) = *( source++ );
         }
 
-        pMemBlockDesc = m_MemoryBlocks.GetNext( pMemBlockDesc );
+#ifdef STANDALONE_BUILD
+        pMemBlockDesc = m_MemoryBlocks.GetNext(pMemBlockDesc);
+#else
+        memBlocksIterator++;
+#endif
         _ASSERTE( pMemBlockDesc != NULL );
     }
 
