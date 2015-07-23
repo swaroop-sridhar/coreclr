@@ -1525,7 +1525,7 @@ void GcInfoEncoder::Build()
                     // Find the match and emit it
                     UINT32 liveStateOffset;
                     bool found = hashMap.Lookup(&liveState, &liveStateOffset);
-                    _ASSERTE(found);
+                    _ASSERTE(found); (found);
                     GCINFO_WRITE(m_Info1, liveStateOffset, numBitsPerPointer, CallSiteStateSize);
 
 
@@ -1549,7 +1549,7 @@ void GcInfoEncoder::Build()
             {
                 UINT32 liveStateOffset;
                 bool found = hashMap.Lookup(&liveState, &liveStateOffset);
-                _ASSERTE(found);
+                _ASSERTE(found); (found);
                 for( ; callSiteIndex < m_NumCallSites; callSiteIndex++)
                 {
                     GCINFO_WRITE(m_Info1, liveStateOffset, numBitsPerPointer, CallSiteStateSize);
