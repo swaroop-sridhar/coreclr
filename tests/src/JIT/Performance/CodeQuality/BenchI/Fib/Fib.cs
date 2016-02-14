@@ -17,7 +17,7 @@ public static class Fib
 #if DEBUG
     public const int Iterations = 1;
 #else
-    public const int Iterations = 35000;
+    public const int Iterations = 30000;
 #endif
 
     const int Number = 24;
