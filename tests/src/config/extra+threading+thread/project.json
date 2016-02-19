@@ -1,0 +1,24 @@
+{
+  "dependencies": {
+    "System.Console": "4.0.0-beta-*",
+    "System.Runtime": "4.0.20-beta-*",
+    "System.Runtime.Extensions": "4.0.10-beta-*",
+    "System.Runtime.InteropServices": "4.0.21-beta-*",
+    "System.Collections": "4.0.10-beta-*",
+    "System.Collections.NonGeneric": "4.0.1-beta-*",
+    "System.IO": "4.0.11-beta-*",
+    "System.IO.FileSystem": "4.0.1-beta-*",
+    "System.Globalization": "4.0.11-beta-*",
+    "System.Reflection": "4.1.0-beta-*",
+    "System.Diagnostics.Process": "4.1.0-beta-*",
+    "System.Diagnostics.Debug": "4.0.11-beta-*",
+    "System.Reflection.TypeExtensions": "4.0.0-beta-*",
+    "System.Threading": "4.0.0-beta-*",
+    "System.Threading.Thread": "4.0.0-beta-*",
+    "System.Numerics.Vectors": "4.1.1-beta-*",
+    "System.Numerics.Vectors.WindowsRuntime": "4.0.1-beta-*"
+  },
+  "frameworks": {
+    "dnxcore50": {}
+  }
+}
