@@ -2538,7 +2538,7 @@
   "libraries": {
     "Microsoft.DotNet.xunit.performance/1.0.0-alpha-build0027": {
       "type": "package",
-      "sha512": "Ic8LKByvYV0C/3/4G2mcQ7tigJyQb79c7eagSywTfSLGYJa0sBkzFyVDgXqCOQm/T0EUYOc6Oqj//avSqfHnLQ==",
+      "sha512": "4RmAI95/3mAPBUaSs4dgtHsrqrGfcjT1lGroO0p3m4L/lghd7q521sCGbEGpQmYZAptgO4EFQi3dZRTaKrsMzw==",
       "files": [
         "lib/dotnet/xunit.performance.core.dll",
         "lib/dotnet/xunit.performance.core.pdb",
