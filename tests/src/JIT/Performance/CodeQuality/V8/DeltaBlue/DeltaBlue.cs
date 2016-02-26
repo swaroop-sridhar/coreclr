@@ -908,7 +908,7 @@ public class deltablue
 
     public bool inst_main(String[] args)
     {
-        int iterations = 200; // read iterations from arguments, walter 7/97
+        int iterations = 2000; // read iterations from arguments, walter 7/97
         if (args.Length > 0)
         {
             bool parsed = Int32.TryParse(args[0], out iterations);

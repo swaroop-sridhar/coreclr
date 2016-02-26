@@ -22,8 +22,8 @@ public static class CscBench
     public const int CompileIterations = 1;
     public const int DataflowIterations = 1;
 #else
-    public const int CompileIterations = 1500;
-    public const int DataflowIterations = 10000;
+    public const int CompileIterations = 15000;
+    public const int DataflowIterations = 100000;
 #endif
 
     public static string MscorlibPath;

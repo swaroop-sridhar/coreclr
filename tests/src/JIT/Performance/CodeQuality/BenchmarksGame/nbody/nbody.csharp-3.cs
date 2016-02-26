@@ -16,7 +16,7 @@ public class NBody
 {
     public static int Main(String[] args)
     {
-        int n = args.Length > 0 ? Int32.Parse(args[0]) : 10000;
+        int n = 50000000;
         NBodySystem bodies = new NBodySystem();
         double initialEnergy = bodies.Energy();
         Console.WriteLine("{0:f9}", initialEnergy);
@@ -32,7 +32,7 @@ public class NBody
     [Benchmark]
     public static void Bench()
     {
-        int n = 5000000;
+        int n = 50000000;
         foreach (var iteration in Benchmark.Iterations)
         {
             using (iteration.StartMeasurement())

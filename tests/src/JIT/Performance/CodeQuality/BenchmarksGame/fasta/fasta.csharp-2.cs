@@ -28,13 +28,16 @@ public class Fasta
         MakeCumulative(s_homoSapiens);
         MakeCumulative(s_IUB);
 
-        int n = args.Length > 0 ? Int32.Parse(args[0]) : 1000;
+        int n = 5000;
 
         using (Stream s = Console.OpenStandardOutput())
         {
+          for (int i = 0; i < Iterations; i++)
+          {
             MakeRepeatFasta("ONE", "Homo sapiens alu", Encoding.ASCII.GetBytes(s_ALU), n * 2, s);
             MakeRandomFasta("TWO", "IUB ambiguity codes", s_IUB, n * 3, s);
             MakeRandomFasta("THREE", "Homo sapiens frequency", s_homoSapiens, n * 5, s);
+          }
         }
         return 100;
     }

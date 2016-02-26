@@ -70,7 +70,10 @@ namespace Crypto
                 }
             }
 
-            Measure(n, verbose);
+            for (int i = 0; i < 200; i++)
+            {
+                Measure(n, verbose);
+            }
 
             bool result = s_TEXT.Equals(INPUT);
 

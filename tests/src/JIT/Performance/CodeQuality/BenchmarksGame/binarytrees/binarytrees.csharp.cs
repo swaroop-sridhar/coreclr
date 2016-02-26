@@ -17,7 +17,7 @@ using Xunit;
 public class BinaryTrees
 {
     private const int minDepth = 4;
-    private const int Iterations = 1;
+    private const int Iterations = 10;
 
     [MethodImpl(MethodImplOptions.NoInlining)]
     private static bool Bench(bool verbose = false)

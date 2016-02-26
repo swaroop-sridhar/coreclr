@@ -75,7 +75,7 @@ namespace ConsoleMandel
                 int which = -1;
                 bool verbose = false;
                 bool bench = false;
-                int iters = 1;
+                int iters = 10;
                 int argNum = 0;
                 while (argNum < args.Length)
                 {

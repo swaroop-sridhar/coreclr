@@ -109,7 +109,7 @@ namespace Richards
 
         public static int Main(String[] args)
         {
-            int n = 1;
+            int n = 50000;
             if (args.Length > 0)
             {
                 n = Int32.Parse(args[0]);

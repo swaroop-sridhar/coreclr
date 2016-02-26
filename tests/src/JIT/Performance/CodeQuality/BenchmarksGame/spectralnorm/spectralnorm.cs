@@ -17,14 +17,20 @@ public class SpectralNorm
 #if DEBUG
     public const int Iterations = 1;
 #else
-    public const int Iterations = 300;
+    public const int Iterations = 3000;
 #endif
 
     public static int Main(String[] args)
     {
         int n = 100;
         if (args.Length > 0) n = Int32.Parse(args[0]);
-        double norm = new SpectralNorm().Approximate(n);
+        double a = 0;
+                for (int i = 0; i < Iterations; i++)
+                {
+                    SpectralNorm s = new SpectralNorm();
+                    a += s.Approximate(n);
+                }
+        double norm = a / (n * Iterations);
         Console.WriteLine("Norm={0:f9}", norm);
         double expected = 1.274219991;
         bool result = Math.Abs(norm - expected) < 1e-4;

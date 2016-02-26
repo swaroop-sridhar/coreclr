@@ -31,7 +31,7 @@ public class RayTracerBench
     private const int RunningTime = 1000;
     private const int Width = 250;
     private const int Height = 250;
-    private const int Iterations = 7;
+    private const int Iterations = 70;
     private const int MaxIterations = 1000;
 
 #endif

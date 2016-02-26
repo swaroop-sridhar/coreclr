@@ -136,7 +136,7 @@ namespace FractalPerf
 #if DEBUG
         public const int Iterations = 1;
 #else
-        public const int Iterations = 5;
+        public const int Iterations = 25;
 #endif
 
         [MethodImpl(MethodImplOptions.NoInlining)]

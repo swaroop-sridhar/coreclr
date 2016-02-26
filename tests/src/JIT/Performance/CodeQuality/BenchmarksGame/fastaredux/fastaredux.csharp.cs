@@ -20,19 +20,22 @@ public static class FastaRedux
 #if DEBUG
     private const int Iterations = 1;
 #else
-    const int Iterations = 5;
+    const int Iterations = 500;
 #endif
 
     public static int Main(string[] args)
     {
         AccumulateAndScale(s_homoSapiens);
         AccumulateAndScale(s_IUB);
-        int n = args.Length > 0 ? Int32.Parse(args[0]) : 2500;
+        int n = 5000;
         using (Stream s = Console.OpenStandardOutput())
         {
+          for (int i = 0; i < Iterations; i++)
+          {
             s.WriteRepeatFasta("ONE", "Homo sapiens alu", Encoding.ASCII.GetBytes(s_ALU), n * 2);
             s.WriteRandomFasta("TWO", "IUB ambiguity codes", s_IUB, n * 3);
             s.WriteRandomFasta("THREE", "Homo sapiens frequency", s_homoSapiens, n * 5);
+          }
         }
         return 100;
     }

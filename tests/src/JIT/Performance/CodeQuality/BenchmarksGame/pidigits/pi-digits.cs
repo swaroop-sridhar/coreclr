@@ -22,7 +22,7 @@ public class pidigits
 #if DEBUG
     public const int Iterations = 1;
 #else
-    public const int Iterations = 50;
+    public const int Iterations = 50000;
 #endif
 
     private BigInteger _acc,_den,_num;

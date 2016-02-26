@@ -4,7 +4,6 @@
     "Microsoft.DotNet.xunit.performance.analysis": "1.0.0-alpha-build0027",
     "Microsoft.DotNet.xunit.performance.runner.Windows": "1.0.0-alpha-build0027",
     "System.Collections.NonGeneric": "4.0.0",
-    "System.Console": "4.0.0-beta-*",
     "System.Linq": "4.0.0",
     "System.Runtime": "4.0.20-beta-*",
     "System.Runtime.Extensions": "4.0.10-beta-*",
@@ -19,6 +18,13 @@
     "xunit.runner.utility": "2.1.0"
   },
   "frameworks": {
-    "dnxcore50": {}
+    "dnxcore50": {
+      "dependencies": {
+        "System.Console": "4.0.0-beta-*"
+      }
+    },
+    "net45": {
+      "dependencies": {}
+    }
   }
 }
