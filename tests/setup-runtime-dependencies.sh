@@ -126,7 +126,8 @@ then
 fi
 
 # Get library path
-libPath=`find $packageDir | grep -m 1 libcoredistools`
+rid=`$dotnetCmd --version | grep 'Runtime Id:' | sed 's/^ *Runtime Id: *//g'`
+libPath=`find $packageDir | grep $rid | grep -m 1 libcoredistools`
 if [ ! -e $libPath ]; then
     exit_with_error 1 'Failed to locate the downloaded library'
 fi

@@ -32,7 +32,6 @@ goto Usage
 
 if not defined __OutputDir goto Usage
 
-
 REM =========================================================================================
 REM ===
 REM === Check if dotnet CLI and necessary directories exist
@@ -51,6 +50,13 @@ if not exist "%__DotNetToolDir%" (
 )
 if not exist "%__DotNetCmd%" (
     echo dotnet.exe does not exist: %__DotNetCmd%
+    goto Fail
+)
+if not exist "%__BuildArch%" (
+    echo Setting RID 
+    set _rid=`%__DotNetCmd% --version | findstr /C:"Runtime Id"`
+    echo RID is %_rid%
+    echo %_rid%
     goto Fail
 )
 
@@ -89,7 +95,7 @@ call %DOTNETCMD%
 if errorlevel 1 goto Fail
 
 REM Get downloaded dll path
-FOR /F "delims=" %%i IN ('dir %__PackageDir%\coredistools.dll /b/s') DO set __LibPath=%%i
+FOR /F "delims=" %%i IN ('dir %__PackageDir%\runtime.win7-%__BuildArch%.Microsoft.NETCore.CoreDisTools\coredistools.dll /b/s') DO set __LibPath=%%i
 if not exist "%__LibPath%" (
     echo Failed to locate the downloaded library: %__LibPath%
     goto Fail
@@ -100,9 +106,9 @@ echo Copy library: %__LibPath% to %__OutputDir%
 copy /y "%__LibPath%" "%__OutputDir%"
 
 REM Delete temporary files
-if exist "%__TmpDir%" (
-    rmdir /S /Q "%__TmpDir%"
-)
+rem if exist "%__TmpDir%" (
+rem    rmdir /S /Q "%__TmpDir%"
+rem )
 
 exit /b 0
 
