@@ -724,9 +724,18 @@ BYTE * ClrVirtualAllocWithinRange(const BYTE *pMinAddr,
     if (!m_pGetNumaHighestNodeNumber(&highest) || (highest == 0))
         return FALSE;
 
+    // GetNumaProcessorNode* APIs are not in kernelbase, only kernel32.
     m_pGetNumaProcessorNodeEx = (PGNPNEx) GetProcAddress(hMod, "GetNumaProcessorNodeEx");
-    if (m_pGetNumaProcessorNodeEx == NULL)
-        return FALSE;
+    if ((m_pGetNumaProcessorNodeEx == NULL) && wcscmp(WINDOWS_KERNEL32_DLLNAME_W, W("kernel32")))
+    {
+        HMODULE hModOther = GetModuleHandleW(W("kernel32"));
+        if (hModOther == NULL)
+            return FALSE;
+
+        m_pGetNumaProcessorNodeEx = (PGNPNEx) GetProcAddress(hModOther, "GetNumaProcessorNodeEx");
+        if (m_pGetNumaProcessorNodeEx == NULL)
+            return FALSE;
+    }
 
     m_pVirtualAllocExNuma = (PVAExN) GetProcAddress(hMod, "VirtualAllocExNuma");
     if (m_pVirtualAllocExNuma == NULL)
