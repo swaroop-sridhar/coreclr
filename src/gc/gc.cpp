@@ -21849,7 +21849,7 @@ void gc_heap::plan_phase (int condemned_gen_number)
                     {
                         if (settings.condemned_generation == (max_generation - 1))
                         {
-                            dprintf (3, (" NA: %Ix-%Ix -> %Ix, %Ix (%Ix)",
+                            dprintf (2222, (" NA: %Ix-%Ix -> %Ix, %Ix (%Ix)",
                                 plug_start, plug_end,
                                 (size_t)new_address, (size_t)new_address + (plug_end - plug_start),
                                 (size_t)(plug_end - plug_start)));
@@ -21894,7 +21894,7 @@ void gc_heap::plan_phase (int condemned_gen_number)
                     else
                     {
 #ifdef SIMPLE_DPRINTF
-                        dprintf (3, ("(%Ix)[%Ix->%Ix, NA: [%Ix(%Id), %Ix[: %Ix(%d)",
+                        dprintf (2222, ("(%Ix)[%Ix->%Ix, NA: [%Ix(%Id), %Ix[: %Ix(%d)",
                             (size_t)(node_gap_size (plug_start)), 
                             plug_start, plug_end, (size_t)new_address, (size_t)(plug_start - new_address),
                                 (size_t)new_address + ps, ps, 
@@ -33046,6 +33046,22 @@ gc_heap::verify_free_lists ()
 void
 gc_heap::verify_heap (BOOL begin_gc_p)
 {
+    int align_const = get_alignment_constant (TRUE);
+    uint8_t* obj = generation_allocation_start (generation_of (max_generation - 1));
+    uint8_t* end = heap_segment_allocated (ephemeral_heap_segment);
+
+    dprintf (2222, ("[%s][h%d]ephemeral objs:", (begin_gc_p ? "[BEG]" : "[END]"), heap_number));
+
+    while (obj < end)
+    {
+        size_t s = size (obj);
+     
+        dprintf (2222, ("%Ix(%Id)", obj, s));
+
+        obj += Align(s, align_const);
+    }
+
+/*
     int             heap_verify_level = g_pConfig->GetHeapVerifyLevel();
     size_t          last_valid_brick = 0;
     BOOL            bCurrentBrickInvalid = FALSE;
@@ -33530,6 +33546,7 @@ gc_heap::verify_heap (BOOL begin_gc_p)
 #else
     dprintf (2,("GC#d: Verifying heap - end", VolatileLoad(&settings.gc_index)));
 #endif //BACKGROUND_GC 
+*/
 }
 
 void GCHeap::ValidateObjectMember (Object* obj)
@@ -35085,7 +35102,7 @@ void gc_heap::do_pre_gc()
 #endif //BACKGROUND_GC
 
 #ifdef BACKGROUND_GC
-    dprintf (1, ("*GC* %d(gen0:%d)(%d)(%s)(%d)", 
+    dprintf (2222, ("*GC* %d(gen0:%d)(%d)(%s)(%d)", 
         VolatileLoad(&settings.gc_index), 
         dd_collection_count (hp->dynamic_data_of (0)),
         settings.condemned_generation,
@@ -35273,7 +35290,7 @@ void gc_heap::do_post_gc()
 #endif // GC_PROFILING
 
     //dprintf (1, (" ****end of Garbage Collection**** %d(gen0:%d)(%d)", 
-    dprintf (1, ("*EGC* %d(gen0:%d)(%d)(%s)", 
+    dprintf (2222, ("*EGC* %d(gen0:%d)(%d)(%s)", 
         VolatileLoad(&settings.gc_index), 
         dd_collection_count(hp->dynamic_data_of(0)),
         settings.condemned_generation,
