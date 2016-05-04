@@ -125,8 +125,8 @@ inline void FATAL_GC_ERROR()
 
 //#define STRESS_PINNING    //Stress pinning by pinning randomly
 
-//#define TRACE_GC          //debug trace gc operation
-//#define SIMPLE_DPRINTF
+#define TRACE_GC          //debug trace gc operation
+#define SIMPLE_DPRINTF
 
 //#define CATCH_GC          //catches exception during GC
 
