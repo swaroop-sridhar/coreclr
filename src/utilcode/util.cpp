@@ -685,32 +685,20 @@ BYTE * ClrVirtualAllocWithinRange(const BYTE *pMinAddr,
 // NumaNodeInfo 
 //******************************************************************************
 #if !defined(FEATURE_REDHAWK) && !defined(FEATURE_PAL)
-#if !defined(FEATURE_CORESYSTEM)
-/*static*/ NumaNodeInfo::PGNPN    NumaNodeInfo::m_pGetNumaProcessorNode = NULL;
-#endif
 /*static*/ NumaNodeInfo::PGNHNN NumaNodeInfo::m_pGetNumaHighestNodeNumber = NULL;
 /*static*/ NumaNodeInfo::PVAExN NumaNodeInfo::m_pVirtualAllocExNuma = NULL;
-
-#if !defined(FEATURE_CORESYSTEM)
-/*static*/ BOOL NumaNodeInfo::GetNumaProcessorNode(UCHAR proc_no, PUCHAR node_no)
-{
-    return (*m_pGetNumaProcessorNode)(proc_no, node_no);
-}
-#endif
 
 /*static*/ LPVOID NumaNodeInfo::VirtualAllocExNuma(HANDLE hProc, LPVOID lpAddr, SIZE_T dwSize,
 		    		     DWORD allocType, DWORD prot, DWORD node)
 {
     return (*m_pVirtualAllocExNuma)(hProc, lpAddr, dwSize, allocType, prot, node);
 }
-#if !defined(FEATURE_CORECLR) || defined(FEATURE_CORESYSTEM)
 /*static*/ NumaNodeInfo::PGNPNEx NumaNodeInfo::m_pGetNumaProcessorNodeEx = NULL;
 
 /*static*/ BOOL NumaNodeInfo::GetNumaProcessorNodeEx(PPROCESSOR_NUMBER proc_no, PUSHORT node_no)
 {
     return (*m_pGetNumaProcessorNodeEx)(proc_no, node_no);
 }
-#endif
 #endif
 
 /*static*/ BOOL NumaNodeInfo::m_enableGCNumaAware = FALSE;
@@ -736,17 +724,18 @@ BYTE * ClrVirtualAllocWithinRange(const BYTE *pMinAddr,
     if (!m_pGetNumaHighestNodeNumber(&highest) || (highest == 0))
         return FALSE;
 
-#if !defined(FEATURE_CORESYSTEM)
-    m_pGetNumaProcessorNode = (PGNPN) GetProcAddress(hMod, "GetNumaProcessorNode");
-    if (m_pGetNumaProcessorNode == NULL)
-        return FALSE;
-#endif
-
-#if !defined(FEATURE_CORECLR) || defined(FEATURE_CORESYSTEM)
+    // GetNumaProcessorNode* APIs are not in kernelbase, only kernel32.
     m_pGetNumaProcessorNodeEx = (PGNPNEx) GetProcAddress(hMod, "GetNumaProcessorNodeEx");
-    if (m_pGetNumaProcessorNodeEx == NULL)
-        return FALSE;
-#endif
+    if ((m_pGetNumaProcessorNodeEx == NULL) && wcscmp(WINDOWS_KERNEL32_DLLNAME_W, W("kernel32")))
+    {
+        HMODULE hModOther = GetModuleHandleW(W("kernel32"));
+        if (hModOther == NULL)
+            return FALSE;
+
+        m_pGetNumaProcessorNodeEx = (PGNPNEx) GetProcAddress(hModOther, "GetNumaProcessorNodeEx");
+        if (m_pGetNumaProcessorNodeEx == NULL)
+            return FALSE;
+    }
 
     m_pVirtualAllocExNuma = (PVAExN) GetProcAddress(hMod, "VirtualAllocExNuma");
     if (m_pVirtualAllocExNuma == NULL)
@@ -1203,7 +1192,7 @@ int GetCurrentProcessCpuCount()
     if (cCPUs != 0)
         return cCPUs;
 
-#if !defined(FEATURE_CORESYSTEM)
+#ifndef FEATURE_PAL
 
     DWORD_PTR pmask, smask;
 
@@ -1238,14 +1227,14 @@ int GetCurrentProcessCpuCount()
             
     return count;
 
-#else // !FEATURE_CORESYSTEM
+#else // !FEATURE_PAL
 
     SYSTEM_INFO sysInfo;
     ::GetSystemInfo(&sysInfo);
     cCPUs = sysInfo.dwNumberOfProcessors;
     return sysInfo.dwNumberOfProcessors;
 
-#endif // !FEATURE_CORESYSTEM
+#endif // !FEATURE_PAL
 }
 
 DWORD_PTR GetCurrentProcessCpuMask()
@@ -1258,7 +1247,7 @@ DWORD_PTR GetCurrentProcessCpuMask()
     }
     CONTRACTL_END;
 
-#if !defined(FEATURE_CORESYSTEM)
+#ifndef FEATURE_PAL
     DWORD_PTR pmask, smask;
 
     if (!GetProcessAffinityMask(GetCurrentProcess(), &pmask, &smask))

@@ -1544,11 +1544,6 @@ public:
 
 #if !defined(FEATURE_REDHAWK)&& !defined(FEATURE_PAL)
 private:	// apis types
-#if !defined(FEATURE_CORESYSTEM)
-    //GetNumaProcessorNode()
-    typedef BOOL
-    (WINAPI *PGNPN)(UCHAR, PUCHAR);
-#endif
 
     //GetNumaHighestNodeNumber()
     typedef BOOL
@@ -1558,21 +1553,14 @@ private:	// apis types
     (WINAPI *PVAExN)(HANDLE,LPVOID,SIZE_T,DWORD,DWORD,DWORD);
 
     // api pfns and members
-#if !defined(FEATURE_CORESYSTEM)
-    static PGNPN    m_pGetNumaProcessorNode;
-#endif
     static PGNHNN   m_pGetNumaHighestNodeNumber;
     static PVAExN   m_pVirtualAllocExNuma;
 
 public: 	// functions
-#if !defined(FEATURE_CORESYSTEM)
-    static BOOL GetNumaProcessorNode(UCHAR proc_no, PUCHAR node_no);
-#endif
 
     static LPVOID VirtualAllocExNuma(HANDLE hProc, LPVOID lpAddr, SIZE_T size,
                                      DWORD allocType, DWORD prot, DWORD node);
 
-#if !defined(FEATURE_CORECLR) || defined(FEATURE_CORESYSTEM)
 private:
     //GetNumaProcessorNodeEx()
     typedef BOOL
@@ -1581,7 +1569,6 @@ private:
 
 public:
     static BOOL GetNumaProcessorNodeEx(PPROCESSOR_NUMBER proc_no, PUSHORT node_no);
-#endif
 #endif
 };
 
