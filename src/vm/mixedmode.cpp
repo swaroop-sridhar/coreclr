@@ -216,8 +216,10 @@ void IJWNOADThunk::SafeNoModule()
         // DO NOT IMPROVE THIS EXCEPTION!  It cannot be a managed exception.  It
         // cannot be a real exception object because we cannot execute any managed
         // code here.
-        if(pThread)
+        if (pThread) {
             pThread->m_fPreemptiveGCDisabled = 0;
+            printf("G] %llx --> %s\n", (uint64_t)pThread, (pThread->m_fPreemptiveGCDisabled) ? "COOP" : "PREMPT"); fflush(stdout);
+        }
         COMPlusThrowBoot(E_PROCESS_SHUTDOWN_REENTRY);
     }
     NoModule();

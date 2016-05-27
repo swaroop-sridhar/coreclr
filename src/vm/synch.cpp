@@ -11,6 +11,21 @@
 #include "synch.h"
 #include "rwlock.h"
 
+const char * _Text(Thread *T) {
+    if (!T) {
+        return "0";
+    }
+    if (T->m_fPreemptiveGCDisabled) {
+        return "COOP";
+    }
+    else {
+        return "PREMT";
+    }
+}
+
+#define T(x) (x), _Text(x)
+
+
 void CLREventBase::CreateAutoEvent (BOOL bInitialState  // If TRUE, initial state is signalled
                                 )
 {
@@ -669,7 +684,10 @@ static DWORD CLREventWaitHelper(HANDLE handle, DWORD dwMilliseconds, BOOL alerta
 DWORD CLREventBase::Wait(DWORD dwMilliseconds, BOOL alertable, PendingSync *syncState) 
 {
     WRAPPER_NO_CONTRACT;
-    return WaitEx(dwMilliseconds, alertable?WaitMode_Alertable:WaitMode_None,syncState);
+    //printf("[%llx] Wait --- (%s))\n", T(GetThread())); fflush(stdout);
+    DWORD res = WaitEx(dwMilliseconds, alertable?WaitMode_Alertable:WaitMode_None,syncState);
+    //printf("[%llx] --- Wait(%s))\n", T(GetThread())); fflush(stdout);
+    return res;
 }
 
 

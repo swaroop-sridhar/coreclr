@@ -52,11 +52,13 @@ public:
 
     void EnablePreemptiveGC()
     {
+        printf("%llx %s --> PREMPT\n", (uint64_t)this, (m_fPreemptiveGCDisabled) ? "COOP" : "PREMPT"); fflush(stdout);
         m_fPreemptiveGCDisabled = false;
     }
 
     void DisablePreemptiveGC()
     {
+        printf("%llx %s --> COOP\n", (uint64_t)this, (m_fPreemptiveGCDisabled) ? "COOP" : "PREMPT"); fflush(stdout);
         m_fPreemptiveGCDisabled = true;
     }
 

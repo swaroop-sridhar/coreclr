@@ -819,6 +819,8 @@ extern "C" UINT64 __stdcall COMToCLRWorker(Thread *pThread, ComMethodFrame* pFra
     // we have additional checks for shutdown races, MDAs, and thread abort that are performed only when 
     // g_TrapReturningThreads is set.
     pThread->m_fPreemptiveGCDisabled.StoreWithoutBarrier(1);
+    printf("C[%llx] --> %s\n", (uint64_t)pThread, (pThread->m_fPreemptiveGCDisabled) ? "COOP" : "PREMPT"); fflush(stdout);
+
     if (g_TrapReturningThreads.LoadWithoutBarrier())
     {
         hr = StubRareDisableHRWorker(pThread);
