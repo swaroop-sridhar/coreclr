@@ -1624,8 +1624,10 @@ void DoGcStress (PCONTEXT regs, MethodDesc *pMD)
     // Do the actual stress work
     //
 
-    if (!GCHeap::GetGCHeap()->StressHeap())
-        UpdateGCStressInstructionWithoutGC ();
+    if (!GCHeap::GetGCHeap()->StressHeap()) {
+        //printf("[%llx] Update Without GC\n", pThread);
+        UpdateGCStressInstructionWithoutGC();
+    }
 
     // Must flush instruction cache before returning as instruction has been modified.
     FlushInstructionCache(GetCurrentProcess(), instrPtr, 4);

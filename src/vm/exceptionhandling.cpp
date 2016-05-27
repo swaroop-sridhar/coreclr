@@ -816,6 +816,7 @@ ProcessCLRException(IN     PEXCEPTION_RECORD   pExceptionRecord
             // We track SO state for the thread.
             EEPolicy::HandleStackOverflow(SOD_ManagedFrameHandler, (void*)MemoryStackFp);
             FastInterlockAnd (&pThread->m_fPreemptiveGCDisabled, 0);
+            printf("E] %llx --> %s\n", (uint64_t)pThread, (pThread->m_fPreemptiveGCDisabled) ? "COOP" : "PREMPT"); fflush(stdout);
             return ExceptionContinueSearch;
         }
         else
@@ -5748,6 +5749,8 @@ UMThunkUnwindFrameChainHandler(IN     PEXCEPTION_RECORD   pExceptionRecord
         {
             // We don't have stack to do full-version EnablePreemptiveGC.
             FastInterlockAnd (&pThread->m_fPreemptiveGCDisabled, 0);
+            printf("F] %llx --> %s\n", (uint64_t)pThread, (pThread->m_fPreemptiveGCDisabled) ? "COOP" : "PREMPT"); fflush(stdout);
+
         }
         else
         {
@@ -5859,6 +5862,8 @@ CallDescrWorkerUnwindFrameChainHandler(IN     PEXCEPTION_RECORD   pExceptionReco
         }
 
         FastInterlockAnd (&pThread->m_fPreemptiveGCDisabled, 0);
+        printf("G] %llx --> %s\n", (uint64_t)pThread, (pThread->m_fPreemptiveGCDisabled) ? "COOP" : "PREMPT"); fflush(stdout);
+
         // We'll let the SO infrastructure handle this exception... at that point, we
         // know that we'll have enough stack to do it.
         return ExceptionContinueSearch;

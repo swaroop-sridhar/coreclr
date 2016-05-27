@@ -1810,7 +1810,7 @@ private:
 #endif
 
     // After we suspend a thread, we may need to call EEJitManager::JitCodeToMethodInfo
-    // or StressLog which may waits on a spinlock.  It is unsafe to suspend a thread while it
+    // or which may waits on a spinlock.  It is unsafe to suspend a thread while it
     // is in this state.
     Volatile<LONG> m_dwForbidSuspendThread;
 public:
@@ -2259,6 +2259,7 @@ public:
         // ------------------------------------------------------------------------
 
         m_fPreemptiveGCDisabled.StoreWithoutBarrier(1);
+        //printf("D[%llx] --> %s\n", (uint64_t)this, (m_fPreemptiveGCDisabled) ? "COOP" : "PREMPT"); fflush(stdout);
 
         if (g_TrapReturningThreads.LoadWithoutBarrier())
         {
@@ -2313,6 +2314,7 @@ public:
         // ------------------------------------------------------------------------
 
         m_fPreemptiveGCDisabled.StoreWithoutBarrier(0);
+        //printf("E[%llx] --> %s\n", (uint64_t)this, (m_fPreemptiveGCDisabled) ? "COOP" : "PREMPT"); fflush(stdout);
 #ifdef ENABLE_CONTRACTS
         m_ulEnablePreemptiveGCCount ++;
 #endif  // _DEBUG
@@ -6467,6 +6469,7 @@ protected:
         m_WasCoop = m_Thread->PreemptiveGCDisabled();
         if (conditional && !m_WasCoop)
         {
+            //printf("#D[%llx] PREMP --> COOP\n", (uint64_t)m_Thread); fflush(stdout);
             m_Thread->DisablePreemptiveGC();
             _ASSERTE(m_Thread->PreemptiveGCDisabled());
         }
@@ -6493,6 +6496,7 @@ protected:
             m_WasCoop = m_Thread->PreemptiveGCDisabled();
             if (conditional && m_WasCoop)
             {
+                //printf("#E[%llx] COOP --> PREMP\n", (uint64_t)m_Thread); fflush(stdout);
                 m_Thread->EnablePreemptiveGC();
                 _ASSERTE(!m_Thread->PreemptiveGCDisabled());
             }

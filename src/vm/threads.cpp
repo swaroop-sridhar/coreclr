@@ -2486,6 +2486,8 @@ BOOL Thread::HasStarted(BOOL bRequiresTSL)
     // preemptive mode, ready for a transition.  But in the IJW case, it can return a
     // cooperative mode thread.  RunDllMain handles this "surprise" correctly.
     m_fPreemptiveGCDisabled = TRUE;
+    //printf("H] %llx --> %s\n", (uint64_t)this, (m_fPreemptiveGCDisabled) ? "COOP" : "PREMPT"); fflush(stdout);
+
 
     // Normally, HasStarted is called from the thread's entrypoint to introduce it to
     // the runtime.  But sometimes that thread is used for DLL_THREAD_ATTACH notifications
@@ -2591,6 +2593,7 @@ FAILURE:
         if (m_fPreemptiveGCDisabled)
         {
             m_fPreemptiveGCDisabled = FALSE;
+            //printf("I] %llx --> %s\n", (uint64_t)this, (m_fPreemptiveGCDisabled) ? "COOP" : "PREMPT"); fflush(stdout);
         }
         _ASSERTE (HasThreadState(TS_Unstarted));
 

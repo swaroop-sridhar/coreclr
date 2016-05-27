@@ -1266,7 +1266,7 @@ void recursive_gc_sync::end_background()
 
 void recursive_gc_sync::begin_foreground()
 {
-    dprintf (2, ("begin_foreground"));
+    dprintf (25, ("begin_foreground"));
 
     BOOL cooperative_mode = FALSE;
     Thread* current_thread = 0;
@@ -1281,7 +1281,7 @@ try_again_top:
         Interlocked::Increment (&foreground_request_count);
 
 try_again_no_inc:
-        dprintf(2, ("Waiting sync gc point"));
+        dprintf(25, ("Waiting sync gc point"));
         assert (foreground_allowed.IsValid());
         assert (foreground_complete.IsValid());
 
@@ -1290,14 +1290,14 @@ try_again_no_inc:
 
         foreground_allowed.Wait(INFINITE, FALSE);
 
-        dprintf(2, ("Waiting sync gc point is done"));
+        dprintf(25, ("Waiting sync gc point is done"));
 
         gc_heap::disable_preemptive (current_thread, cooperative_mode);
 
         if (foreground_gate)
         {
             Interlocked::Increment (&foreground_count);
-            dprintf (2, ("foreground_count: %d", (int32_t)foreground_count));
+            dprintf (25, ("foreground_count: %d", (int32_t)foreground_count));
             if (foreground_gate)
             {
                 gc_heap::settings.concurrent = FALSE;
@@ -1318,11 +1318,11 @@ try_again_no_inc:
 
 void recursive_gc_sync::end_foreground()
 {
-    dprintf (2, ("end_foreground"));
+    dprintf (25, ("end_foreground"));
     if (gc_background_running)
     {
         Interlocked::Decrement (&foreground_request_count);
-        dprintf (2, ("foreground_count before decrement: %d", (int32_t)foreground_count));
+        dprintf (25, ("foreground_count before decrement: %d", (int32_t)foreground_count));
         if (Interlocked::Decrement (&foreground_count) == 0)
         {
             //c_write ((BOOL*)&foreground_gate, 0);
@@ -1331,7 +1331,7 @@ void recursive_gc_sync::end_foreground()
             if (foreground_count == 0)
             {
                 foreground_allowed.Reset ();
-                dprintf(2, ("setting foreground complete event"));
+                dprintf(25, ("setting foreground complete event"));
                 foreground_complete.Set();
             }
         }
@@ -5182,7 +5182,7 @@ void set_thread_affinity_mask_for_heap(int heap_number, GCThreadAffinity* affini
 
 bool gc_heap::create_gc_thread ()
 {
-    dprintf (3, ("Creating gc thread\n"));
+    dprintf (25, ("Creating gc thread\n"));
 
     GCThreadAffinity affinity;
     affinity.Group = GCThreadAffinity::None;
@@ -5209,7 +5209,7 @@ void gc_heap::gc_thread_function ()
 {
     assert (gc_done_event.IsValid());
     assert (gc_start_event.IsValid());
-    dprintf (3, ("gc thread started"));
+    dprintf (25, ("gc thread started"));
 
     heap_select::init_cpu_mapping(this, heap_number);
 
@@ -5234,13 +5234,13 @@ void gc_heap::gc_thread_function ()
             }
             else
                 settings.init_mechanisms();
-            dprintf (3, ("%d gc thread waiting...", heap_number));
+            dprintf (25, ("%d gc thread waiting...", heap_number));
             gc_start_event.Set();
         }
         else
         {
             gc_start_event.Wait(INFINITE, FALSE);
-            dprintf (3, ("%d gc thread waiting... Done", heap_number));
+            dprintf (25, ("%d gc thread waiting... Done", heap_number));
         }
 
         if (proceed_with_gc_p)
@@ -9571,7 +9571,7 @@ void gc_heap::reset_write_watch (BOOL concurrent_p)
 void gc_heap::restart_vm()
 {
     //assert (generation_allocation_pointer (youngest_generation) == 0);
-    dprintf (3, ("Restarting EE"));
+    dprintf (25, ("Restarting EE"));
     STRESS_LOG0(LF_GC, LL_INFO10000, "Concurrent GC: Retarting EE\n");
     ee_proceed_event.Set();
 }
@@ -16368,7 +16368,7 @@ int gc_heap::garbage_collect (int n)
 
 #ifdef MULTIPLE_HEAPS
         //align all heaps on the max generation to condemn
-        dprintf (3, ("Joining for max generation to condemn"));
+        dprintf (25, ("Joining for max generation to condemn"));
         condemned_generation_num = generation_to_condemn (n, 
                                                           &blocking_collection, 
                                                           &elevation_requested, 
@@ -16515,7 +16515,7 @@ int gc_heap::garbage_collect (int n)
                 // in particular, the allocation contexts are gone.
                 // For now, it is simpler to collect max_generation-1
                 settings.condemned_generation = max_generation - 1;
-                dprintf (GTC_LOG, ("bgc - 1 instead of 2"));
+                dprintf (25, ("bgc - 1 instead of 2"));
             }
 
             if ((settings.condemned_generation == max_generation) &&
@@ -16545,7 +16545,7 @@ int gc_heap::garbage_collect (int n)
 #ifdef MULTIPLE_HEAPS
             gc_start_event.Reset();
             //start all threads on the roots.
-            dprintf(3, ("Starting all gc threads for gc"));
+            dprintf(25, ("Starting all gc threads for gc"));
             gc_t_join.restart();
 #endif //MULTIPLE_HEAPS
         }
@@ -16593,13 +16593,13 @@ int gc_heap::garbage_collect (int n)
                 {
                     prepare_bgc_thread (g_heaps[i]);
                 }
-                dprintf (2, ("setting bgc_threads_sync_event"));
+                dprintf (25, ("setting bgc_threads_sync_event"));
                 bgc_threads_sync_event.Set();
             }
             else
             {
                 bgc_threads_sync_event.Wait(INFINITE, FALSE);
-                dprintf (2, ("bgc_threads_sync_event is signalled"));
+                dprintf (25, ("bgc_threads_sync_event is signalled"));
             }
 #else
             prepare_bgc_thread(0);
@@ -16613,7 +16613,7 @@ int gc_heap::garbage_collect (int n)
                 do_concurrent_p = TRUE;
                 do_ephemeral_gc_p = FALSE;
 #ifdef MULTIPLE_HEAPS
-                dprintf(2, ("Joined to perform a background GC"));
+                dprintf(25, ("Joined to perform a background GC"));
 
                 for (int i = 0; i < n_heaps; i++)
                 {
@@ -16712,7 +16712,7 @@ int gc_heap::garbage_collect (int n)
 
                 if (do_ephemeral_gc_p)
                 {
-                    dprintf (2, ("GC threads running, doing gen%d GC", settings.condemned_generation));
+                    dprintf (25, ("GC threads running, doing gen%d GC", settings.condemned_generation));
 
                     gen_to_condemn_reasons.init();
                     gen_to_condemn_reasons.set_condition (gen_before_bgc);
@@ -16739,7 +16739,7 @@ int gc_heap::garbage_collect (int n)
             }
             else
             {
-                dprintf (2, ("couldn't create BGC threads, reverting to doing a blocking GC"));
+                dprintf (25, ("couldn't create BGC threads, reverting to doing a blocking GC"));
                 gc1();
             }
         }
@@ -19272,7 +19272,7 @@ void gc_heap::scan_dependent_handles (int condemned_gen_number, ScanContext *sc,
             }
 
             // Restart all the workers.
-            dprintf(3, ("Starting all gc thread mark stack overflow processing"));
+            dprintf(25, ("Starting all gc thread mark stack overflow processing"));
             gc_t_join.restart();
         }
 
@@ -19353,7 +19353,7 @@ void gc_heap::mark_phase (int condemned_gen_number, BOOL mark_only_p)
     sc.promotion = TRUE;
     sc.concurrent = FALSE;
 
-    dprintf(2,("---- Mark Phase condemning %d ----", condemned_gen_number));
+    dprintf(25,("---- Mark Phase condemning %d ----", condemned_gen_number));
     BOOL  full_p = (condemned_gen_number == max_generation);
 
 #ifdef TIME_GC
@@ -19489,13 +19489,13 @@ void gc_heap::mark_phase (int condemned_gen_number, BOOL mark_only_p)
             gc_t_join.join(this, gc_join_scan_sizedref_done);
             if (gc_t_join.joined())
             {
-                dprintf(3, ("Done with marking all sized refs. Starting all gc thread for marking other strong roots"));
+                dprintf(25, ("Done with marking all sized refs. Starting all gc thread for marking other strong roots"));
                 gc_t_join.restart();
             }
 #endif //MULTIPLE_HEAPS
         }
     
-        dprintf(3,("Marking Roots"));
+        dprintf(25,("Marking Roots"));
 
         GCScan::GcScanRoots(GCHeap::Promote,
                                 condemned_gen_number, max_generation,
@@ -19512,7 +19512,7 @@ void gc_heap::mark_phase (int condemned_gen_number, BOOL mark_only_p)
 #endif //BACKGROUND_GC
 
 #ifdef FEATURE_PREMORTEM_FINALIZATION
-        dprintf(3, ("Marking finalization data"));
+        dprintf(25, ("Marking finalization data"));
         finalize_queue->GcScanRoots(GCHeap::Promote, heap_number, 0);
 #endif // FEATURE_PREMORTEM_FINALIZATION
 
@@ -19522,7 +19522,7 @@ void gc_heap::mark_phase (int condemned_gen_number, BOOL mark_only_p)
 // MTHTS
         {
 
-            dprintf(3,("Marking handle table"));
+            dprintf(25,("Marking handle table"));
             GCScan::GcScanHandles(GCHeap::Promote,
                                       condemned_gen_number, max_generation,
                                       &sc);
@@ -19534,7 +19534,7 @@ void gc_heap::mark_phase (int condemned_gen_number, BOOL mark_only_p)
         size_t promoted_before_cards = promoted_bytes (heap_number);
 #endif //TRACE_GC
 
-        dprintf (3, ("before cards: %Id", promoted_before_cards));
+        dprintf (25, ("before cards: %Id", promoted_before_cards));
         if (!full_p)
         {
 #ifdef CARD_BUNDLE
@@ -19563,13 +19563,13 @@ void gc_heap::mark_phase (int condemned_gen_number, BOOL mark_only_p)
             }
 #endif //HEAP_ANALYZE
 
-            dprintf(3,("Marking cross generation pointers"));
+            dprintf(25,("Marking cross generation pointers"));
             mark_through_cards_for_segments (mark_object_fn, FALSE);
 
-            dprintf(3,("Marking cross generation pointers for large objects"));
+            dprintf(25,("Marking cross generation pointers for large objects"));
             mark_through_cards_for_large_objects (mark_object_fn, FALSE);
 
-            dprintf (3, ("marked by cards: %Id", 
+            dprintf (25, ("marked by cards: %Id", 
                 (promoted_bytes (heap_number) - promoted_before_cards)));
             fire_mark_event (heap_number, ETW::GC_ROOT_OLDER, (promoted_bytes (heap_number) - last_promoted_bytes));
             last_promoted_bytes = promoted_bytes (heap_number);
@@ -19594,7 +19594,7 @@ void gc_heap::mark_phase (int condemned_gen_number, BOOL mark_only_p)
     scan_dependent_handles(condemned_gen_number, &sc, true);
 
 #ifdef MULTIPLE_HEAPS
-    dprintf(3, ("Joining for short weak handle scan"));
+    dprintf(25, ("Joining for short weak handle scan"));
     gc_t_join.join(this, gc_join_null_dead_short_weak);
     if (gc_t_join.joined())
 #endif //MULTIPLE_HEAPS
@@ -19613,7 +19613,7 @@ void gc_heap::mark_phase (int condemned_gen_number, BOOL mark_only_p)
         }
 
         //start all threads on the roots.
-        dprintf(3, ("Starting all gc thread for short weak handle scan"));
+        dprintf(25, ("Starting all gc thread for short weak handle scan"));
         gc_t_join.restart();
 #endif //MULTIPLE_HEAPS
 
@@ -19624,7 +19624,7 @@ void gc_heap::mark_phase (int condemned_gen_number, BOOL mark_only_p)
 
 // MTHTS: keep by single thread
 #ifdef MULTIPLE_HEAPS
-    dprintf(3, ("Joining for finalization"));
+    dprintf(25, ("Joining for finalization"));
     gc_t_join.join(this, gc_join_scan_finalization);
     if (gc_t_join.joined())
 #endif //MULTIPLE_HEAPS
@@ -19632,7 +19632,7 @@ void gc_heap::mark_phase (int condemned_gen_number, BOOL mark_only_p)
     {
 #ifdef MULTIPLE_HEAPS
         //start all threads on the roots.
-        dprintf(3, ("Starting all gc thread for Finalization"));
+        dprintf(25, ("Starting all gc thread for Finalization"));
         gc_t_join.restart();
 #endif //MULTIPLE_HEAPS
     }
@@ -19641,7 +19641,7 @@ void gc_heap::mark_phase (int condemned_gen_number, BOOL mark_only_p)
     size_t promoted_bytes_live = promoted_bytes (heap_number);
 
 #ifdef FEATURE_PREMORTEM_FINALIZATION
-    dprintf (3, ("Finalize marking"));
+    dprintf (25, ("Finalize marking"));
     finalize_queue->ScanForFinalization (GCHeap::Promote, condemned_gen_number, mark_only_p, __this);
 
 #ifdef GC_PROFILING
@@ -19657,12 +19657,12 @@ void gc_heap::mark_phase (int condemned_gen_number, BOOL mark_only_p)
     scan_dependent_handles(condemned_gen_number, &sc, false);
 
 #ifdef MULTIPLE_HEAPS
-    dprintf(3, ("Joining for weak pointer deletion"));
+    dprintf(25, ("Joining for weak pointer deletion"));
     gc_t_join.join(this, gc_join_null_dead_long_weak);
     if (gc_t_join.joined())
     {
         //start all threads on the roots.
-        dprintf(3, ("Starting all gc thread for weak pointer deletion"));
+        dprintf(25, ("Starting all gc thread for weak pointer deletion"));
         gc_t_join.restart();
     }
 #endif //MULTIPLE_HEAPS
@@ -19680,7 +19680,7 @@ void gc_heap::mark_phase (int condemned_gen_number, BOOL mark_only_p)
 #endif //PARALLEL_MARK_LIST_SORT
 #endif //MARK_LIST
 
-    dprintf (3, ("Joining for sync block cache entry scanning"));
+    dprintf (25, ("Joining for sync block cache entry scanning"));
     gc_t_join.join(this, gc_join_null_dead_syncblk);
     if (gc_t_join.joined())
 #endif //MULTIPLE_HEAPS
@@ -19794,7 +19794,7 @@ void gc_heap::mark_phase (int condemned_gen_number, BOOL mark_only_p)
 #endif //SNOOP_STATS
 
         //start all threads.
-        dprintf(3, ("Starting all threads for end of mark phase"));
+        dprintf(25, ("Starting all threads for end of mark phase"));
         gc_t_join.restart();
 #else //MULTIPLE_HEAPS
 
@@ -19812,7 +19812,7 @@ void gc_heap::mark_phase (int condemned_gen_number, BOOL mark_only_p)
                                      (dd_desired_allocation (dd) -
                                      dd_new_allocation (dd)));
 
-            dprintf (2, ("promotion threshold: %Id, promoted bytes: %Id size n+1: %Id",
+            dprintf (25, ("promotion threshold: %Id, promoted bytes: %Id size n+1: %Id",
                          m, promoted_bytes (heap_number), older_gen_size));
 
             if ((m > older_gen_size) ||
@@ -19846,7 +19846,7 @@ void gc_heap::mark_phase (int condemned_gen_number, BOOL mark_only_p)
         mark_time = finish - start;
 #endif //TIME_GC
 
-    dprintf(2,("---- End of mark phase ----"));
+    dprintf(25,("---- End of mark phase ----"));
 }
 
 inline
@@ -25604,7 +25604,7 @@ void gc_heap::background_mark_phase ()
     const int thread = heap_number;
 #endif //!MULTIPLE_HEAPS
 
-    dprintf(2,("-(GC%d)BMark-", VolatileLoad(&settings.gc_index)));
+    dprintf(25,("-(GC%d)BMark-", VolatileLoad(&settings.gc_index)));
 
     assert (settings.concurrent);
 
@@ -25649,7 +25649,7 @@ void gc_heap::background_mark_phase ()
 
         generation*   gen = generation_of (max_generation);
 
-        dprintf(3,("BGC: stack marking"));
+        dprintf(25,("BGC: stack marking"));
         sc.concurrent = TRUE;
 
         GCScan::GcScanRoots(background_promote_callback,
@@ -25658,7 +25658,7 @@ void gc_heap::background_mark_phase ()
     }
 
     {
-        dprintf(3,("BGC: finalization marking"));
+        dprintf(25,("BGC: finalization marking"));
         finalize_queue->GcScanRoots(background_promote_callback, heap_number, 0);
     }
 
@@ -25726,12 +25726,15 @@ void gc_heap::background_mark_phase ()
             assert (dont_restart_ee_p);
             dont_restart_ee_p = FALSE;
 
+            STRESS_LOG0(LF_SYNC, LL_INFO1000, "Restart_vm ... \n");
             restart_vm();
             GCToOSInterface::YieldThread (0);
 #ifdef MULTIPLE_HEAPS
-            dprintf(3, ("Starting all gc threads for gc"));
+            dprintf(25, ("Starting all gc threads for gc"));
             bgc_t_join.restart();
 #endif //MULTIPLE_HEAPS
+            STRESS_LOG0(LF_SYNC, LL_INFO1000, "... Restart_vm\n");
+
         }
 
 #ifdef MULTIPLE_HEAPS
@@ -25787,7 +25790,7 @@ void gc_heap::background_mark_phase ()
             enable_preemptive (current_thread);
 
 #ifdef MULTIPLE_HEAPS
-            dprintf(3, ("Joining BGC threads after resetting writewatch"));
+            dprintf(25, ("Joining BGC threads after resetting writewatch"));
             bgc_t_join.restart();
 #endif //MULTIPLE_HEAPS
         }
@@ -25812,7 +25815,7 @@ void gc_heap::background_mark_phase ()
             disable_preemptive (current_thread, TRUE);
         }
 
-        dprintf (3,("BGC: handle table marking"));
+        dprintf (25,("BGC: handle table marking"));
         GCScan::GcScanHandles(background_promote,
                                   max_generation, max_generation,
                                   &sc);
@@ -25825,7 +25828,7 @@ void gc_heap::background_mark_phase ()
         //concurrent_print_time_delta ("concurrent marking stack roots");
         concurrent_print_time_delta ("CRS");
 
-        dprintf (2,("concurrent revisiting dirtied pages"));
+        dprintf (25, ("concurrent revisiting dirtied pages"));
         revisit_written_pages (TRUE);
         revisit_written_pages (TRUE);
         //concurrent_print_time_delta ("concurrent marking dirtied pages on LOH");
@@ -25856,7 +25859,7 @@ void gc_heap::background_mark_phase ()
                 g_heaps[i]->background_max_overflow_address = all_heaps_max;
                 g_heaps[i]->background_min_overflow_address = all_heaps_min;
             }
-            dprintf(3, ("Starting all bgc threads after updating the overflow info"));
+            dprintf(25, ("Starting all bgc threads after updating the overflow info"));
             bgc_t_join.restart();
         }
 #endif //MULTIPLE_HEAPS
@@ -25874,7 +25877,7 @@ void gc_heap::background_mark_phase ()
         // Stop all threads, crawl all stacks and revisit changed pages.
         fire_bgc_event (BGC1stConEnd);
 
-        dprintf (2, ("Stopping the EE"));
+        dprintf (25, ("Stopping the EE"));
 
         enable_preemptive (current_thread);
 
@@ -25884,7 +25887,7 @@ void gc_heap::background_mark_phase ()
         {
             bgc_threads_sync_event.Reset();
 
-            dprintf(3, ("Joining BGC threads for non concurrent final marking"));
+            dprintf(25, ("Joining BGC threads for non concurrent final marking"));
             bgc_t_join.restart();
         }
 #endif //MULTIPLE_HEAPS
@@ -25900,13 +25903,13 @@ void gc_heap::background_mark_phase ()
         else
         {
             bgc_threads_sync_event.Wait(INFINITE, FALSE);
-            dprintf (2, ("bgc_threads_sync_event is signalled"));
+            dprintf (25, ("bgc_threads_sync_event is signalled"));
         }
 
         assert (settings.concurrent);
         assert (settings.condemned_generation == max_generation);
 
-        dprintf (2, ("clearing cm_in_progress"));
+        dprintf (25, ("clearing cm_in_progress"));
         c_write (cm_in_progress, FALSE);
 
         bgc_alloc_lock->check();
@@ -25927,7 +25930,7 @@ void gc_heap::background_mark_phase ()
         bgc_t_join.join(this, gc_join_after_absorb);
         if (bgc_t_join.joined())
         {
-            dprintf(3, ("Joining BGC threads after absorb"));
+            dprintf(25, ("Joining BGC threads after absorb"));
             bgc_t_join.restart();
         }
 #endif //MULTIPLE_HEAPS
@@ -25944,10 +25947,14 @@ void gc_heap::background_mark_phase ()
 
         dprintf (GTC_LOG, ("FM: h%d: loh: %Id, soh: %Id", heap_number, total_loh_size, total_soh_size));
 
-        dprintf (2, ("nonconcurrent marking stack roots"));
+        dprintf (25, ("nonconcurrent marking stack roots"));
+        //printf("[%llx] NCM --- \n", current_thread); fflush(stdout);
+        STRESS_LOG0(LF_SYNC, LL_INFO1000, "NCM ...\n");
         GCScan::GcScanRoots(background_promote,
                                 max_generation, max_generation,
                                 &sc);
+        STRESS_LOG0(LF_SYNC, LL_INFO1000, "      ... NCM\n");
+        //printf("[%llx]           --- NCM \n", current_thread); fflush(stdout);
         //concurrent_print_time_delta ("nonconcurrent marking stack roots");
         concurrent_print_time_delta ("NRS");
 
@@ -25955,14 +25962,14 @@ void gc_heap::background_mark_phase ()
         finalize_queue->GcScanRoots(background_promote, heap_number, 0);
 //        finalize_queue->LeaveFinalizeLock();
 
-        dprintf (2, ("nonconcurrent marking handle table"));
+        dprintf (25, ("nonconcurrent marking handle table"));
         GCScan::GcScanHandles(background_promote,
                                   max_generation, max_generation,
                                   &sc);
         //concurrent_print_time_delta ("nonconcurrent marking handle table");
         concurrent_print_time_delta ("NRH");
 
-        dprintf (2,("---- (GC%d)final going through written pages ----", VolatileLoad(&settings.gc_index)));
+        dprintf (25,("---- (GC%d)final going through written pages ----", VolatileLoad(&settings.gc_index)));
         revisit_written_pages (FALSE);
         //concurrent_print_time_delta ("nonconcurrent revisit dirtied pages on LOH");
         concurrent_print_time_delta ("NRre LOH");
@@ -25978,7 +25985,7 @@ void gc_heap::background_mark_phase ()
             SoftwareWriteWatch::DisableForGCHeap();
 
 #ifdef MULTIPLE_HEAPS
-            dprintf(3, ("Restarting BGC threads after disabling software write watch"));
+            dprintf(25, ("Restarting BGC threads after disabling software write watch"));
             bgc_t_join.restart();
 #endif // MULTIPLE_HEAPS
         }
@@ -26011,7 +26018,7 @@ void gc_heap::background_mark_phase ()
             GCToEEInterface::AfterGcScanRoots (max_generation, max_generation, &sc);
 
 #ifdef MULTIPLE_HEAPS
-            dprintf(3, ("Joining BGC threads for short weak handle scan"));
+            dprintf(25, ("Joining BGC threads for short weak handle scan"));
             bgc_t_join.restart();
 #endif //MULTIPLE_HEAPS
         }
@@ -26028,13 +26035,13 @@ void gc_heap::background_mark_phase ()
         bgc_t_join.join(this, gc_join_scan_finalization);
         if (bgc_t_join.joined())
         {
-            dprintf(3, ("Joining BGC threads for finalization"));
+            dprintf(25, ("Joining BGC threads for finalization"));
             bgc_t_join.restart();
         }
 #endif //MULTIPLE_HEAPS
 
         //Handle finalization.
-        dprintf(3,("Marking finalization data"));
+        dprintf(25,("Marking finalization data"));
         //concurrent_print_time_delta ("bgc joined to mark finalization");
         concurrent_print_time_delta ("NRj");
 
@@ -26060,7 +26067,7 @@ void gc_heap::background_mark_phase ()
     bgc_t_join.join(this, gc_join_null_dead_long_weak);
     if (bgc_t_join.joined())
     {
-        dprintf(2, ("Joining BGC threads for weak pointer deletion"));
+        dprintf(25, ("Joining BGC threads for weak pointer deletion"));
         bgc_t_join.restart();
     }
 #endif //MULTIPLE_HEAPS
@@ -26074,19 +26081,19 @@ void gc_heap::background_mark_phase ()
     if (bgc_t_join.joined())
 #endif //MULTIPLE_HEAPS
     {
-        dprintf (2, ("calling GcWeakPtrScanBySingleThread"));
+        dprintf (25, ("calling GcWeakPtrScanBySingleThread"));
         // scan for deleted entries in the syncblk cache
         GCScan::GcWeakPtrScanBySingleThread (max_generation, max_generation, &sc);
         concurrent_print_time_delta ("NR GcWeakPtrScanBySingleThread");
 #ifdef MULTIPLE_HEAPS
-        dprintf(2, ("Starting BGC threads for end of background mark phase"));
+        dprintf(25, ("Starting BGC threads for end of background mark phase"));
         bgc_t_join.restart();
 #endif //MULTIPLE_HEAPS
     }
 
     gen0_bricks_cleared = FALSE;
 
-    dprintf (2, ("end of bgc mark: loh: %d, soh: %d", 
+    dprintf (25, ("end of bgc mark: loh: %d, soh: %d", 
                  generation_size (max_generation + 1), 
                  generation_sizes (generation_of (max_generation))));
 
@@ -26140,17 +26147,17 @@ void gc_heap::background_mark_phase ()
         mark_time = finish - start;
 #endif //TIME_GC
 
-    dprintf (2, ("end of bgc mark: gen2 free list space: %d, free obj space: %d", 
+    dprintf (25, ("end of bgc mark: gen2 free list space: %d, free obj space: %d", 
         generation_free_list_space (generation_of (max_generation)), 
         generation_free_obj_space (generation_of (max_generation))));
 
-    dprintf(2,("---- (GC%d)End of background mark phase ----", VolatileLoad(&settings.gc_index)));
+    dprintf(25,("---- (GC%d)End of background mark phase ----", VolatileLoad(&settings.gc_index)));
 }
 
 void
 gc_heap::suspend_EE ()
 {
-    dprintf (2, ("suspend_EE"));
+    dprintf (25, ("suspend_EE"));
 #ifdef MULTIPLE_HEAPS
     gc_heap* hp = gc_heap::g_heaps[0];
     GCToEEInterface::SuspendEE(GCToEEInterface::SUSPEND_FOR_GC_PREP);
@@ -26168,7 +26175,7 @@ gc_heap::bgc_suspend_EE ()
         gc_heap::g_heaps[i]->reset_gc_done();
     }
     gc_started = TRUE;
-    dprintf (2, ("bgc_suspend_EE"));
+    dprintf (25, ("bgc_suspend_EE"));
     GCToEEInterface::SuspendEE(GCToEEInterface::SUSPEND_FOR_GC_PREP);
 
     gc_started = FALSE;
@@ -26183,7 +26190,7 @@ gc_heap::bgc_suspend_EE ()
 {
     reset_gc_done();
     gc_started = TRUE;
-    dprintf (2, ("bgc_suspend_EE"));
+    dprintf (25, ("bgc_suspend_EE"));
     GCToEEInterface::SuspendEE(GCToEEInterface::SUSPEND_FOR_GC_PREP);
     gc_started = FALSE;
     set_gc_done();
@@ -26193,7 +26200,7 @@ gc_heap::bgc_suspend_EE ()
 void
 gc_heap::restart_EE ()
 {
-    dprintf (2, ("restart_EE"));
+    dprintf (25, ("restart_EE"));
 #ifdef MULTIPLE_HEAPS
     GCToEEInterface::RestartEE(FALSE);
 #else
@@ -35286,7 +35293,6 @@ size_t
 GCHeap::GarbageCollectGeneration (unsigned int gen, gc_reason reason)
 {
     dprintf (2, ("triggered a GC!"));
-
 #ifdef MULTIPLE_HEAPS
     gc_heap* hpt = gc_heap::g_heaps[0];
 #else
@@ -35296,6 +35302,8 @@ GCHeap::GarbageCollectGeneration (unsigned int gen, gc_reason reason)
     BOOL cooperative_mode = TRUE;
     dynamic_data* dd = hpt->dynamic_data_of (gen);
     size_t localCount = dd_collection_count (dd);
+
+    //printf("[%llx] GC --- \n", current_thread); fflush(stdout);
 
     enter_spin_lock (&gc_heap::gc_lock);
     dprintf (SPINLOCK_LOG, ("GC Egc"));
@@ -35489,6 +35497,8 @@ GCHeap::GarbageCollectGeneration (unsigned int gen, gc_reason reason)
         FinalizerThread::EnableFinalization();
     }
 #endif // FEATURE_PREMORTEM_FINALIZATION
+
+    //printf("[%llx]               --- GC\n", current_thread); fflush(stdout);
 
     return dd_collection_count (dd);
 }

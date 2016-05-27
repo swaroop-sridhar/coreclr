@@ -25,6 +25,20 @@
 #define HIJACK_NONINTERRUPTIBLE_THREADS
 #endif
 
+const char * Text(Thread *T) {
+    if (!T) {
+        return "0";
+    }
+    if (T->m_fPreemptiveGCDisabled) {
+        return "COOP";
+    }
+    else {
+        return "PREMT";
+    }
+}
+
+#define T(x) (x), Text(x)
+
 bool ThreadSuspend::s_fSuspendRuntimeInProgress = false;
 
 CLREvent* ThreadSuspend::g_pGCSuspendEvent = NULL;
@@ -3037,6 +3051,8 @@ void ThreadSuspend::LockThreadStore(ThreadSuspend::SUSPEND_REASON reason)
     }
     CONTRACTL_END;
 
+    //printf("[%llx] LockThreadStore --- (%s))\n", T(GetThread())); fflush(stdout);
+
     // There's a nasty problem here.  Once we start shutting down because of a
     // process detach notification, threads are disappearing from under us.  There
     // are a surprising number of cases where the dying thread holds the ThreadStore
@@ -3099,7 +3115,6 @@ void ThreadSuspend::LockThreadStore(ThreadSuspend::SUSPEND_REASON reason)
         // then this will not take the lock and just block forever.
         ThreadStore::s_pThreadStore->Enter();
 
-
         _ASSERTE(ThreadStore::s_pThreadStore->m_holderthreadid.IsUnknown());
         ThreadStore::s_pThreadStore->m_holderthreadid.SetToCurrentThread();
 
@@ -3120,6 +3135,9 @@ void ThreadSuspend::LockThreadStore(ThreadSuspend::SUSPEND_REASON reason)
     else
         LOG((LF_SYNC, INFO3, "Locking thread store skipped upon detach\n"));
 #endif
+
+    //printf("[%llx] --- LockThreadStore(%s))\n", T(GetThread())); fflush(stdout);
+
 }
 
 void ThreadSuspend::UnlockThreadStore(BOOL bThreadDestroyed, ThreadSuspend::SUSPEND_REASON reason)
@@ -3129,6 +3147,8 @@ void ThreadSuspend::UnlockThreadStore(BOOL bThreadDestroyed, ThreadSuspend::SUSP
         GC_NOTRIGGER;
     }
     CONTRACTL_END;
+
+    //printf("[%llx] UnlockTS --- (%s))\n", T(GetThread())); fflush(stdout);
 
     // There's a nasty problem here.  Once we start shutting down because of a
     // process detach notification, threads are disappearing from under us.  There
@@ -3164,6 +3184,8 @@ void ThreadSuspend::UnlockThreadStore(BOOL bThreadDestroyed, ThreadSuspend::SUSP
     else
         LOG((LF_SYNC, INFO3, "Unlocking thread store skipped upon detach\n"));
 #endif
+
+    //printf("[%llx] --- UnlockTS(%s))\n", T(GetThread())); fflush(stdout);
 }
 
 
@@ -3259,7 +3281,6 @@ void Thread::RareDisablePreemptiveGC()
     {
         goto Exit;
     }
-
 
 #ifdef _DEBUG
     AddFiberInfo(ThreadTrackInfo_GCMode);
@@ -3404,6 +3425,7 @@ void Thread::RareDisablePreemptiveGC()
 
                 END_GCX_ASSERT_PREEMP;
 
+                //printf("R[%llx] %s --> COOP\n", T(this)); fflush(stdout);
                 // disable preemptive gc.
                 FastInterlockOr(&m_fPreemptiveGCDisabled, 1);
 
@@ -3783,11 +3805,14 @@ void Thread::RareEnablePreemptiveGC()
     // holding a spin lock in coop mode and transit to preemp mode will cause deadlock on GC
     _ASSERTE ((m_StateNC & Thread::TSNC_OwnsSpinLock) == 0);
 
-    FastInterlockOr (&m_fPreemptiveGCDisabled, 0);
+    FastInterlockOr(&m_fPreemptiveGCDisabled, 0);
 
 #if defined(STRESS_HEAP) && defined(_DEBUG)
-    if (!IsDetached())
+    if (!IsDetached()) {
+        //printf("P[%llx] Preemptive GC(%s) --- \n", T(this)); fflush(stdout);
         PerformPreemptiveGC();
+        //printf("P[%llx] --- Preemptive GC (%s)\n", T(this)); fflush(stdout);
+    }
 #endif
 
     STRESS_LOG1(LF_SYNC, LL_INFO100000, "RareEnablePreemptiveGC: entering. Thread state = %x\n", m_State.Load());
@@ -3910,7 +3935,8 @@ void ThreadStore::TrapReturningThreads(BOOL yes)
         EnableJitGCPoll();
 #endif
         _ASSERTE(g_TrapReturningThreads > 0);
-
+        STRESS_LOG1(LF_SYNC, LL_INFO100000, " ++g_TrapReturningThreads: %d.\n", g_TrapReturningThreads);
+        //printf("[%llx] ++(%s) TRAP=%ld\n", T(GetThread()), g_TrapReturningThreads); fflush(stdout);
 #ifdef _DEBUG
         trtHolder.Release();
 #endif
@@ -3918,6 +3944,8 @@ void ThreadStore::TrapReturningThreads(BOOL yes)
     else
     {
         FastInterlockDecrement (&g_TrapReturningThreads);
+        STRESS_LOG1(LF_SYNC, LL_INFO100000, " --g_TrapReturningThreads: %d.\n", g_TrapReturningThreads);
+        //printf("[%llx] --(%s) TRAP=%ld\n", T(GetThread()), g_TrapReturningThreads); fflush(stdout);
 #ifdef ENABLE_FAST_GCPOLL_HELPER
         if (0 == g_TrapReturningThreads)
             DisableJitGCPoll();
@@ -4157,18 +4185,28 @@ void __stdcall Thread::RedirectedHandledJITCase(RedirectReason reason)
         pThread->SetSavedRedirectContext(NULL);
 
         // Link in the frame
+        //printf("[%llx] Push(%s))\n", T(pThread)); fflush(stdout);
+        assert(pThread->PreemptiveGCDisabled());
+        STRESS_LOG0(LF_SYNC, LL_INFO100000, " RHJC: Push().\n");
         frame.Push();
+        assert(pThread->PreemptiveGCDisabled());
 
 #if defined(HAVE_GCCOVER) && defined(USE_REDIRECT_FOR_GCSTRESS) // GCCOVER
         if (reason == RedirectReason_GCStress)
         {
-            _ASSERTE(pThread->PreemptiveGCDisabledOther());
+            //printf("[%llx] Stress(%s) --- \n", T(pThread)); fflush(stdout);
+            STRESS_LOG0(LF_SYNC, LL_INFO100000, " RHJC: Stress() ...\n");
+            _ASSERTE(pThread->PreemptiveGCDisabled());
             DoGcStress(frame.GetContext(), NULL);
+            STRESS_LOG0(LF_SYNC, LL_INFO100000, " RHJC: ... Stress\n");
+            _ASSERTE(pThread->PreemptiveGCDisabled());
+            //printf("[%llx]              --- Stress(%s)\n", T(pThread)); fflush(stdout);
         }
         else
 #endif // HAVE_GCCOVER && USE_REDIRECT_FOR_GCSTRESS
         {
             // Enable PGC before calling out to the client to allow runtime suspend to finish
+            ////printf("[%llx] PGC(%s) --- \n", T(pThread)); fflush(stdout);
             GCX_PREEMP_NO_DTOR();
 
             // <REVISIT_TODO>@TODO: Is this necessary?  Does debugger wait on the events, or does it just
@@ -4212,7 +4250,10 @@ void __stdcall Thread::RedirectedHandledJITCase(RedirectReason reason)
 
             // Disable preemptive GC so we can unlink the frame
             GCX_PREEMP_NO_DTOR_END();
+            ////printf("[%llx]              --- PGC(%s)\n", T(pThread)); fflush(stdout);
         }
+
+        _ASSERTE(pThread->PreemptiveGCDisabled());
 
 #ifdef _TARGET_X86_
         pThread->HandleThreadAbort();        // Might throw an exception.
@@ -4269,7 +4310,11 @@ void __stdcall Thread::RedirectedHandledJITCase(RedirectReason reason)
         }
 
         // Unlink the frame in preparation for resuming in managed code
+        assert(pThread->PreemptiveGCDisabled());
+        //printf("[%llx] pop(%s)\n", T(pThread)); fflush(stdout);
         frame.Pop();
+        STRESS_LOG0(LF_SYNC, LL_INFO100000, " RHJC: pop()\n");
+        assert(pThread->PreemptiveGCDisabled());
 
         {
             // Free the context struct if we already have one cached
@@ -4289,7 +4334,10 @@ void __stdcall Thread::RedirectedHandledJITCase(RedirectReason reason)
 #if defined(HAVE_GCCOVER) && defined(USE_REDIRECT_FOR_GCSTRESS) // GCCOVER
             if (pThread->m_fPreemptiveGCDisabledForGCStress)
             {
+                assert(pThread->PreemptiveGCDisabled());
+                STRESS_LOG0(LF_SYNC, LL_INFO100000, " RHJC: PREMPT Enable by GcStress()\n");
                 pThread->EnablePreemptiveGC();
+                //printf("L[%llx] --> %s\n", T(pThread)); fflush(stdout);
                 pThread->m_fPreemptiveGCDisabledForGCStress = false;
             }
 #endif
@@ -4700,7 +4748,10 @@ BOOL Thread::CheckForAndDoRedirectForGCStress (CONTEXT *pCurrentThreadCtx)
 
     LOG((LF_CORDB, LL_INFO1000, "Redirecting thread %08x for GCStress", GetThreadId()));
 
-    m_fPreemptiveGCDisabledForGCStress = !PreemptiveGCDisabled();
+    if (!PreemptiveGCDisabled()) {
+        STRESS_LOG0(LF_SYNC, LL_INFO1000, "Enter: PREMPT, m_fPreemptiveGCDisabledForGCStress = true\n");
+        m_fPreemptiveGCDisabledForGCStress = true;
+    }
     GCX_COOP_NO_DTOR();
 
     BOOL fSuccess = RedirectCurrentThreadAtHandledJITCase(GetRedirectHandlerForGCStress(), pCurrentThreadCtx);
@@ -4708,6 +4759,7 @@ BOOL Thread::CheckForAndDoRedirectForGCStress (CONTEXT *pCurrentThreadCtx)
     if (!fSuccess)
     {
         GCX_COOP_NO_DTOR_END();
+        STRESS_LOG0(LF_SYNC, LL_INFO1000, "Exit: !Success, m_fPreemptiveGCDisabledForGCStress = false\n");
         m_fPreemptiveGCDisabledForGCStress = false;
     }
 
@@ -7203,6 +7255,7 @@ void STDCALL OnHijackObjectWorker(HijackArgs * pArgs)
     }
     GCPROTECT_END();        // trashes oref here!
 
+    _ASSERTE(thread->PreemptiveGCDisabledOther());
     frame.Pop();
 #else
     PORTABILITY_ASSERT("OnHijackObjectWorker not implemented on this platform.");
@@ -7264,6 +7317,7 @@ void STDCALL OnHijackInteriorPointerWorker(HijackArgs * pArgs)
     }
     GCPROTECT_END();        // trashes or here!
 
+    _ASSERTE(thread->PreemptiveGCDisabledOther());
     frame.Pop();
 #else
     PORTABILITY_ASSERT("OnHijackInteriorPointerWorker not implemented on this platform.");
@@ -7321,6 +7375,7 @@ void STDCALL OnHijackScalarWorker(HijackArgs * pArgs)
     }
 #endif
 
+    _ASSERTE(thread->PreemptiveGCDisabledOther());
     frame.Pop();
 #else
     PORTABILITY_ASSERT("OnHijackScalarWorker not implemented on this platform.");
@@ -7990,6 +8045,7 @@ void ThreadSuspend::RestartEE(BOOL bFinishedGC, BOOL SuspendSucceded)
 #endif //TIME_SUSPEND
 
     FireEtwGCRestartEEBegin_V1(GetClrInstanceId());
+    //printf("[%llx] RestartEE(%s) --- \n", T(GetThread()));
 
     //
     // SyncClean holds a list of things to be cleaned up when it's possible.
@@ -8055,6 +8111,7 @@ void ThreadSuspend::RestartEE(BOOL bFinishedGC, BOOL SuspendSucceded)
     ResumeRuntime(bFinishedGC, SuspendSucceded);
 
     FireEtwGCRestartEEEnd_V1(GetClrInstanceId());
+    ////printf("[%llx]        --- RestartEE(%s)\n", T(GetThread()));
 
 #ifdef TIME_SUSPEND
     g_SuspendStatistics.EndRestart();
@@ -8103,7 +8160,8 @@ void ThreadSuspend::SuspendEE(SUSPEND_REASON reason)
     FireEtwGCSuspendEEBegin_V1(Info.SuspendEE.Reason, Info.SuspendEE.GcCount, GetClrInstanceId());
 
     LOG((LF_SYNC, INFO3, "Suspending the runtime for reason %d\n", reason));
-
+    //printf("[%llx] SuspendEE(%s) --- \n", T(GetThread()));
+    
     gcOnTransitions = GC_ON_TRANSITIONS(FALSE);        // dont do GC for GCStress 3
 
     Thread* pCurThread = GetThread();
@@ -8338,6 +8396,7 @@ retry_for_debugger:
     GC_ON_TRANSITIONS(gcOnTransitions);
 
     FireEtwGCSuspendEEEnd_V1(GetClrInstanceId());
+    //printf("[%llx]              --- SuspendEE(%s)\n", T(GetThread())); fflush(stdout);
 
 #ifdef TIME_SUSPEND
     g_SuspendStatistics.EndSuspend(reason == SUSPEND_FOR_GC || reason == SUSPEND_FOR_GC_PREP);
