@@ -6,6 +6,9 @@ set __BuildArch=x64
 set __BuildType=Debug
 set __BuildOS=Windows_NT
 
+set COMPlus_GCConcurrent=0
+echo COMPlus_GCConcurrent is %COMPlus_GCConcurrent%
+
 :: Default to highest Visual Studio version available
 set __VSVersion=vs2015
 
