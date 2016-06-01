@@ -4337,6 +4337,10 @@ void __stdcall Thread::RedirectedHandledJITCase(RedirectReason reason)
                 assert(pThread->PreemptiveGCDisabled());
                 STRESS_LOG0(LF_SYNC, LL_INFO100000, " RHJC: PREMPT Enable by GcStress()\n");
                 pThread->EnablePreemptiveGC();
+                assert(!pThread->PreemptiveGCDisabled());
+                STRESS_LOG1(LF_SYNC, LL_INFO100000, " RHJC: COOP = (%d)\n", pThread->PreemptiveGCDisabled());
+                assert(!pThread->PreemptiveGCDisabled());
+
                 //printf("L[%llx] --> %s\n", T(pThread)); fflush(stdout);
                 pThread->m_fPreemptiveGCDisabledForGCStress = false;
             }
