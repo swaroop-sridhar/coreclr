@@ -374,7 +374,7 @@ public:
 //    call    CORINFO_HELP_INIT_PINVOKE_FRAME // Obtain the thread pointer
 //    …
 //    mov      byte  ptr[rsi + 12], 0   // Switch to preemptive mode [thread->premptiveGcDisabled = 0]
-//    call     rax                      // The actual native call, in preemptive mode
+//    call     native-method            // The actual native call, in preemptive mode
 //    mov      byte  ptr[rsi + 12], 1   // Switch the thread to Cooperative mode
 //    cmp      dword ptr[(reloc 0x7ffd1bb77148)], 0  // if(g_TrapReturningThreads)
 //    je       SHORT G_M40565_IG05
@@ -388,23 +388,21 @@ public:
 //    call    CORINFO_HELP_INIT_PINVOKE_FRAME // Obtain the thread pointer
 //    …
 //    mov      byte  ptr[rsi + 12], 0   // Switch to preemptive mode [thread->premptiveGcDisabled = 0]
-//    cli                               // INTERRUPT_INSTR_CALL
+//    call     native-method            // The actual native call, in preemptive mode
 //    mov      byte  ptr[rsi + 12], 1   // Switch the thread to Cooperative mode
 //    cmp      dword ptr[(reloc 0x7ffd1bb77148)], 0  // if(g_TrapReturningThreads)
 //    je       SHORT G_M40565_IG05
 //    cli                               // INTERRUPT_INSTR_CALL
 //    …
 //
-//  Now, a managed thread (T) can race with the GC as follows:
-// 1)	At the first safepoint, we notice that T is in preemptive mode during the call for GCStress
-//      So, it is put it in cooperative mode for the purpose of GCStress(fPremptiveGcDisabledForGcStress)
-// 2)	We DoGCStress(). Start off background GC in a different thread.
-// 3)	Then the thread T is put back to preemptive mode (because that’s where it was).
-//      Thread T continues execution along with the GC thread.
-// 4)	The Jitted code puts thread T to cooperative mode, as part of PInvoke epilog
+// Now, a managed thread can race with the GC as follows:
+// 1)	Thread T1 calls DoGCStress(). We start off background GC in a different thread.
+// 3)	Thread T2 is executing native code in premptive mode.
+//      So, the GC thread doesn't stop for T2, but continues to scan the stack.        
+// 4)	The Pinvoke epilog (above) puts thread T2 in cooperative mode
 // 5)	Now instead of CORINFO_HELP_STOP_FOR_GC(), we hit the GCStress trap and start 
-//      another round of GCStress while in Cooperative mode.
-// 6)	Now, thread T can modify the stack (ex: RedirectionFrame setup) while the GC thread is scanning it.
+//      another round of GCStress from thread T2 while in Cooperative mode.
+// 6)	Now, thread T2 can modify the stack (ex: RedirectionFrame setup) while the GC thread is scanning it.
 // 
 // This problem can be avoided by not inserting traps-for-GC in place of calls to CORINFO_HELP_STOP_FOR_GC()
 //

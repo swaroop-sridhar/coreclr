@@ -3744,7 +3744,6 @@ private:
 public:
     BOOL CheckForAndDoRedirectForGCStress (T_CONTEXT *pCurrentThreadCtx);
 private:
-    bool        m_fPreemptiveGCDisabledForGCStress;
 #endif // HAVE_GCCOVER && USE_REDIRECT_FOR_GCSTRESS
 #endif // FEATURE_HIJACK && !PLATFORM_UNIX
 

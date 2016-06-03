@@ -2145,10 +2145,6 @@ Thread::Thread()
 
     m_dwAVInRuntimeImplOkayCount = 0;
 
-#if defined(HAVE_GCCOVER) && defined(USE_REDIRECT_FOR_GCSTRESS) && !defined(PLATFORM_UNIX) // GCCOVER
-    m_fPreemptiveGCDisabledForGCStress = false;
-#endif
-
 #ifdef _DEBUG
     m_pHelperMethodFrameCallerList = (HelperMethodFrameCallerList*)-1;
 #endif
