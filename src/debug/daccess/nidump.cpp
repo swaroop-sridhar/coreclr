@@ -3093,7 +3093,7 @@ void NativeImageDumper::DumpCompleteMethod(PTR_Module module, MethodIterator& mi
     unsigned gcInfoSize = UINT_MAX;
 
     //parse GCInfo for size information.
-    PTR_CBYTE gcInfo = dac_cast<PTR_CBYTE>(mi.GetGCInfo());
+    PTR_EE_GCINFO gcInfo = mi.GetGCInfo();
 
     void (* stringOutFn)(const char *, ...);
     IF_OPT(GC_INFO)

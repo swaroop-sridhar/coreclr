@@ -5567,7 +5567,7 @@ bool  EECodeManager::IsInSynchronizedRegion(
  *
  *  Returns the size of a given function.
  */
-size_t EECodeManager::GetFunctionSize(PTR_VOID  methodInfoPtr)
+size_t EECodeManager::GetFunctionSize(PTR_EE_GCINFO GcInfo)
 {
     CONTRACTL {
         NOTHROW;
@@ -5576,6 +5576,7 @@ size_t EECodeManager::GetFunctionSize(PTR_VOID  methodInfoPtr)
     } CONTRACTL_END;
 
 #if defined(_TARGET_X86_)
+    PTR_VOID  methodInfoPtr = GcInfo->Data;
     hdrInfo info;
 
     crackMethodInfoHdr(methodInfoPtr, 0, &info);
@@ -5583,10 +5584,8 @@ size_t EECodeManager::GetFunctionSize(PTR_VOID  methodInfoPtr)
     return info.methodSize;
 #elif defined(USE_GC_INFO_DECODER)
 
-    PTR_BYTE gcInfoAddr = PTR_BYTE(methodInfoPtr);
-
     GcInfoDecoder gcInfoDecoder(
-            gcInfoAddr,
+            GcInfo,
             DECODE_CODE_LENGTH,
             0
             );

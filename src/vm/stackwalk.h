@@ -324,11 +324,18 @@ public:
         return &codeInfo;
     }
 
-    PTR_VOID GetGCInfo()
+    PTR_EE_GCINFO GetGCInfo()
     {
         LIMITED_METHOD_DAC_CONTRACT;
         _ASSERTE(isFrameless);
         return codeInfo.GetGCInfo();
+    }
+
+    PTR_VOID GetGCInfoPtr()
+    {
+        LIMITED_METHOD_DAC_CONTRACT;
+        _ASSERTE(isFrameless);
+        return codeInfo.GetGCInfo()->Data;
     }
 
     const METHODTOKEN& GetMethodToken()

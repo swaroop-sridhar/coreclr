@@ -135,7 +135,7 @@ public:
     // Note - *(&(pCodeHeader->phdrJitEHInfo) - sizeof(size_t)) 
     // contains the number of EH clauses, See EEJitManager::allocEHInfo
     PTR_EE_ILEXCEPTION  phdrJitEHInfo;
-    PTR_BYTE            phdrJitGCInfo;
+    PTR_EE_GCINFO       phdrJitGCInfo;
 
     PTR_MethodDesc      phdrMDesc;
 
@@ -159,10 +159,15 @@ public:
     {
         return phdrJitEHInfo;
     }
-    PTR_BYTE                GetGCInfo()
+    PTR_EE_GCINFO           GetGCInfo()
     {
         SUPPORTS_DAC;
         return phdrJitGCInfo;
+    }
+    PTR_BYTE                GetGCInfoPtr()
+    {
+        SUPPORTS_DAC;
+        return phdrJitGCInfo->Data;
     }
     PTR_MethodDesc          GetMethodDesc()
     {
@@ -235,10 +240,15 @@ public:
     {
         return pRealCodeHeader->phdrJitEHInfo;
     }
-    PTR_BYTE                GetGCInfo()
+    PTR_EE_GCINFO            GetGCInfo()
     {
         SUPPORTS_DAC;
         return pRealCodeHeader->phdrJitGCInfo;
+    }
+    PTR_BYTE                GetGCInfoPtr()
+    {
+        SUPPORTS_DAC;
+        return pRealCodeHeader->phdrJitGCInfo->Data;
     }
     PTR_MethodDesc          GetMethodDesc()
     {
@@ -735,7 +745,8 @@ public:
                                         CrawlFrame *pCf)=0;
 #endif // #ifndef DACCESS_COMPILE
 
-    virtual PTR_VOID    GetGCInfo(const METHODTOKEN& MethodToken)=0;
+    virtual PTR_EE_GCINFO  GetGCInfo(const METHODTOKEN& MethodToken)=0;
+    virtual PTR_BYTE       GetGCInfoPtr(const METHODTOKEN& MethodToken)=0;
 
     TADDR JitTokenToModuleBase(const METHODTOKEN& MethodToken);
 
@@ -1754,10 +1765,16 @@ public:
         return m_relOffset;
     }
 
-    PTR_VOID    GetGCInfo()
+    PTR_EE_GCINFO  GetGCInfo()
     {
         WRAPPER_NO_CONTRACT; 
         return GetJitManager()->GetGCInfo(GetMethodToken());
+    }
+
+    PTR_BYTE       GetGCInfoPtr()
+    {
+        WRAPPER_NO_CONTRACT;
+        return GetJitManager()->GetGCInfoPtr(GetMethodToken())->Data;
     }
 
     void        GetMethodRegionInfo(IJitManager::MethodRegionInfo *methodRegionInfo)
@@ -1852,7 +1869,7 @@ private:
     BOOL Next();
 
     PTR_MethodDesc GetMethodDesc();
-    PTR_VOID GetGCInfo();
+    PTR_EE_GCINFO GetGCInfo();
     TADDR GetMethodStartAddress();
     TADDR GetMethodColdStartAddress();
     ULONG GetHotCodeSize();

@@ -293,7 +293,7 @@ virtual bool IsInSynchronizedRegion(
   not take procedure splitting into account).  For the actual size of
   the hot region call IJitManager::JitTokenToMethodHotSize.
 */
-virtual size_t GetFunctionSize(PTR_VOID methodInfoPtr) = 0;
+virtual size_t GetFunctionSize(PTR_EE_GCINFO GcInfo) = 0;
 
 /*
   Returns the size of the frame (barring localloc)
@@ -551,8 +551,7 @@ bool IsInSynchronizedRegion(
   Returns the size of a given function.
 */
 virtual
-size_t GetFunctionSize(
-                PTR_VOID        methodInfoPtr);
+size_t GetFunctionSize(PTR_EE_GCINFO GcInfo);
 
 /*
   Returns the size of the frame (barring localloc)

@@ -41,6 +41,15 @@ struct EE_ILEXCEPTION_CLAUSE  {
     };  
 };
 
+struct EE_GCINFO;
+typedef DPTR(EE_GCINFO) PTR_EE_GCINFO;
+
+struct EE_GCINFO : public COR_ILMETHOD_SECT_FAT
+{
+    PTR_BYTE Data;
+    SHORT Version;
+};
+
 struct EE_ILEXCEPTION;
 typedef DPTR(EE_ILEXCEPTION) PTR_EE_ILEXCEPTION;
 
