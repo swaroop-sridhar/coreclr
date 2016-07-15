@@ -22,8 +22,8 @@
 #pragma warning(disable:4127)   // conditional expression is constant
 #pragma warning(disable:4430)   // missing type specifier: C++ doesn't support default-int
 #endif
+#include "gcinfo.h"
 #include "strike.h"
-
 #include <wdbgexts.h>
 #include <dbgeng.h>
 #include <stdio.h>
@@ -386,7 +386,7 @@ public:
 
     typedef void (*printfFtn)(const char* fmt, ...);
     // Dumps the GCInfo
-    virtual void DumpGCInfo(BYTE* pTable, unsigned methodSize, printfFtn gcPrintf, bool encBytes, bool bPrintHeader) const = 0;
+    virtual void DumpGCInfo(GCTable gcTable, unsigned methodSize, printfFtn gcPrintf, bool encBytes, bool bPrintHeader) const = 0;
 
 protected:
     IMachine()           {}

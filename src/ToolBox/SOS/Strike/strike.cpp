@@ -8017,10 +8017,10 @@ DECLARE_API(GCInfo)
 
     // Mutable table pointer since we need to pass the appropriate
     // offset into the table to DumpGCTable.
-    BYTE *pTable = table;
+    GCTable gcTable = { table, GCINFO_VERSION };
     unsigned int methodSize = (unsigned int)codeHeaderData.MethodSize;
 
-    g_targetMachine->DumpGCInfo(pTable, methodSize, ExtOut, true /*encBytes*/, true /*bPrintHeader*/);
+    g_targetMachine->DumpGCInfo(gcTable, methodSize, ExtOut, true /*encBytes*/, true /*bPrintHeader*/);
 
     return Status;
 }
@@ -8101,8 +8101,8 @@ void DecodeGCTableEntry (const char *fmt, ...)
 VOID CALLBACK DumpGCTableFiberEntry (LPVOID pvGCEncodingInfo)
 {
     GCEncodingInfo *pInfo = (GCEncodingInfo*)pvGCEncodingInfo;
-
-    g_targetMachine->DumpGCInfo(pInfo->table, pInfo->methodSize, DecodeGCTableEntry, false /*encBytes*/, false /*bPrintHeader*/);
+    GCTable gcTable = { pInfo, GCINFO_VERSION };
+    g_targetMachine->DumpGCInfo(gcTable, pInfo->methodSize, DecodeGCTableEntry, false /*encBytes*/, false /*bPrintHeader*/);
 
     pInfo->fDoneDecoding = true;
     SwitchToFiber(pInfo->pvMainFiber);

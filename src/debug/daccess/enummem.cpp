@@ -979,10 +979,11 @@ HRESULT ClrDataAccess::EnumMemWalkStackHelper(CLRDataEnumMemoryFlags flags,
                                 codeInfo.GetJitManager()->IsFilterFunclet(&codeInfo);
 
                                 // The stackwalker needs GC info to find the parent 'stack pointer' or PSP
-                                PTR_BYTE pGCInfo = dac_cast<PTR_BYTE>(codeInfo.GetGCInfo());
+                                GCTable gcTable = codeInfo.GetGCTable();
+                                PTR_BYTE pGCInfo = dac_cast<PTR_BYTE>(gcTable.Info);
                                 if (pGCInfo != NULL)
                                 {
-                                    GcInfoDecoder gcDecoder(pGCInfo, DECODE_PSP_SYM, 0);
+                                    GcInfoDecoder gcDecoder(gcTable, DECODE_PSP_SYM, 0);
                                     DacEnumMemoryRegion(dac_cast<TADDR>(pGCInfo), gcDecoder.GetNumBytesRead(), true);
                                 }
                             }

@@ -132,7 +132,7 @@ inline bool SafeToReportGenericParamContext(CrawlFrame* pCF)
 
 #else  // USE_GC_INFO_DECODER
 
-    GcInfoDecoder gcInfoDecoder((PTR_CBYTE)pCF->GetGCInfo(), 
+    GcInfoDecoder gcInfoDecoder(pCF->GetGCTable(),
             DECODE_PROLOG_LENGTH, 
             0);
     UINT32 prologLength = gcInfoDecoder.GetPrologSize();
@@ -199,8 +199,8 @@ bool FindFirstInterruptiblePointStateCB(
 // the end is exclusive). Return -1 if no such point exists.
 unsigned FindFirstInterruptiblePoint(CrawlFrame* pCF, unsigned offs, unsigned endOffs)
 {
-    PTR_BYTE gcInfoAddr = dac_cast<PTR_BYTE>(pCF->GetCodeInfo()->GetGCInfo());
-    GcInfoDecoder gcInfoDecoder(gcInfoAddr, DECODE_FOR_RANGES_CALLBACK, 0);
+    GCTable gcTable = pCF->GetGCTable();
+    GcInfoDecoder gcInfoDecoder(gcTable, DECODE_FOR_RANGES_CALLBACK, 0);
 
     FindFirstInterruptiblePointState state;
     state.offs = offs;
@@ -281,9 +281,9 @@ StackWalkAction GcStackCrawlCallBack(CrawlFrame* pCF, VOID* pData)
 #if defined(WIN64EXCEPTIONS)
             if (pCF->ShouldParentToFuncletUseUnwindTargetLocationForGCReporting())
             {
-                PTR_BYTE gcInfoAddr = dac_cast<PTR_BYTE>(pCF->GetCodeInfo()->GetGCInfo());
+                GCTable gcTable = pCF->GetGCTable();
                 GcInfoDecoder _gcInfoDecoder(
-                                    gcInfoAddr,
+                                    gcTable,
                                     DECODE_CODE_LENGTH,
                                     0
                                     );

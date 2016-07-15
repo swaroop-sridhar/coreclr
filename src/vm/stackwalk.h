@@ -324,6 +324,13 @@ public:
         return &codeInfo;
     }
 
+    GCTable GetGCTable()
+    {
+        LIMITED_METHOD_DAC_CONTRACT;
+        _ASSERTE(isFrameless);
+        return codeInfo.GetGCTable();
+    }
+
     PTR_VOID GetGCInfo()
     {
         LIMITED_METHOD_DAC_CONTRACT;

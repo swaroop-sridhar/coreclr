@@ -3093,7 +3093,8 @@ void NativeImageDumper::DumpCompleteMethod(PTR_Module module, MethodIterator& mi
     unsigned gcInfoSize = UINT_MAX;
 
     //parse GCInfo for size information.
-    PTR_CBYTE gcInfo = dac_cast<PTR_CBYTE>(mi.GetGCInfo());
+    GCTable gcTable = mi.GetGCTable();
+    PTR_CBYTE gcInfo = dac_cast<PTR_CBYTE>(gcTable.Info);
 
     void (* stringOutFn)(const char *, ...);
     IF_OPT(GC_INFO)
@@ -3108,10 +3109,10 @@ void NativeImageDumper::DumpCompleteMethod(PTR_Module module, MethodIterator& mi
     {
         PTR_CBYTE curGCInfoPtr = gcInfo;
         g_holdStringOutData.Clear();
-        GCDump gcDump;
+        GCDump gcDump(gcTable.Version);
         gcDump.gcPrintf = stringOutFn;
 #if !defined(_TARGET_X86_) && defined(USE_GC_INFO_DECODER)
-        GcInfoDecoder gcInfoDecoder(curGCInfoPtr, DECODE_CODE_LENGTH, 0);
+        GcInfoDecoder gcInfoDecoder(gcTable, DECODE_CODE_LENGTH, 0);
         methodSize = gcInfoDecoder.GetCodeLength();
 #endif
 
@@ -3119,7 +3120,7 @@ void NativeImageDumper::DumpCompleteMethod(PTR_Module module, MethodIterator& mi
 #ifdef _TARGET_X86_
         InfoHdr hdr;
         stringOutFn( "method info Block:\n" );
-        curGCInfoPtr += gcDump.DumpInfoHdr(curGCInfoPtr, &hdr, &methodSize, 0);
+        curGCInfoPtr += gcDump.DumpInfoHdr(PTR_CBYTE(gcTable.Info), &hdr, &methodSize, 0);
         stringOutFn( "\n" );
 #endif
 
@@ -9436,10 +9437,10 @@ void NativeImageDumper::DumpReadyToRunMethod(PCODE pEntryPoint, PTR_RUNTIME_FUNC
     {
         PTR_CBYTE curGCInfoPtr = gcInfo;
         g_holdStringOutData.Clear();
-        GCDump gcDump;
+        GCDump gcDump(GCINFO_VERSION);
         gcDump.gcPrintf = stringOutFn;
 #if !defined(_TARGET_X86_) && defined(USE_GC_INFO_DECODER)
-        GcInfoDecoder gcInfoDecoder(curGCInfoPtr, DECODE_CODE_LENGTH, 0);
+        GcInfoDecoder gcInfoDecoder({ curGCInfoPtr, GCINFO_VERSION }, DECODE_CODE_LENGTH, 0);
         methodSize = gcInfoDecoder.GetCodeLength();
 #endif
 
