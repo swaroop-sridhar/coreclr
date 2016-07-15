@@ -101,7 +101,6 @@ enum GcStackSlotBase
     GC_CALLER_SP_REL = 0x0,
     GC_SP_REL        = 0x1,
     GC_FRAMEREG_REL  = 0x2,
-
     GC_SPBASE_FIRST  = GC_CALLER_SP_REL,
     GC_SPBASE_LAST   = GC_FRAMEREG_REL,
 };

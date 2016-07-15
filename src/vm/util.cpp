@@ -3170,13 +3170,13 @@ BOOL JITNotifications::UpdateOutOfProcTable()
 
 GPTR_IMPL(GcNotification, g_pGcNotificationTable);
 
-GcNotifications::GcNotifications(GcNotification *gcTable)
+GcNotifications::GcNotifications(GcNotification *gcInfoToken)
 {
     LIMITED_METHOD_CONTRACT;
-    if (gcTable)
+    if (gcInfoToken)
     {
         // Bookkeeping info is held in the first slot
-        m_gcTable = gcTable + 1;
+        m_gcTable = gcInfoToken + 1;
     }
     else
     {

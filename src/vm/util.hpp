@@ -1168,7 +1168,7 @@ GPTR_DECL(GcNotification, g_pGcNotificationTable);
 class GcNotifications
 {
 public:
-    GcNotifications(GcNotification *gcTable);    
+    GcNotifications(GcNotification *gcInfoToken);    
     BOOL SetNotification(GcEvtArgs ev);
     GcEvtArgs* GetNotification(GcEvtArgs ev)
     {
