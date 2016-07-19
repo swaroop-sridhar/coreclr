@@ -22,7 +22,8 @@
 #pragma warning(disable:4127)   // conditional expression is constant
 #pragma warning(disable:4430)   // missing type specifier: C++ doesn't support default-int
 #endif
-#include "gcinfo.h"
+#include "common.h"
+#include "gctable.h"
 #include "strike.h"
 #include <wdbgexts.h>
 #include <dbgeng.h>

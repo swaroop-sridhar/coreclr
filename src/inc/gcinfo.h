@@ -31,24 +31,7 @@ const unsigned  byref_OFFSET_FLAG  = 0x1;  // the offset is an interior ptr
 const unsigned pinned_OFFSET_FLAG  = 0x2;  // the offset is a pinned ptr
 const unsigned   this_OFFSET_FLAG  = 0x2;  // the offset is "this"
 
-//-----------------------------------------------------------------------------
-// The current GCInfo Version
-//-----------------------------------------------------------------------------
-
-#define GCINFO_VERSION 1
-
-//-----------------------------------------------------------------------------
-// GCTable: A wrapper struct that contains the actual GcInfo data 
-// and the GcInfo version number.
-// - For JIT/Ngened code, Version is always the latest/current version 
-// - For ReadyToRun images, the version is extracted from the ready-to-run header
-//-----------------------------------------------------------------------------
-
-struct GCTable
-{
-    PTR_VOID Info;
-    UINT32 Version;
-};
+#include "gctable.h"
 
 #ifdef _TARGET_X86_
 
