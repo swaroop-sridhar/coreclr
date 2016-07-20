@@ -6418,10 +6418,16 @@ UINT32 ReadyToRunJitManager::JitTokenToGCInfoVersion(const METHODTOKEN& MethodTo
     } CONTRACTL_END;
 
     READYTORUN_HEADER * header = JitTokenToReadyToRunInfo(MethodToken)->GetImage()->GetReadyToRunHeader();
-    UINT32 gcInfoVersion = header->MajorVersion;
 
-    // Currently there's only one version of GCInfo.
-    _ASSERTE(gcInfoVersion == GCINFO_VERSION);
+#ifdef _TARGET_X86
+    UINT32 gcInfoVersion = 1;
+#else
+    // GcInfo version is 1 up to ReadyTorun version 1.x
+    // GcInfo version is 2 from  ReadyToRun version 2.0
+    UINT32 gcInfoVersion = (header->MajorVersion > 1) ? 2 : 1;
+#endif // _TARGET_x86_
+
+    _ASSERTE(gcInfoVersion <= GCINFO_VERSION);
 
     return gcInfoVersion;
 }
