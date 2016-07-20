@@ -32,7 +32,7 @@ const unsigned   this_OFFSET_FLAG  = 0x2;  // the offset is "this"
 // The current GCInfo Version
 //-----------------------------------------------------------------------------
 
-#define GCINFO_VERSION 1
+#define GCINFO_VERSION 2
 
 //-----------------------------------------------------------------------------
 // GCInfoToken: A wrapper that contains the GcInfo data and version number.
