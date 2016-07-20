@@ -251,6 +251,47 @@ NESTED_ENTRY OnHijackStructInRegsTripThread, _TEXT, NoHandler
 NESTED_END OnHijackStructInRegsTripThread, _TEXT
 #endif // FEATURE_UNIX_AMD64_STRUCT_PASSING
 
+#ifdef FEATURE_HIJACK // FEATURE_MULTIREG_RETURN
+//------------------------------------------------
+// OnHijackRetKindTripThread
+//
+NESTED_ENTRY OnHijackRetKindTripThread, _TEXT, NoHandler
+
+    // Make room for the real return address (rip)
+    push_register rax
+
+    PUSH_CALLEE_SAVED_REGISTERS
+
+    push_register rdx
+    // Push rax again - this is where part of the struct gets returned
+    push_register rax
+
+    mov                 rdi, rsp
+
+    alloc_stack         0x28
+
+    // First float return register
+    movdqa              [rsp], xmm0
+    // Second float return register
+    movdqa              [rsp+0x10], xmm1
+
+    END_PROLOGUE
+
+    call                C_FUNC(OnHijackRetKindWorker)
+
+    movdqa              xmm0, [rsp]
+    movdqa              xmm1, [rsp+0x10]
+    free_stack          0x28
+    pop_register        rax
+    pop_register        rdx
+
+    POP_CALLEE_SAVED_REGISTERS
+    ret
+
+NESTED_END OnHijackRetKindTripThread, _TEXT
+
+#endif // FEATURE_MULTIREG_RETURN
+
 //------------------------------------------------
 // OnHijackObjectTripThread
 //
