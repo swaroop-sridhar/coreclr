@@ -174,6 +174,8 @@ enum GcInfoDecoderFlags
     DECODE_FOR_RANGES_CALLBACK   = 0x200,
     DECODE_PROLOG_LENGTH         = 0x400,   // length of the prolog (used to avoid reporting generics context)
     DECODE_EDIT_AND_CONTINUE     = 0x800,
+    DECODE_REVERSE_PINVOKE_VAR   = 0x1000,
+    DECODE_RETURN_KIND           = 0x2000
 };
 
 enum GcInfoHeaderFlags
@@ -486,10 +488,12 @@ public:
     UINT32  GetPrologSize();
     INT32   GetPSPSymStackSlot();
     INT32   GetGenericsInstContextStackSlot();
+    INT32   GetReversePInvokeStackSlot();
     bool    HasMethodDescGenericsInstContext();
     bool    HasMethodTableGenericsInstContext();
     bool    GetIsVarArg();
     bool    WantsReportOnlyLeaf();
+    ReturnKind GetReturnKind();
     UINT32  GetCodeLength();
     UINT32  GetStackBaseRegister();
     UINT32  GetSizeOfEditAndContinuePreservedArea();
@@ -512,6 +516,7 @@ private:
     bool    m_WantsReportOnlyLeaf;
     INT32   m_SecurityObjectStackSlot;
     INT32   m_GSCookieStackSlot;
+    INT32   m_ReversePInvokeStackSlot;
     UINT32  m_ValidRangeStart;
     UINT32  m_ValidRangeEnd;
     INT32   m_PSPSymStackSlot;
@@ -519,6 +524,7 @@ private:
     UINT32  m_CodeLength;
     UINT32  m_StackBaseRegister;
     UINT32  m_SizeOfEditAndContinuePreservedArea;
+    ReturnKind m_ReturnKind;
 #ifdef PARTIALLY_INTERRUPTIBLE_GC_SUPPORTED
     UINT32  m_NumSafePoints;
     UINT32  m_SafePointIndex;

@@ -12,14 +12,25 @@
  ENCODING LAYOUT
 
  1. Header
+ 
+ Slim Header for simple and common cases:
+    - EncodingType[Slim]
+    - ReturnKind (Fat: 2 bits)
+    - CodeLength
+    - NumCallSites (#ifdef PARTIALLY_INTERRUPTIBLE_GC_SUPPORTED)
+
+ Fat Header for other cases:
+    - EncodingType[Fat]
     - Flag:     isVarArg, 
                 hasSecurityObject, 
                 hasGSCookie,
                 hasPSPSymStackSlot,
                 hasGenericsInstContextStackSlot, 
+                hasReversePInvokeFrame,
                 hasStackBaseregister,
                 wantsReportOnlyLeaf,
                 hasSizeOfEditAndContinuePreservedArea
+    - ReturnKind (Fat: 4 bits)
     - CodeLength
     - Prolog (if hasSecurityObject || hasGenericsInstContextStackSlot || hasGSCookie)
     - Epilog (if hasGSCookie)
@@ -27,11 +38,13 @@
     - GSCookieStackSlot (if any)
     - PSPSymStackSlot (if any)
     - GenericsInstContextStackSlot (if any)
+    - ReversePInvokeFrameSlot (if any)
     - StackBaseRegister (if any)
     - SizeOfEditAndContinuePreservedArea (if any)
     - SizeOfStackOutgoingAndScratchArea (#ifdef FIXED_STACK_PARAMETER_SCRATCH_AREA)
     - NumCallSites (#ifdef PARTIALLY_INTERRUPTIBLE_GC_SUPPORTED)
     - NumInterruptibleRanges
+
  2. Call sites offsets (#ifdef PARTIALLY_INTERRUPTIBLE_GC_SUPPORTED)
  3. Fully-interruptible ranges
  4. Slot table
@@ -390,6 +403,11 @@ public:
                                     );
 
 
+    //------------------------------------------------------------------------
+    // ReturnKind
+    //------------------------------------------------------------------------
+
+    void SetReturnKind(ReturnKind returnKind);
 
     //------------------------------------------------------------------------
     // Miscellaneous method information
@@ -400,6 +418,7 @@ public:
     void SetGSCookieStackSlot( INT32 spOffsetGSCookie, UINT32 validRangeStart, UINT32 validRangeEnd );
     void SetPSPSymStackSlot( INT32 spOffsetPSPSym );
     void SetGenericsInstContextStackSlot( INT32 spOffsetGenericsContext, GENERIC_CONTEXTPARAM_TYPE type);
+    void SetReversePInvokeFrameSlot(INT32 spOffset);
     void SetIsVarArg();
     void SetCodeLength( UINT32 length );
 
@@ -467,11 +486,13 @@ private:
     bool   m_WantsReportOnlyLeaf;
     INT32  m_SecurityObjectStackSlot;
     INT32  m_GSCookieStackSlot;
+    INT32  m_ReversePInvokeFrameSlot;
     UINT32 m_GSCookieValidRangeStart;
     UINT32 m_GSCookieValidRangeEnd;
     INT32  m_PSPSymStackSlot;
     INT32  m_GenericsInstContextStackSlot;
     GENERIC_CONTEXTPARAM_TYPE m_contextParamType;
+    ReturnKind m_ReturnKind;
     UINT32 m_CodeLength;
     UINT32 m_StackBaseRegister;
     UINT32 m_SizeOfEditAndContinuePreservedArea;

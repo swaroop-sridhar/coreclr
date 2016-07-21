@@ -135,6 +135,73 @@ struct GcStackSlot
     }
 };
 
+//--------------------------------------------------------------------------------
+// ReturnKind -- encoding return type information in GcInfo
+// 
+// When a method is stopped at a call - site for GC (ex: via return-address 
+// hijacking) the runtime needs to know whether the value is a GC - value
+// (gc - pointer or gc - pointers stored in an aggregate).
+// It needs this information so that mark - phase can preserve the gc-pointers 
+// being returned.
+//
+// The Runtime doesn't need the precise return-type of a method. 
+// It only needs to find the GC-pointers in the return value.
+// The only scenarios currently supported by CoreCLR are:
+// 1. Object references
+// 2. ByRef pointers
+// 3. X64 only : Two - value structs containing one of the above types
+//    (For Linux struct - return in two registers)
+// 4. X86 only : Floating point returns to perform the correct save/restore 
+//    of the return value around return-hijacking.
+//
+// Based on these cases, the legal set of ReturnKind enumerations are specified 
+// for each architecture/encoding. 
+// A value of this enumeration is stored in the GcInfo header.
+//
+//--------------------------------------------------------------------------------
+
+#if defined(_TARGET_X86_)
+
+enum ReturnKind {
+    RT_Scalar = 0,
+    RT_Object = 1,
+    RT_ByRef  = 2,
+    RT_Float  = 3,
+};
+
+#elif defined(_TARGET_ARM_)
+
+enum ReturnKind {
+    RT_Scalar = 0,
+    RT_Object = 1,
+    RT_ByRef  = 2,
+};
+
+
+#elif defined(_TARGET_AMD64_) || defined(_TARGET_ARM64_) 
+
+enum ReturnKind {
+    // Slim and Fat encodings
+    RT_Scalar       = 0,
+    RT_Object       = 1,
+    RT_ByRef        = 2,
+    // Fat encodings only
+    RT_Scalar_Obj   = 3,
+    RT_Scalar_ByRef = 4,
+    RT_Obj_Scalar   = 5,
+    RT_Obj_Obj      = 6,
+    RT_Obj_ByRef    = 7,
+    RT_ByRef_Scalar = 8,
+    RT_ByRef_Obj    = 9,
+    RT_ByRef_ByRef  = 10
+};
+
+#else
+#ifdef PORTABILITY_WARNING
+PORTABILITY_WARNING("Need ReturnKind for new Platform")
+#endif
+#endif // Target checks
+
 #ifdef _TARGET_X86_
 
 #include <stdlib.h>     // For memcmp()

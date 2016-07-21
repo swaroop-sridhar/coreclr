@@ -455,6 +455,12 @@ INT32 GcInfoDecoder::GetGSCookieStackSlot()
     return m_GSCookieStackSlot;
 }
 
+INT32 GcInfoDecoder::GetReversePInvokeStackSlot()
+{
+    _ASSERTE(m_Flags & DECODE_REVERSE_PINVOKE_VAR);
+    return m_ReversePInvokeStackSlot;
+}
+
 UINT32 GcInfoDecoder::GetGSCookieValidRangeStart()
 {
     _ASSERTE( m_Flags & DECODE_GS_COOKIE );
@@ -501,6 +507,13 @@ UINT32 GcInfoDecoder::GetCodeLength()
 //    SUPPORTS_DAC;
     _ASSERTE( m_Flags & DECODE_CODE_LENGTH );
     return m_CodeLength;
+}
+
+ReturnKind GcInfoDecoder::GetReturnKind()
+{
+    //    SUPPORTS_DAC;
+    _ASSERTE( m_Flags & DECODE_RETURN_KIND );
+    return m_ReturnKind;
 }
 
 UINT32  GcInfoDecoder::GetStackBaseRegister()

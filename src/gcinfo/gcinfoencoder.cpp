@@ -758,13 +758,21 @@ void GcInfoEncoder::SetSizeOfStackOutgoingAndScratchArea( UINT32 size )
 }
 #endif // FIXED_STACK_PARAMETER_SCRATCH_AREA
 
+void GcInfoEncoder::SetReversePInvokeFrameSlot(INT32 spOffset)
+{
+    m_ReversePInvokeFrameSlot = spOffset;
+}
+
+void GcInfoEncoder::SetReturnKind(ReturnKind returnKind)
+{
+    m_ReturnKind = returnKind;
+}
 
 struct GcSlotDescAndId
 {
     GcSlotDesc m_SlotDesc;
     UINT32 m_SlotId;
 };
-
 
 int __cdecl CompareSlotDescAndIdBySlotDesc(const void* p1, const void* p2)
 {
