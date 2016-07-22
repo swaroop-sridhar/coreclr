@@ -993,12 +993,14 @@ void GcInfoEncoder::Build()
     // Method header
     ///////////////////////////////////////////////////////////////////////
 
+    
     UINT32 hasSecurityObject = (m_SecurityObjectStackSlot != NO_SECURITY_OBJECT);
     UINT32 hasGSCookie = (m_GSCookieStackSlot != NO_GS_COOKIE);
     UINT32 hasContextParamType = (m_GenericsInstContextStackSlot != NO_GENERICS_INST_CONTEXT);
+    UINT32 hasReversePInvokeFrame = (m_ReversePInvokeFrameSlot != NO_REVERSE_PINVOKE_FRAME_SLOT);
 
     BOOL slimHeader = (!m_IsVarArg && !hasSecurityObject && !hasGSCookie && (m_PSPSymStackSlot == NO_PSP_SYM) &&
-        !hasContextParamType && !m_WantsReportOnlyLeaf && (m_InterruptibleRanges.Count() == 0) &&
+        !hasContextParamType && !m_WantsReportOnlyLeaf && (m_InterruptibleRanges.Count() == 0) && !hasReversePInvokeFrame &&
         ((m_StackBaseRegister == NO_STACK_BASE_REGISTER) || (NORMALIZE_STACK_BASE_REGISTER(m_StackBaseRegister) == 0))) &&
         (m_SizeOfEditAndContinuePreservedArea == NO_SIZE_OF_EDIT_AND_CONTINUE_PRESERVED_AREA);
 
@@ -1007,6 +1009,8 @@ void GcInfoEncoder::Build()
         // Slim encoding means nothing special, partially interruptible, maybe a default frame register
         GCINFO_WRITE(m_Info1, 0, 1, FlagsSize); // Slim encoding
         GCINFO_WRITE(m_Info1, (m_StackBaseRegister == NO_STACK_BASE_REGISTER) ? 0 : 1, 1, FlagsSize);
+
+        GCINFO_WRITE(m_Info1, m_ReturnKind, SIZE_OF_RETURN_KIND_IN_SLIM_HEADER, RetKindSize);
     }
     else
     {
@@ -1019,6 +1023,9 @@ void GcInfoEncoder::Build()
         GCINFO_WRITE(m_Info1, ((m_StackBaseRegister != NO_STACK_BASE_REGISTER) ? 1 : 0), 1, FlagsSize);
         GCINFO_WRITE(m_Info1, (m_WantsReportOnlyLeaf ? 1 : 0), 1, FlagsSize);
         GCINFO_WRITE(m_Info1, ((m_SizeOfEditAndContinuePreservedArea != NO_SIZE_OF_EDIT_AND_CONTINUE_PRESERVED_AREA) ? 1 : 0), 1, FlagsSize);
+        GCINFO_WRITE(m_Info1, (hasReversePInvokeFrame ? 1 : 0), 1, FlagsSize);
+
+        GCINFO_WRITE(m_Info1, m_ReturnKind, SIZE_OF_RETURN_KIND_IN_FAT_HEADER, RetKindSize);
     }
 
     _ASSERTE( m_CodeLength > 0 );
@@ -1115,6 +1122,12 @@ void GcInfoEncoder::Build()
     if (m_SizeOfEditAndContinuePreservedArea != NO_SIZE_OF_EDIT_AND_CONTINUE_PRESERVED_AREA)
     {
         GCINFO_WRITE_VARL_U(m_Info1, m_SizeOfEditAndContinuePreservedArea, SIZE_OF_EDIT_AND_CONTINUE_PRESERVED_AREA_ENCBASE, EncPreservedSlots);
+    }
+
+    if (hasReversePInvokeFrame)
+    {
+        _ASSERTE(!slimHeader);
+        GCINFO_WRITE_VARL_U(m_Info1, m_ReversePInvokeFrameSlot, SIZE_OF_REVERSE_PINVOKE_FRAME_SLOT, ReversePInvokeFrameSize);
     }
 
 #ifdef FIXED_STACK_PARAMETER_SCRATCH_AREA

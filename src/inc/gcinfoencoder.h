@@ -115,6 +115,7 @@ struct GcInfoSize
     size_t SizeOfCode;
 
     size_t FlagsSize;
+    size_t RetKindSize;
     size_t CodeLengthSize;
     size_t ProEpilogSize;
     size_t SecObjSize;
@@ -122,6 +123,7 @@ struct GcInfoSize
     size_t GenericsCtxSize;
     size_t PspSymSize;
     size_t StackBaseSize;
+    size_t ReversePInvokeFrameSize;
     size_t FrameMarkerSize;
     size_t FixedAreaSize;
     size_t NumCallSitesSize;

@@ -22,6 +22,7 @@ XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 #endif
 
 #include "gcinfotypes.h"
+#include "gcinfodumper.h"
 
 #ifdef JIT32_GCENCODER
 
@@ -3397,6 +3398,15 @@ public:
         }
     }
 
+    void SetReturnKind(ReturnKind returnKind)
+    {
+        m_gcInfoEncoder->SetReturnKind(returnKind);
+        if (m_doLogging)
+        {
+            printf("Set ReturnKind to %s.\n", GcInfoDumper::ReturnKindToString(returnKind));
+        }
+    }
+
     void SetStackBaseRegister(UINT32 registerNumber)
     {
         m_gcInfoEncoder->SetStackBaseRegister(registerNumber);
@@ -3509,6 +3519,10 @@ void                GCInfo::gcInfoBlockHdrSave(GcInfoEncoder* gcInfoEncoder,
     // Can't create tables if we've not saved code.
 
     gcInfoEncoderWithLog->SetCodeLength(methodSize);
+
+    compiler->info.compRetType;
+
+    gcInfoEncoderWithLog->SetReturnKind(RT_Unset);
 
     if  (compiler->isFramePointerUsed())
     {

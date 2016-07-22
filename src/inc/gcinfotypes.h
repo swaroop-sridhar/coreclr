@@ -177,23 +177,32 @@ enum ReturnKind {
     RT_ByRef  = 2,
 };
 
-
 #elif defined(_TARGET_AMD64_) || defined(_TARGET_ARM64_) 
+
+// RT_Unset is an intermediate step for staged transtion to GcInfo v2
+// It is used only by JIT64 until it implements GcInfo v2.
+// ReturnKind is never expected to be RT_Unset for RYU JIT.
+// 
+// When ReturnKind is RT_Unset, it means that the JIT did not set 
+// the ReturnKind in the GCInfo, and therefore the VM cannot rely on it,
+// and must use other mechanisms (similar to GcInfo ver 1) to determine 
+// the Return type's GC information.
 
 enum ReturnKind {
     // Slim and Fat encodings
-    RT_Scalar       = 0,
-    RT_Object       = 1,
-    RT_ByRef        = 2,
+    RT_Unset        = 0,
+    RT_Scalar       = 1,
+    RT_Object       = 2,
+    RT_ByRef        = 3,
     // Fat encodings only
-    RT_Scalar_Obj   = 3,
-    RT_Scalar_ByRef = 4,
-    RT_Obj_Scalar   = 5,
-    RT_Obj_Obj      = 6,
-    RT_Obj_ByRef    = 7,
-    RT_ByRef_Scalar = 8,
-    RT_ByRef_Obj    = 9,
-    RT_ByRef_ByRef  = 10
+    RT_Scalar_Obj   = 4,
+    RT_Scalar_ByRef = 5,
+    RT_Obj_Scalar   = 6,
+    RT_Obj_Obj      = 7,
+    RT_Obj_ByRef    = 8,
+    RT_ByRef_Scalar = 9,
+    RT_ByRef_Obj    = 10,
+    RT_ByRef_ByRef  = 11
 };
 
 #else
@@ -441,6 +450,7 @@ void FASTCALL decodeCallPattern(int         pattern,
 #define NO_STACK_BASE_REGISTER    (0xffffffff)
 #define NO_SIZE_OF_EDIT_AND_CONTINUE_PRESERVED_AREA (0xffffffff)
 #define NO_GENERICS_INST_CONTEXT  (-1)
+#define NO_REVERSE_PINVOKE_FRAME_SLOT  (-1)
 #define NO_PSP_SYM                (-1)
 
 #if defined(_TARGET_AMD64_)
@@ -474,9 +484,12 @@ void FASTCALL decodeCallPattern(int         pattern,
 #define SECURITY_OBJECT_STACK_SLOT_ENCBASE 6
 #define GS_COOKIE_STACK_SLOT_ENCBASE 6
 #define CODE_LENGTH_ENCBASE 8
+#define SIZE_OF_RETURN_KIND_IN_SLIM_HEADER 2
+#define SIZE_OF_RETURN_KIND_IN_FAT_HEADER  4
 #define STACK_BASE_REGISTER_ENCBASE 3
 #define SIZE_OF_STACK_AREA_ENCBASE 3
 #define SIZE_OF_EDIT_AND_CONTINUE_PRESERVED_AREA_ENCBASE 4
+#define SIZE_OF_REVERSE_PINVOKE_FRAME_SLOT 6
 #define NUM_REGISTERS_ENCBASE 2
 #define NUM_STACK_SLOTS_ENCBASE 2
 #define NUM_UNTRACKED_SLOTS_ENCBASE 1
@@ -529,9 +542,12 @@ void FASTCALL decodeCallPattern(int         pattern,
 #define SECURITY_OBJECT_STACK_SLOT_ENCBASE 5
 #define GS_COOKIE_STACK_SLOT_ENCBASE 5
 #define CODE_LENGTH_ENCBASE 7
+#define SIZE_OF_RETURN_KIND_IN_SLIM_HEADER 2
+#define SIZE_OF_RETURN_KIND_IN_FAT_HEADER  2
 #define STACK_BASE_REGISTER_ENCBASE 1
 #define SIZE_OF_STACK_AREA_ENCBASE 3
 #define SIZE_OF_EDIT_AND_CONTINUE_PRESERVED_AREA_ENCBASE 3
+#define SIZE_OF_REVERSE_PINVOKE_FRAME_SLOT 5
 #define NUM_REGISTERS_ENCBASE 2
 #define NUM_STACK_SLOTS_ENCBASE 3
 #define NUM_UNTRACKED_SLOTS_ENCBASE 3
@@ -581,9 +597,12 @@ void FASTCALL decodeCallPattern(int         pattern,
 #define SECURITY_OBJECT_STACK_SLOT_ENCBASE 6
 #define GS_COOKIE_STACK_SLOT_ENCBASE 6
 #define CODE_LENGTH_ENCBASE 8
+#define SIZE_OF_RETURN_KIND_IN_SLIM_HEADER 2
+#define SIZE_OF_RETURN_KIND_IN_FAT_HEADER  4
 #define STACK_BASE_REGISTER_ENCBASE 2 // FP encoded as 0, SP as 2.
 #define SIZE_OF_STACK_AREA_ENCBASE 3
 #define SIZE_OF_EDIT_AND_CONTINUE_PRESERVED_AREA_ENCBASE 4
+#define SIZE_OF_REVERSE_PINVOKE_FRAME_SLOT 6
 #define NUM_REGISTERS_ENCBASE 3
 #define NUM_STACK_SLOTS_ENCBASE 2
 #define NUM_UNTRACKED_SLOTS_ENCBASE 1
@@ -639,9 +658,12 @@ PORTABILITY_WARNING("Please specialize these definitions for your platform!")
 #define SECURITY_OBJECT_STACK_SLOT_ENCBASE 6
 #define GS_COOKIE_STACK_SLOT_ENCBASE 6
 #define CODE_LENGTH_ENCBASE 6
+#define SIZE_OF_RETURN_KIND_IN_SLIM_HEADER 2
+#define SIZE_OF_RETURN_KIND_IN_FAT_HEADER  2
 #define STACK_BASE_REGISTER_ENCBASE 3
 #define SIZE_OF_STACK_AREA_ENCBASE 6
 #define SIZE_OF_EDIT_AND_CONTINUE_PRESERVED_AREA_ENCBASE 3
+#define SIZE_OF_REVERSE_PINVOKE_FRAME_SLOT 6
 #define NUM_REGISTERS_ENCBASE 3
 #define NUM_STACK_SLOTS_ENCBASE 5
 #define NUM_UNTRACKED_SLOTS_ENCBASE 5

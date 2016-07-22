@@ -32,7 +32,13 @@ const unsigned   this_OFFSET_FLAG  = 0x2;  // the offset is "this"
 // The current GCInfo Version
 //-----------------------------------------------------------------------------
 
+#ifdef _TARGET_X86_
+// X86 GcInfo encoding is yet to be changed.
+#define GCINFO_VERSION 1
+#else
 #define GCINFO_VERSION 2
+#endif // _TARGET_X86_
+
 
 //-----------------------------------------------------------------------------
 // GCInfoToken: A wrapper that contains the GcInfo data and version number.
@@ -53,6 +59,10 @@ struct GCInfoToken
 {
     PTR_VOID Info;
     UINT32 Version;
+
+    static UINT32 GetCurrentVersion() {
+
+    }
 };
 
 /*****************************************************************************/
