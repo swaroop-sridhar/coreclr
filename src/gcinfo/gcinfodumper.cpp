@@ -78,7 +78,6 @@ void GcInfoDumper::FreePointerRecords (LivePointerRecord *pRecords)
 //static 
 const char *GcInfoDumper::ReturnKindToString(ReturnKind returnKind)
 {
-
     switch (returnKind) {
     case RT_Scalar: return "Scalar";
     case RT_Object: return "Object";
@@ -98,6 +97,8 @@ const char *GcInfoDumper::ReturnKindToString(ReturnKind returnKind)
     case RT_ByRef_Obj:     return "{ByRef, Object}";
     case RT_ByRef_ByRef:   return "{ByRef, ByRef}";
 #endif // _TARGET_AMD64_ || _TARGET_ARM64_
+
+    default: return "IllegalEnumeration";
     }
 }
 

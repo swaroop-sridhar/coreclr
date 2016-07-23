@@ -129,6 +129,7 @@ GcInfoDecoder::GcInfoDecoder(
     int hasStackBaseRegister   = headerFlags & GC_INFO_HAS_STACK_BASE_REGISTER;
     m_WantsReportOnlyLeaf      = ((headerFlags & GC_INFO_WANTS_REPORT_ONLY_LEAF) != 0);
     int hasSizeOfEditAndContinuePreservedArea = headerFlags & GC_INFO_HAS_EDIT_AND_CONTINUE_PRESERVED_SLOTS;
+    int hasReversePInvokeFrame = headerFlags & GC_INFO_REVERSE_PINVOKE_FRAME;
 
     m_CodeLength = (UINT32) DENORMALIZE_CODE_LENGTH((UINT32) m_Reader.DecodeVarLengthUnsigned(CODE_LENGTH_ENCBASE));
 
@@ -256,6 +257,16 @@ GcInfoDecoder::GcInfoDecoder(
     {
         m_SizeOfEditAndContinuePreservedArea = NO_SIZE_OF_EDIT_AND_CONTINUE_PRESERVED_AREA;
     }
+
+    if (hasReversePInvokeFrame)
+    {
+        m_ReversePInvokeFrameSlot = (INT32)m_Reader.DecodeVarLengthSigned(REVERSE_PINVOKE_FRAME_ENCBASE);
+    }
+    else
+    {
+        m_ReversePInvokeFrameSlot = NO_REVERSE_PINVOKE_FRAME;
+    }
+
 
 #ifdef FIXED_STACK_PARAMETER_SCRATCH_AREA
     if (slimHeader)

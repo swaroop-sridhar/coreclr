@@ -192,10 +192,10 @@ enum GcInfoHeaderFlags
     GC_INFO_HAS_STACK_BASE_REGISTER     = 0x40,
     GC_INFO_WANTS_REPORT_ONLY_LEAF      = 0x80,
     GC_INFO_HAS_EDIT_AND_CONTINUE_PRESERVED_SLOTS = 0x100,
+    GC_INFO_REVERSE_PINVOKE_FRAME = 0x200,
 
-    GC_INFO_FLAGS_BIT_SIZE              = 9,
+    GC_INFO_FLAGS_BIT_SIZE              = 10,
 };
-
 
 class BitStreamReader
 {
@@ -524,6 +524,7 @@ private:
     UINT32  m_CodeLength;
     UINT32  m_StackBaseRegister;
     UINT32  m_SizeOfEditAndContinuePreservedArea;
+    INT32  m_ReversePInvokeFrameSlot;
     ReturnKind m_ReturnKind;
 #ifdef PARTIALLY_INTERRUPTIBLE_GC_SUPPORTED
     UINT32  m_NumSafePoints;

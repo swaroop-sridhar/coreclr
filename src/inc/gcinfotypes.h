@@ -160,6 +160,16 @@ struct GcStackSlot
 //
 //--------------------------------------------------------------------------------
 
+// RT_Unset: An intermediate step for staged bringup.
+// When ReturnKind is RT_Unset, it means that the JIT did not set 
+// the ReturnKind in the GCInfo, and therefore the VM cannot rely on it,
+// and must use other mechanisms (similar to GcInfo ver 1) to determine 
+// the Return type's GC information.
+// 
+// RT_Unset is only used in the following situations:
+// X64: Used by JIT64 until updated to use GcInfo v2 API
+// ARM: Used by JIT32 until updated to use GcInfo v2 API
+
 #if defined(_TARGET_X86_)
 
 enum ReturnKind {
@@ -172,21 +182,13 @@ enum ReturnKind {
 #elif defined(_TARGET_ARM_)
 
 enum ReturnKind {
-    RT_Scalar = 0,
-    RT_Object = 1,
-    RT_ByRef  = 2,
+    RT_Unset = 0,
+    RT_Scalar = 1,
+    RT_Object = 2,
+    RT_ByRef  = 3,
 };
 
 #elif defined(_TARGET_AMD64_) || defined(_TARGET_ARM64_) 
-
-// RT_Unset is an intermediate step for staged transtion to GcInfo v2
-// It is used only by JIT64 until it implements GcInfo v2.
-// ReturnKind is never expected to be RT_Unset for RYU JIT.
-// 
-// When ReturnKind is RT_Unset, it means that the JIT did not set 
-// the ReturnKind in the GCInfo, and therefore the VM cannot rely on it,
-// and must use other mechanisms (similar to GcInfo ver 1) to determine 
-// the Return type's GC information.
 
 enum ReturnKind {
     // Slim and Fat encodings
@@ -450,7 +452,7 @@ void FASTCALL decodeCallPattern(int         pattern,
 #define NO_STACK_BASE_REGISTER    (0xffffffff)
 #define NO_SIZE_OF_EDIT_AND_CONTINUE_PRESERVED_AREA (0xffffffff)
 #define NO_GENERICS_INST_CONTEXT  (-1)
-#define NO_REVERSE_PINVOKE_FRAME_SLOT  (-1)
+#define NO_REVERSE_PINVOKE_FRAME  (-1)
 #define NO_PSP_SYM                (-1)
 
 #if defined(_TARGET_AMD64_)
@@ -489,7 +491,7 @@ void FASTCALL decodeCallPattern(int         pattern,
 #define STACK_BASE_REGISTER_ENCBASE 3
 #define SIZE_OF_STACK_AREA_ENCBASE 3
 #define SIZE_OF_EDIT_AND_CONTINUE_PRESERVED_AREA_ENCBASE 4
-#define SIZE_OF_REVERSE_PINVOKE_FRAME_SLOT 6
+#define REVERSE_PINVOKE_FRAME_ENCBASE 6
 #define NUM_REGISTERS_ENCBASE 2
 #define NUM_STACK_SLOTS_ENCBASE 2
 #define NUM_UNTRACKED_SLOTS_ENCBASE 1
@@ -547,7 +549,7 @@ void FASTCALL decodeCallPattern(int         pattern,
 #define STACK_BASE_REGISTER_ENCBASE 1
 #define SIZE_OF_STACK_AREA_ENCBASE 3
 #define SIZE_OF_EDIT_AND_CONTINUE_PRESERVED_AREA_ENCBASE 3
-#define SIZE_OF_REVERSE_PINVOKE_FRAME_SLOT 5
+#define REVERSE_PINVOKE_FRAME_ENCBASE 5
 #define NUM_REGISTERS_ENCBASE 2
 #define NUM_STACK_SLOTS_ENCBASE 3
 #define NUM_UNTRACKED_SLOTS_ENCBASE 3
@@ -602,7 +604,7 @@ void FASTCALL decodeCallPattern(int         pattern,
 #define STACK_BASE_REGISTER_ENCBASE 2 // FP encoded as 0, SP as 2.
 #define SIZE_OF_STACK_AREA_ENCBASE 3
 #define SIZE_OF_EDIT_AND_CONTINUE_PRESERVED_AREA_ENCBASE 4
-#define SIZE_OF_REVERSE_PINVOKE_FRAME_SLOT 6
+#define REVERSE_PINVOKE_FRAME_ENCBASE 6
 #define NUM_REGISTERS_ENCBASE 3
 #define NUM_STACK_SLOTS_ENCBASE 2
 #define NUM_UNTRACKED_SLOTS_ENCBASE 1
@@ -663,7 +665,7 @@ PORTABILITY_WARNING("Please specialize these definitions for your platform!")
 #define STACK_BASE_REGISTER_ENCBASE 3
 #define SIZE_OF_STACK_AREA_ENCBASE 6
 #define SIZE_OF_EDIT_AND_CONTINUE_PRESERVED_AREA_ENCBASE 3
-#define SIZE_OF_REVERSE_PINVOKE_FRAME_SLOT 6
+#define REVERSE_PINVOKE_FRAME_ENCBASE 6
 #define NUM_REGISTERS_ENCBASE 3
 #define NUM_STACK_SLOTS_ENCBASE 5
 #define NUM_UNTRACKED_SLOTS_ENCBASE 5

@@ -3520,15 +3520,24 @@ void                GCInfo::gcInfoBlockHdrSave(GcInfoEncoder* gcInfoEncoder,
 
     gcInfoEncoderWithLog->SetCodeLength(methodSize);
 
-    compiler->info.compRetType;
+    ReturnKind returnKind = RT_Unset;
+    switch (compiler->info.compRetType) {
+    case TYP_REF:
+        returnKind = RT_Object;
+    case TYP_BYREF:
+        returnKind = RT_ByRef;
+    case TYP_STRUCT:
+        returnKind = RT_Scalar;
+    default:
+        returnKind = RT_Scalar;
+    }
 
-    gcInfoEncoderWithLog->SetReturnKind(RT_Unset);
+    gcInfoEncoderWithLog->SetReturnKind(returnKind);
 
     if  (compiler->isFramePointerUsed())
     {
         gcInfoEncoderWithLog->SetStackBaseRegister(REG_FPBASE);
     }
-   
 
     if (compiler->info.compIsVarArgs)
     {

@@ -26,10 +26,10 @@
                 hasGSCookie,
                 hasPSPSymStackSlot,
                 hasGenericsInstContextStackSlot, 
-                hasReversePInvokeFrame,
                 hasStackBaseregister,
                 wantsReportOnlyLeaf,
                 hasSizeOfEditAndContinuePreservedArea
+                hasReversePInvokeFrame,
     - ReturnKind (Fat: 4 bits)
     - CodeLength
     - Prolog (if hasSecurityObject || hasGenericsInstContextStackSlot || hasGSCookie)
@@ -38,9 +38,9 @@
     - GSCookieStackSlot (if any)
     - PSPSymStackSlot (if any)
     - GenericsInstContextStackSlot (if any)
-    - ReversePInvokeFrameSlot (if any)
     - StackBaseRegister (if any)
     - SizeOfEditAndContinuePreservedArea (if any)
+    - ReversePInvokeFrameSlot (if any)
     - SizeOfStackOutgoingAndScratchArea (#ifdef FIXED_STACK_PARAMETER_SCRATCH_AREA)
     - NumCallSites (#ifdef PARTIALLY_INTERRUPTIBLE_GC_SUPPORTED)
     - NumInterruptibleRanges
@@ -120,11 +120,10 @@ struct GcInfoSize
     size_t ProEpilogSize;
     size_t SecObjSize;
     size_t GsCookieSize;
-    size_t GenericsCtxSize;
     size_t PspSymSize;
+    size_t GenericsCtxSize;
     size_t StackBaseSize;
     size_t ReversePInvokeFrameSize;
-    size_t FrameMarkerSize;
     size_t FixedAreaSize;
     size_t NumCallSitesSize;
     size_t NumRangesSize;
@@ -488,7 +487,6 @@ private:
     bool   m_WantsReportOnlyLeaf;
     INT32  m_SecurityObjectStackSlot;
     INT32  m_GSCookieStackSlot;
-    INT32  m_ReversePInvokeFrameSlot;
     UINT32 m_GSCookieValidRangeStart;
     UINT32 m_GSCookieValidRangeEnd;
     INT32  m_PSPSymStackSlot;
@@ -498,6 +496,7 @@ private:
     UINT32 m_CodeLength;
     UINT32 m_StackBaseRegister;
     UINT32 m_SizeOfEditAndContinuePreservedArea;
+    INT32  m_ReversePInvokeFrameSlot;
     InterruptibleRange* m_pLastInterruptibleRange;
     
 #ifdef FIXED_STACK_PARAMETER_SCRATCH_AREA

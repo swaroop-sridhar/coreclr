@@ -351,7 +351,7 @@ GcInfoSize& operator+=(const GcInfoSize& other)
     GenericsCtxSize += other.GenericsCtxSize;
     PspSymSize += other.PspSymSize;
     StackBaseSize += other.StackBaseSize;
-    FrameMarkerSize += other.FrameMarkerSize;
+    ReversePInvokeFrameSize += other.ReversePInvokeFrameSize;
     FixedAreaSize += other.FixedAreaSize;
     NumCallSitesSize += other.NumCallSitesSize;
     NumRangesSize += other.NumRangesSize;
@@ -398,8 +398,9 @@ void GcInfoSize::Log(DWORD level, const char * header)
         LogSpew(LF_GCINFO, level, "GsCookie: %Iu\n", GsCookieSize);
         LogSpew(LF_GCINFO, level, "PspSym: %Iu\n", PspSymSize);
         LogSpew(LF_GCINFO, level, "GenericsCtx: %Iu\n", GenericsCtxSize);
-        LogSpew(LF_GCINFO, level, "FrameMarker: %Iu\n", FrameMarkerSize);
+        LogSpew(LF_GCINFO, level, "StackBase: %Iu\n", StackBaseSize);
         LogSpew(LF_GCINFO, level, "FixedArea: %Iu\n", FixedAreaSize);
+        LogSpew(LF_GCINFO, level, "ReversePInvokeFrame: %Iu\n", ReversePInvokeFrameSize);
         LogSpew(LF_GCINFO, level, "NumCallSites: %Iu\n", NumCallSitesSize);
         LogSpew(LF_GCINFO, level, "NumRanges: %Iu\n", NumRangesSize);
         LogSpew(LF_GCINFO, level, "CallSiteOffsets: %Iu\n", CallSitePosSize);
@@ -488,17 +489,24 @@ GcInfoEncoder::GcInfoEncoder(
 
     m_StackBaseRegister = NO_STACK_BASE_REGISTER;
     m_SizeOfEditAndContinuePreservedArea = NO_SIZE_OF_EDIT_AND_CONTINUE_PRESERVED_AREA;
+    m_ReversePInvokeFrameSlot = NO_REVERSE_PINVOKE_FRAME;
     m_WantsReportOnlyLeaf = false;
     m_IsVarArg = false;
     m_pLastInterruptibleRange = NULL;
     
 #ifdef _DEBUG
     m_IsSlotTableFrozen = FALSE;
+#endif //_DEBUG
+
+#ifndef _TARGET_X86_
+    m_ReturnKind = RT_Unset;
+#endif _TARGET_X86_
+
     m_CodeLength = 0;
 #ifdef FIXED_STACK_PARAMETER_SCRATCH_AREA
     m_SizeOfStackOutgoingAndScratchArea = -1;
 #endif // FIXED_STACK_PARAMETER_SCRATCH_AREA
-#endif //_DEBUG
+
 }
 
 #ifdef PARTIALLY_INTERRUPTIBLE_GC_SUPPORTED
@@ -997,7 +1005,7 @@ void GcInfoEncoder::Build()
     UINT32 hasSecurityObject = (m_SecurityObjectStackSlot != NO_SECURITY_OBJECT);
     UINT32 hasGSCookie = (m_GSCookieStackSlot != NO_GS_COOKIE);
     UINT32 hasContextParamType = (m_GenericsInstContextStackSlot != NO_GENERICS_INST_CONTEXT);
-    UINT32 hasReversePInvokeFrame = (m_ReversePInvokeFrameSlot != NO_REVERSE_PINVOKE_FRAME_SLOT);
+    UINT32 hasReversePInvokeFrame = (m_ReversePInvokeFrameSlot != NO_REVERSE_PINVOKE_FRAME);
 
     BOOL slimHeader = (!m_IsVarArg && !hasSecurityObject && !hasGSCookie && (m_PSPSymStackSlot == NO_PSP_SYM) &&
         !hasContextParamType && !m_WantsReportOnlyLeaf && (m_InterruptibleRanges.Count() == 0) && !hasReversePInvokeFrame &&
@@ -1127,7 +1135,7 @@ void GcInfoEncoder::Build()
     if (hasReversePInvokeFrame)
     {
         _ASSERTE(!slimHeader);
-        GCINFO_WRITE_VARL_U(m_Info1, m_ReversePInvokeFrameSlot, SIZE_OF_REVERSE_PINVOKE_FRAME_SLOT, ReversePInvokeFrameSize);
+        GCINFO_WRITE_VARL_S(m_Info1, NORMALIZE_STACK_SLOT(m_ReversePInvokeFrameSlot), REVERSE_PINVOKE_FRAME_ENCBASE, ReversePInvokeFrameSize);
     }
 
 #ifdef FIXED_STACK_PARAMETER_SCRATCH_AREA

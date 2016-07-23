@@ -157,6 +157,18 @@ inline unsigned      varTypeGCtype     (T vt)
 }
 
 template <class T>
+inline unsigned      varTypeObjectRef(T vt)
+{
+    return  (unsigned)(varTypeClassification[TypeGet(vt)] & VTF_GCR);
+}
+
+template <class T>
+inline unsigned      varTypeByRef(T vt)
+{
+    return  (unsigned)(varTypeClassification[TypeGet(vt)] & VTF_BYR);
+}
+
+template <class T>
 inline bool         varTypeIsGC        (T vt)
 {
     return  (varTypeGCtype(vt) != 0);
