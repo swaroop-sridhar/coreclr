@@ -75,34 +75,6 @@ void GcInfoDumper::FreePointerRecords (LivePointerRecord *pRecords)
     }
 }
 
-//static 
-const char *GcInfoDumper::ReturnKindToString(ReturnKind returnKind)
-{
-    switch (returnKind) {
-    case RT_Scalar: return "Scalar";
-    case RT_Object: return "Object";
-    case RT_ByRef:  return "ByRef";
-#ifdef _TARGET_X86_
-    case RT_Float:  return "Float";
-#endif // _TARGET_X86_
-
-#if defined(_TARGET_AMD64_) || defined(_TARGET_ARM64_)
-    case RT_Unset:         return "UNSET";
-    case RT_Scalar_Obj:    return "{Scalar, Object}";
-    case RT_Scalar_ByRef:  return "{Scalar, ByRef}";
-    case RT_Obj_Scalar:    return "{Object, Scalar}";
-    case RT_Obj_Obj:       return "{Object, Object}";
-    case RT_Obj_ByRef:     return "{Object, ByRef}";
-    case RT_ByRef_Scalar:  return "{ByRef, Scalar}";
-    case RT_ByRef_Obj:     return "{ByRef, Object}";
-    case RT_ByRef_ByRef:   return "{ByRef, ByRef}";
-#endif // _TARGET_AMD64_ || _TARGET_ARM64_
-
-    default: return "IllegalEnumeration";
-    }
-}
-
-
 //This function tries to find the address of the managed object in the registers of the current function's context, 
 //failing which it checks if it is present in the stack of the current function. IF it finds one it reports appropriately
 //

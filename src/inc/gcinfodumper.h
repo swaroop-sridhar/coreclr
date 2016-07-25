@@ -69,7 +69,6 @@ public:
             PVOID pvData);
 
     size_t GetGCInfoSize();
-    static const char *ReturnKindToString(ReturnKind returnKind);
 
 private:
 

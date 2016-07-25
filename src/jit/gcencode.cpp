@@ -22,7 +22,6 @@ XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 #endif
 
 #include "gcinfotypes.h"
-#include "gcinfodumper.h"
 
 #ifdef JIT32_GCENCODER
 
@@ -3403,7 +3402,7 @@ public:
         m_gcInfoEncoder->SetReturnKind(returnKind);
         if (m_doLogging)
         {
-            printf("Set ReturnKind to %s.\n", GcInfoDumper::ReturnKindToString(returnKind));
+            printf("Set ReturnKind to %s.\n", ReturnKindToString(returnKind));
         }
     }
 
