@@ -169,49 +169,72 @@ struct GcStackSlot
 // RT_Unset is only used in the following situations:
 // X64: Used by JIT64 until updated to use GcInfo v2 API
 // ARM: Used by JIT32 until updated to use GcInfo v2 API
+//
+// RT_Unset should have a valid encoding, whose bits are actually stored in the image.
+// For X86, there are no free bits, and there's no RT_Unused enumeration.
 
 #if defined(_TARGET_X86_)
 
-enum ReturnKind {
-    RT_Scalar = 0,
-    RT_Object = 1,
-    RT_ByRef  = 2,
-    RT_Float  = 3,
-};
+// 00    RT_Scalar
+// 01    RT_Object
+// 10    RT_ByRef
+// 11    RT_Float
 
-#elif defined(_TARGET_ARM_)
+#elif defined(_TARGET_ARM)
 
-enum ReturnKind {
-    RT_Unset = 0,
-    RT_Scalar = 1,
-    RT_Object = 2,
-    RT_ByRef  = 3,
-};
+// 00    RT_Scalar
+// 01    RT_Object
+// 10    RT_ByRef
+// 11    RT_Unset
 
 #elif defined(_TARGET_AMD64_) || defined(_TARGET_ARM64_) 
 
-enum ReturnKind {
-    // Slim and Fat encodings
-    RT_Unset        = 0,
-    RT_Scalar       = 1,
-    RT_Object       = 2,
-    RT_ByRef        = 3,
-    // Fat encodings only
-    RT_Scalar_Obj   = 4,
-    RT_Scalar_ByRef = 5,
-    RT_Obj_Scalar   = 6,
-    RT_Obj_Obj      = 7,
-    RT_Obj_ByRef    = 8,
-    RT_ByRef_Scalar = 9,
-    RT_ByRef_Obj    = 10,
-    RT_ByRef_ByRef  = 11
-};
+// Slim Header:
+
+// 00    RT_Scalar
+// 01    RT_Object
+// 10    RT_ByRef
+// 11    RT_Unset
+
+// Fat Header:
+
+// 0000  RT_Scalar
+// 0001  RT_Object
+// 0010  RT_ByRef
+// 0011  RT_Unset
+// 0100  RT_Scalar_Obj
+// 0101  RT_Scalar_ByRef
+// 0110  RT_Obj_Scalar
+// 0111  RT_Obj_Obj
+// 1000  RT_Obj_ByRef
+// 1001  RT_ByRef_Scalar
+// 1010  RT_ByRef_Obj
+// 1011  RT_ByRef_ByRef
 
 #else
 #ifdef PORTABILITY_WARNING
 PORTABILITY_WARNING("Need ReturnKind for new Platform")
 #endif
-#endif // Target checks
+#endif // Target checks */
+
+enum ReturnKind {
+    RT_Scalar = 0,
+    RT_Object = 1,
+    RT_ByRef  = 2,
+#ifdef _TARGET_X86
+    RT_Float  = 3,       // Encoding 3 means RT_Float on X86
+#else
+    RT_Unset  = 3,       // RT_Unset on other platforms
+#endif // _TARGET_X86_
+    RT_Scalar_Obj = 4,
+    RT_Scalar_ByRef = 5,
+    RT_Obj_Scalar = 6,
+    RT_Obj_Obj = 7,
+    RT_Obj_ByRef = 8,
+    RT_ByRef_Scalar = 9,
+    RT_ByRef_Obj = 10,
+    RT_ByRef_ByRef = 11
+};
 
 inline const char *ReturnKindToString(ReturnKind returnKind)
 {
@@ -221,10 +244,9 @@ inline const char *ReturnKindToString(ReturnKind returnKind)
     case RT_ByRef:  return "ByRef";
 #ifdef _TARGET_X86_
     case RT_Float:  return "Float";
-#endif // _TARGET_X86_
-
-#if defined(_TARGET_AMD64_) || defined(_TARGET_ARM64_)
+#else
     case RT_Unset:         return "UNSET";
+#endif // _TARGET_X86_
     case RT_Scalar_Obj:    return "{Scalar, Object}";
     case RT_Scalar_ByRef:  return "{Scalar, ByRef}";
     case RT_Obj_Scalar:    return "{Object, Scalar}";
@@ -233,7 +255,6 @@ inline const char *ReturnKindToString(ReturnKind returnKind)
     case RT_ByRef_Scalar:  return "{ByRef, Scalar}";
     case RT_ByRef_Obj:     return "{ByRef, Object}";
     case RT_ByRef_ByRef:   return "{ByRef, ByRef}";
-#endif // _TARGET_AMD64_ || _TARGET_ARM64_
 
     default: return "IllegalEnumeration";
     }

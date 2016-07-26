@@ -3505,11 +3505,11 @@ public:
 
 
 void                GCInfo::gcInfoBlockHdrSave(GcInfoEncoder* gcInfoEncoder,
-                                               unsigned       methodSize,
-                                               unsigned       prologSize)
+    unsigned       methodSize,
+    unsigned       prologSize)
 {
 #ifdef DEBUG
-    if  (compiler->verbose)
+    if (compiler->verbose)
         printf("*************** In gcInfoBlockHdrSave()\n");
 #endif
 
@@ -3520,13 +3520,24 @@ void                GCInfo::gcInfoBlockHdrSave(GcInfoEncoder* gcInfoEncoder,
     gcInfoEncoderWithLog->SetCodeLength(methodSize);
 
     ReturnKind returnKind = RT_Unset;
+
     switch (compiler->info.compRetType) {
     case TYP_REF:
         returnKind = RT_Object;
+        break;
     case TYP_BYREF:
         returnKind = RT_ByRef;
+        break;
+
     case TYP_STRUCT:
-        returnKind = RT_Scalar;
+#ifdef FEATURE_UNIX_AMD64_STRUCT_PASSING
+        returnKind = RT_Unset;
+        // if (compiler->IsRegisterPassable(methInfo->args.retTypeClass)) {
+            // Handle this case... 
+        // }
+        break;
+#endif
+        // fall through
     default:
         returnKind = RT_Scalar;
     }

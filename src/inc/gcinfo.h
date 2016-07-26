@@ -39,6 +39,7 @@ const unsigned   this_OFFSET_FLAG  = 0x2;  // the offset is "this"
 #define GCINFO_VERSION 2
 #endif // _TARGET_X86_
 
+#define MIN_GCINFO_VERSION_WITH_RETURN_KIND 2
 
 //-----------------------------------------------------------------------------
 // GCInfoToken: A wrapper that contains the GcInfo data and version number.
@@ -51,8 +52,7 @@ const unsigned   this_OFFSET_FLAG  = 0x2;  // the offset is "this"
 // 1) The current GCINFO_VERSION for JITted and Ngened images
 // 2) A function of the Ready - to - run major version stored in READYTORUN_HEADER
 //   for ready - to - run images.ReadyToRunJitManager::JitTokenToGCInfoVersion()
-//   provides the GcInfo version for any Method.Currently, there's only one
-//   version of GCInfo.
+//   provides the GcInfo version for any Method. 
 //-----------------------------------------------------------------------------
 
 struct GCInfoToken
@@ -60,8 +60,8 @@ struct GCInfoToken
     PTR_VOID Info;
     UINT32 Version;
 
-    static UINT32 GetCurrentVersion() {
-
+    BOOL IsReturnKindAvailable() {
+        return (Version >= MIN_GCINFO_VERSION_WITH_RETURN_KIND);
     }
 };
 

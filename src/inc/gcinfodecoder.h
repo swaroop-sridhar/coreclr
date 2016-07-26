@@ -161,6 +161,7 @@ enum ICodeManagerFlags
 
 enum GcInfoDecoderFlags
 {
+    DECODE_NOTHING               = 0x0,
     DECODE_SECURITY_OBJECT       = 0x01,    // stack location of security object
     DECODE_CODE_LENGTH           = 0x02,
     DECODE_VARARG                = 0x04,

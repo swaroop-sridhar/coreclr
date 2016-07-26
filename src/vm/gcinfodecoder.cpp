@@ -93,8 +93,9 @@ GcInfoDecoder::GcInfoDecoder(
 #ifdef _DEBUG
             , m_Flags( flags )
             , m_GcInfoAddress(dac_cast<PTR_CBYTE>(gcInfoToken.Info))
-            , m_Version(gcInfoToken.Version)
 #endif
+           , m_Version(gcInfoToken.Version)
+           , m_ReturnKind(RT_Unset)
 {
     _ASSERTE( (flags & (DECODE_INTERRUPTIBILITY | DECODE_GC_LIFETIMES)) || (0 == breakOffset) );
 
@@ -131,11 +132,21 @@ GcInfoDecoder::GcInfoDecoder(
     int hasSizeOfEditAndContinuePreservedArea = headerFlags & GC_INFO_HAS_EDIT_AND_CONTINUE_PRESERVED_SLOTS;
     int hasReversePInvokeFrame = headerFlags & GC_INFO_REVERSE_PINVOKE_FRAME;
 
+    int returnKindBits = (slimHeader) ? SIZE_OF_RETURN_KIND_IN_SLIM_HEADER : SIZE_OF_RETURN_KIND_IN_FAT_HEADER;
+    m_ReturnKind = 
+        (ReturnKind)((UINT32)m_Reader.Read(returnKindBits));
+
+    flags = (GcInfoDecoderFlags)(flags & ~DECODE_RETURN_KIND);
+    if (flags == DECODE_NOTHING) {
+        // Bail, if we've decoded enough,
+        return;
+    }
+
     m_CodeLength = (UINT32) DENORMALIZE_CODE_LENGTH((UINT32) m_Reader.DecodeVarLengthUnsigned(CODE_LENGTH_ENCBASE));
 
-    if (flags == DECODE_CODE_LENGTH)
-    {
-        // If we are only interested in the code length, then bail out now.
+    flags = (GcInfoDecoderFlags)(flags & ~DECODE_CODE_LENGTH);
+    if (flags == DECODE_NOTHING) {
+        // Bail, if we've decoded enough,
         return;
     }
 
@@ -166,12 +177,12 @@ GcInfoDecoder::GcInfoDecoder(
         m_ValidRangeStart = m_ValidRangeEnd = 0;
     }
 
-    if (flags == DECODE_PROLOG_LENGTH)
-    {
-        // if we are only interested in the prolog size, then bail out now
+    flags = (GcInfoDecoderFlags)(flags & ~DECODE_PROLOG_LENGTH);
+    if (flags == DECODE_NOTHING) {
+        // Bail, if we've decoded enough,
         return;
     }
-    
+
     // Decode the offset to the security object.
     if(hasSecurityObject)
     {
@@ -181,9 +192,10 @@ GcInfoDecoder::GcInfoDecoder(
     {
         m_SecurityObjectStackSlot = NO_SECURITY_OBJECT;
     }
-    if (flags == DECODE_SECURITY_OBJECT)
-    {
-        // If we are only interested in the security object, then bail out now.
+
+    flags = (GcInfoDecoderFlags)(flags & ~DECODE_SECURITY_OBJECT);
+    if (flags == DECODE_NOTHING) {
+        // Bail, if we've decoded enough,
         return;
     }
 
@@ -196,9 +208,10 @@ GcInfoDecoder::GcInfoDecoder(
     {
         m_GSCookieStackSlot        = NO_GS_COOKIE;
     }
-    if (flags == DECODE_GS_COOKIE)
-    {
-        // If we are only interested in the GS cookie, then bail out now.
+
+    flags = (GcInfoDecoderFlags)(flags & ~DECODE_GS_COOKIE);
+    if (flags == DECODE_NOTHING) {
+        // Bail, if we've decoded enough,
         return;
     }
 
@@ -212,9 +225,10 @@ GcInfoDecoder::GcInfoDecoder(
     {
         m_PSPSymStackSlot              = NO_PSP_SYM;
     }
-    if (flags == DECODE_PSP_SYM)
-    {
-        // If we are only interested in the PSPSym, then bail out now.
+
+    flags = (GcInfoDecoderFlags)(flags & ~DECODE_PSP_SYM);
+    if (flags == DECODE_NOTHING) {
+        // Bail, if we've decoded enough,
         return;
     }
 
@@ -227,9 +241,10 @@ GcInfoDecoder::GcInfoDecoder(
     {
         m_GenericsInstContextStackSlot = NO_GENERICS_INST_CONTEXT;
     }
-    if (flags == DECODE_GENERICS_INST_CONTEXT)
-    {
-        // If we are only interested in the generics token, then bail out now.
+
+    flags = (GcInfoDecoderFlags)(flags & ~DECODE_GENERICS_INST_CONTEXT);
+    if (flags == DECODE_NOTHING) {
+        // Bail, if we've decoded enough,
         return;
     }
 

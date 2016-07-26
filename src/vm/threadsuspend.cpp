@@ -7770,6 +7770,107 @@ BOOL Thread::GetSafelyRedirectableThreadContext(DWORD dwOptions, CONTEXT * pCtx,
     return TRUE;
 }
 
+VOID * GetHijackAddrFromMethodTable(Thread *pThread, EECodeInfo *codeInfo)
+{
+#ifdef _WIN64
+    // For simplicity, we don't hijack in funclets, but if you ever change that, 
+    // be sure to choose the OnHijack... callback type to match that of the FUNCLET
+    // not the main method (it would probably be Scalar).
+#endif // _WIN64
+
+    ENABLE_FORBID_GC_LOADER_USE_IN_THIS_SCOPE();
+    // Mark that we are performing a stackwalker like operation on the current thread.
+    // This is necessary to allow the signature parsing functions to work without triggering any loads
+    ClrFlsValueSwitch threadStackWalking(TlsIdx_StackWalkerWalkingThread, pThread);
+
+    MethodDesc *methodDesc = codeInfo->GetMethodDesc();
+
+    if (methodDesc == nullptr) {
+        return OnHijackScalarTripThread;
+    }
+
+#ifdef _TARGET_X86_
+    MetaSig msig(methodDesc);
+    if (msig.HasFPReturn())
+    {
+        // Figuring out whether the function returns FP or not is hard to do
+        // on-the-fly, so we use a different callback helper on x86 where this
+        // piece of information is needed in order to perform the right save &
+        // restore of the return value around the call to OnHijackScalarWorker.
+        return OnHijackFloatingPointTripThread;
+    }
+#endif // _TARGET_X86_
+    MethodTable* pMT = NULL;
+    MetaSig::RETURNTYPE type = methodDesc->ReturnsObject(INDEBUG_COMMA(false) &pMT);
+    if (type == MetaSig::RETOBJ)
+        return OnHijackObjectTripThread;
+    else if (type == MetaSig::RETBYREF)
+        return OnHijackInteriorPointerTripThread;
+#ifdef FEATURE_UNIX_AMD64_STRUCT_PASSING
+    else if (type == MetaSig::RETVALUETYPE)
+    {
+        pThread->SetHijackReturnTypeClass(pMT->GetClass());
+        return OnHijackStructInRegsTripThread;
+    }
+#endif // FEATURE_UNIX_AMD64_STRUCT_PASSING
+
+    return OnHijackScalarTripThread;
+}
+
+VOID * GetHijackAddrFromGcInfo(EECodeInfo *codeInfo)
+{
+    GCInfoToken gcInfoToken = codeInfo->GetGCInfoToken();
+    if (gcInfoToken.IsReturnKindAvailable()) {
+        GcInfoDecoder gcInfoDecoder(gcInfoToken, DECODE_RETURN_KIND, 0);
+        ReturnKind returnKind = gcInfoDecoder.GetReturnKind();
+        switch (returnKind) {
+        case RT_Scalar:
+            return OnHijackScalarTripThread;
+        case RT_Object:
+            return OnHijackObjectTripThread;
+        case RT_ByRef:
+            return OnHijackInteriorPointerTripThread;
+#ifdef _TARGET_X86_
+        case RT_Float:  return "Float";
+            return OnHijackFloatingPointTripThread;
+#endif // _TARGET_X86_
+
+#if defined(_TARGET_AMD64_) || defined(_TARGET_ARM64_)
+        case RT_Unset:
+        case RT_Scalar_Obj:
+        case RT_Scalar_ByRef:
+        case RT_Obj_Scalar:
+        case RT_Obj_Obj:
+        case RT_Obj_ByRef:
+        case RT_ByRef_Scalar:
+        case RT_ByRef_Obj:
+        case RT_ByRef_ByRef:
+        default:
+            // Unimplemented
+            break;
+#endif // _TARGET_AMD64_ || _TARGET_ARM64_
+        }
+    }
+
+    return nullptr;
+}
+
+VOID * GetHijackAddr(Thread *pThread, EECodeInfo *codeInfo)
+{
+    VOID* addrFromGcInfo = GetHijackAddrFromGcInfo(codeInfo);
+
+#ifndef _DEBUG
+    if (addrFromGcInfo != nullptr) {
+        return addrFromGcInfo;
+    }
+#endif // !_DEBUG
+
+    VOID* addrFromMT = GetHijackAddrFromMethodTable(pThread, codeInfo);
+    _ASSERTE(addrFromMT != nullptr);
+    _ASSERTE((addrFromGcInfo == nullptr) || (addrFromMT == addrFromGcInfo));
+    return addrFromMT;
+}
+
 // Called while the thread is suspended.  If we aren't in JITted code, this isn't
 // a JITCase and we return FALSE.  If it is a JIT case and we are in interruptible
 // code, then we are handled.  Our caller has found a good spot and can keep us
@@ -7801,11 +7902,12 @@ BOOL Thread::HandledJITCase(BOOL ForTaskSwitchIn)
         return FALSE;
     }
 
-    if (!ExecutionManager::IsManagedCode(GetIP(&ctx)))
+    PCODE ip = GetIP(&ctx);
+    if (!ExecutionManager::IsManagedCode(ip))
     {
         return FALSE;
     }
-    
+
 #ifdef WORKAROUND_RACES_WITH_KERNEL_MODE_EXCEPTION_HANDLING
     if (ThreadCaughtInKernelModeExceptionHandling(this, &ctx))
     {
@@ -7865,48 +7967,8 @@ BOOL Thread::HandledJITCase(BOOL ForTaskSwitchIn)
             // we need to hijack the return address.  Base this on whether or not
             // the method returns an object reference, so we know whether to protect
             // it or not.
-            VOID *pvHijackAddr = OnHijackScalarTripThread;
-            if (esb.m_pFD)
-            {
-#ifdef _WIN64
-                // For simplicity, we don't hijack in funclets, but if you ever change that, 
-                // be sure to choose the OnHijack... callback type to match that of the FUNCLET
-                // not the main method (it would probably be Scalar).
-#endif // _WIN64
-
-                ENABLE_FORBID_GC_LOADER_USE_IN_THIS_SCOPE();
-                // Mark that we are performing a stackwalker like operation on the current thread.
-                // This is necessary to allow the signature parsing functions to work without triggering any loads
-                ClrFlsValueSwitch threadStackWalking(TlsIdx_StackWalkerWalkingThread, this);
-
-#ifdef _TARGET_X86_
-                MetaSig msig(esb.m_pFD);
-                if (msig.HasFPReturn())
-                {
-                    // Figuring out whether the function returns FP or not is hard to do
-                    // on-the-fly, so we use a different callback helper on x86 where this
-                    // piece of information is needed in order to perform the right save &
-                    // restore of the return value around the call to OnHijackScalarWorker.
-                    pvHijackAddr = OnHijackFloatingPointTripThread;
-                }
-                else
-#endif // _TARGET_X86_
-                {
-                    MethodTable* pMT = NULL;
-                    MetaSig::RETURNTYPE type = esb.m_pFD->ReturnsObject(INDEBUG_COMMA(false) &pMT);
-                    if (type == MetaSig::RETOBJ)
-                        pvHijackAddr = OnHijackObjectTripThread;
-                    else if (type == MetaSig::RETBYREF)
-                        pvHijackAddr = OnHijackInteriorPointerTripThread;
-#ifdef FEATURE_UNIX_AMD64_STRUCT_PASSING
-                    else if (type == MetaSig::RETVALUETYPE)
-                    {
-                        pThread->SetHijackReturnTypeClass(pMT->GetClass());
-                        pvHijackAddr = OnHijackStructInRegsTripThread;
-                    }
-#endif // FEATURE_UNIX_AMD64_STRUCT_PASSING
-                }
-            }
+            EECodeInfo codeInfo(ip);
+            VOID *pvHijackAddr = GetHijackAddr(this, &codeInfo);
 
 #ifdef FEATURE_ENABLE_GCPOLL
             // On platforms that support both hijacking and GC polling
@@ -7919,7 +7981,6 @@ BOOL Thread::HandledJITCase(BOOL ForTaskSwitchIn)
             {
                 HijackThread(pvHijackAddr, &esb);
             }
-
         }
     }
     // else it's not even a JIT case
@@ -8455,26 +8516,7 @@ void PALAPI HandleGCSuspensionForInterruptedThread(CONTEXT *interruptedContext)
         ClrFlsValueSwitch threadStackWalking(TlsIdx_StackWalkerWalkingThread, pThread);
 
         // Hijack the return address to point to the appropriate routine based on the method's return type.
-        void *pvHijackAddr = reinterpret_cast<void*>(OnHijackScalarTripThread);
-        MethodDesc *pMethodDesc = codeInfo.GetMethodDesc();
-        MethodTable* pMT = NULL;
-        MetaSig::RETURNTYPE type = pMethodDesc->ReturnsObject(INDEBUG_COMMA(false) &pMT);
-        if (type == MetaSig::RETOBJ)
-        {
-            pvHijackAddr = reinterpret_cast<void*>(OnHijackObjectTripThread);
-        }
-        else if (type == MetaSig::RETBYREF)
-        {
-            pvHijackAddr = reinterpret_cast<void*>(OnHijackInteriorPointerTripThread);
-        }
-#ifdef FEATURE_UNIX_AMD64_STRUCT_PASSING
-        else if (type == MetaSig::RETVALUETYPE)
-        {
-            pThread->SetHijackReturnTypeClass(pMT->GetClass());
-            pvHijackAddr = reinterpret_cast<void*>(OnHijackStructInRegsTripThread);
-        }
-#endif // FEATURE_UNIX_AMD64_STRUCT_PASSING
-
+        void *pvHijackAddr = GetHijackAddr(this, &codeInfo);
         pThread->HijackThread(pvHijackAddr, &executionState);
     }
 }
