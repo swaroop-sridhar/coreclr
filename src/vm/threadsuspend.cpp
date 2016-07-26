@@ -8516,7 +8516,7 @@ void PALAPI HandleGCSuspensionForInterruptedThread(CONTEXT *interruptedContext)
         ClrFlsValueSwitch threadStackWalking(TlsIdx_StackWalkerWalkingThread, pThread);
 
         // Hijack the return address to point to the appropriate routine based on the method's return type.
-        void *pvHijackAddr = GetHijackAddr(this, &codeInfo);
+        void *pvHijackAddr = GetHijackAddr(pThread, &codeInfo);
         pThread->HijackThread(pvHijackAddr, &executionState);
     }
 }

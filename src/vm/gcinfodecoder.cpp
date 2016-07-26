@@ -136,16 +136,14 @@ GcInfoDecoder::GcInfoDecoder(
     m_ReturnKind = 
         (ReturnKind)((UINT32)m_Reader.Read(returnKindBits));
 
-    flags = (GcInfoDecoderFlags)(flags & ~DECODE_RETURN_KIND);
-    if (flags == DECODE_NOTHING) {
+    if (flags == DECODE_RETURN_KIND) {
         // Bail, if we've decoded enough,
         return;
     }
 
     m_CodeLength = (UINT32) DENORMALIZE_CODE_LENGTH((UINT32) m_Reader.DecodeVarLengthUnsigned(CODE_LENGTH_ENCBASE));
 
-    flags = (GcInfoDecoderFlags)(flags & ~DECODE_CODE_LENGTH);
-    if (flags == DECODE_NOTHING) {
+    if (flags == DECODE_CODE_LENGTH) {
         // Bail, if we've decoded enough,
         return;
     }
@@ -177,8 +175,7 @@ GcInfoDecoder::GcInfoDecoder(
         m_ValidRangeStart = m_ValidRangeEnd = 0;
     }
 
-    flags = (GcInfoDecoderFlags)(flags & ~DECODE_PROLOG_LENGTH);
-    if (flags == DECODE_NOTHING) {
+    if (flags == DECODE_PROLOG_LENGTH) {
         // Bail, if we've decoded enough,
         return;
     }
@@ -193,8 +190,7 @@ GcInfoDecoder::GcInfoDecoder(
         m_SecurityObjectStackSlot = NO_SECURITY_OBJECT;
     }
 
-    flags = (GcInfoDecoderFlags)(flags & ~DECODE_SECURITY_OBJECT);
-    if (flags == DECODE_NOTHING) {
+    if (flags == DECODE_SECURITY_OBJECT) {
         // Bail, if we've decoded enough,
         return;
     }
@@ -209,8 +205,7 @@ GcInfoDecoder::GcInfoDecoder(
         m_GSCookieStackSlot        = NO_GS_COOKIE;
     }
 
-    flags = (GcInfoDecoderFlags)(flags & ~DECODE_GS_COOKIE);
-    if (flags == DECODE_NOTHING) {
+    if (flags == DECODE_GS_COOKIE) {
         // Bail, if we've decoded enough,
         return;
     }
@@ -226,8 +221,7 @@ GcInfoDecoder::GcInfoDecoder(
         m_PSPSymStackSlot              = NO_PSP_SYM;
     }
 
-    flags = (GcInfoDecoderFlags)(flags & ~DECODE_PSP_SYM);
-    if (flags == DECODE_NOTHING) {
+    if (flags == DECODE_PSP_SYM) {
         // Bail, if we've decoded enough,
         return;
     }
@@ -242,8 +236,7 @@ GcInfoDecoder::GcInfoDecoder(
         m_GenericsInstContextStackSlot = NO_GENERICS_INST_CONTEXT;
     }
 
-    flags = (GcInfoDecoderFlags)(flags & ~DECODE_GENERICS_INST_CONTEXT);
-    if (flags == DECODE_NOTHING) {
+    if (flags == DECODE_GENERICS_INST_CONTEXT) {
         // Bail, if we've decoded enough,
         return;
     }
@@ -360,7 +353,7 @@ bool GcInfoDecoder::HasMethodTableGenericsInstContext()
 //  a call-return offset with partially-interruptible GC info?
 bool GcInfoDecoder::IsSafePoint(UINT32 codeOffset)
 {
-    _ASSERTE(m_Flags == 0 && m_InstructionOffset == 0);
+    _ASSERTE(m_Flags == DECODE_EVERYTHING && m_InstructionOffset == 0);
     if(m_NumSafePoints == 0)
         return false;
 

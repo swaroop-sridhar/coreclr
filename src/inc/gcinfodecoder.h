@@ -161,7 +161,7 @@ enum ICodeManagerFlags
 
 enum GcInfoDecoderFlags
 {
-    DECODE_NOTHING               = 0x0,
+    DECODE_EVERYTHING            = 0x0,
     DECODE_SECURITY_OBJECT       = 0x01,    // stack location of security object
     DECODE_CODE_LENGTH           = 0x02,
     DECODE_VARARG                = 0x04,
@@ -433,7 +433,7 @@ public:
     // If you are not insterested in interruptibility or gc lifetime information, pass 0 as instructionOffset
     GcInfoDecoder(
             GCInfoToken gcInfoToken,
-            GcInfoDecoderFlags flags,
+            GcInfoDecoderFlags flags = DECODE_EVERYTHING,
             UINT32 instructionOffset = 0
             );
 

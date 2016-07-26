@@ -500,7 +500,7 @@ GcInfoEncoder::GcInfoEncoder(
 
 #ifndef _TARGET_X86_
     m_ReturnKind = RT_Unset;
-#endif _TARGET_X86_
+#endif // _TARGET_X86_
 
     m_CodeLength = 0;
 #ifdef FIXED_STACK_PARAMETER_SCRATCH_AREA
