@@ -81,7 +81,6 @@ bool GcInfoDecoder::SetIsInterruptibleCB (UINT32 startOffset, UINT32 stopOffset,
     return fStop;
 }
 
-
 GcInfoDecoder::GcInfoDecoder(
             GCInfoToken gcInfoToken,
             GcInfoDecoderFlags flags,

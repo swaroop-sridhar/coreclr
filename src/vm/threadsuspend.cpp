@@ -7819,9 +7819,10 @@ VOID * GetHijackAddrFromMethodTable(Thread *pThread, EECodeInfo *codeInfo)
 
 VOID * GetHijackAddrFromGcInfo(EECodeInfo *codeInfo)
 {
+#ifndef _TARGET_X86_  
     GCInfoToken gcInfoToken = codeInfo->GetGCInfoToken();
     if (gcInfoToken.IsReturnKindAvailable()) {
-        GcInfoDecoder gcInfoDecoder(gcInfoToken, DECODE_RETURN_KIND, 0);
+        GcInfoDecoder gcInfoDecoder(gcInfoToken, DECODE_RETURN_KIND);
         ReturnKind returnKind = gcInfoDecoder.GetReturnKind();
         switch (returnKind) {
         case RT_Scalar:
@@ -7851,7 +7852,7 @@ VOID * GetHijackAddrFromGcInfo(EECodeInfo *codeInfo)
 #endif // _TARGET_AMD64_ || _TARGET_ARM64_
         }
     }
-
+#endif // ! _TARGET_X86_
     return nullptr;
 }
 

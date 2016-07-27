@@ -324,6 +324,10 @@ typedef SimplerHashTable<const BitArray *, LiveStateFuncs, UINT32, GcInfoHashBeh
 // Pi = partially-interruptible; methods with zero fully-interruptible ranges
 GcInfoSize g_FiGcInfoSize;
 GcInfoSize g_PiGcInfoSize;
+// Number of methods with GcInfo that have SlimHeader
+GcInfoSize g_NumSlimHeaders;
+// Number of methods with GcInfo that have FatHeader
+GcInfoSize g_NumFatHeaders;
 
 GcInfoSize::GcInfoSize()
 {
@@ -2334,6 +2338,15 @@ lExitSuccess:;
     //-------------------------------------------------------------------
 
 #ifdef MEASURE_GCINFO
+    if (slimHeader)
+    {
+        g_NumSlimHeaders++;
+    }
+    else
+    {
+        g_NumFatHeaders++;
+    }
+
     m_CurrentMethodSize.NumMethods = 1;
 #ifdef PARTIALLY_INTERRUPTIBLE_GC_SUPPORTED
     m_CurrentMethodSize.NumCallSites = m_NumCallSites;

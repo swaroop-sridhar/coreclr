@@ -100,6 +100,8 @@
 
 #include "gcinfotypes.h"
 
+//#define MEASURE_GCINFO
+
 #ifdef MEASURE_GCINFO
 struct GcInfoSize
 {

@@ -180,7 +180,7 @@ struct GcStackSlot
 // 10    RT_ByRef
 // 11    RT_Float
 
-#elif defined(_TARGET_ARM)
+#elif defined(_TARGET_ARM_)
 
 // 00    RT_Scalar
 // 01    RT_Object
@@ -214,14 +214,14 @@ struct GcStackSlot
 #else
 #ifdef PORTABILITY_WARNING
 PORTABILITY_WARNING("Need ReturnKind for new Platform")
-#endif
-#endif // Target checks */
+#endif // PORTABILITY_WARNING
+#endif // Target checks 
 
 enum ReturnKind {
     RT_Scalar = 0,
     RT_Object = 1,
     RT_ByRef  = 2,
-#ifdef _TARGET_X86
+#ifdef _TARGET_X86_
     RT_Float  = 3,       // Encoding 3 means RT_Float on X86
 #else
     RT_Unset  = 3,       // RT_Unset on other platforms
