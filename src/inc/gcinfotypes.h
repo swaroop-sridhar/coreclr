@@ -46,7 +46,6 @@
 #define DISABLE_EH_VECTORS
 #endif
 
-
 #if defined(_TARGET_AMD64_) || defined(_TARGET_ARM_) || defined(_TARGET_ARM64_)
 #define FIXED_STACK_PARAMETER_SCRATCH_AREA
 #endif
@@ -204,12 +203,17 @@ struct GcStackSlot
 // 0011  RT_Unset
 // 0100  RT_Scalar_Obj
 // 0101  RT_Scalar_ByRef
-// 0110  RT_Obj_Scalar
-// 0111  RT_Obj_Obj
-// 1000  RT_Obj_ByRef
-// 1001  RT_ByRef_Scalar
-// 1010  RT_ByRef_Obj
-// 1011  RT_ByRef_ByRef
+// 0110  RT_Obj_Obj
+// 0111  RT_Obj_ByRef
+// 1000  RT_ByRef_Obj
+// 1001  RT_ByRef_ByRef
+
+// The following definitions are unnecessary, because 
+// the VM's behavior is the same as one of the above 
+// enumerations. 
+// RT_Scalar_Scalar is the Same as RT_Scalar
+// RT_Obj_Scalar    is the Same as RT_Object
+// RT_ByRef_Scalar  is the Same as RT_Byref
 
 #else
 #ifdef PORTABILITY_WARNING
@@ -228,12 +232,13 @@ enum ReturnKind {
 #endif // _TARGET_X86_
     RT_Scalar_Obj = 4,
     RT_Scalar_ByRef = 5,
-    RT_Obj_Scalar = 6,
-    RT_Obj_Obj = 7,
-    RT_Obj_ByRef = 8,
-    RT_ByRef_Scalar = 9,
-    RT_ByRef_Obj = 10,
-    RT_ByRef_ByRef = 11
+    RT_Obj_Obj = 6,
+    RT_Obj_ByRef = 7,
+    RT_ByRef_Obj = 8,
+    RT_ByRef_ByRef = 9,
+
+    RT_Illegal = 0xFF   // Illegal or uninitialized value, 
+                        // Not a valid encoding, never written to image.
 };
 
 inline const char *ReturnKindToString(ReturnKind returnKind)
@@ -249,14 +254,13 @@ inline const char *ReturnKindToString(ReturnKind returnKind)
 #endif // _TARGET_X86_
     case RT_Scalar_Obj:    return "{Scalar, Object}";
     case RT_Scalar_ByRef:  return "{Scalar, ByRef}";
-    case RT_Obj_Scalar:    return "{Object, Scalar}";
     case RT_Obj_Obj:       return "{Object, Object}";
     case RT_Obj_ByRef:     return "{Object, ByRef}";
-    case RT_ByRef_Scalar:  return "{ByRef, Scalar}";
     case RT_ByRef_Obj:     return "{ByRef, Object}";
     case RT_ByRef_ByRef:   return "{ByRef, ByRef}";
 
-    default: return "IllegalEnumeration";
+    case RT_Illegal:   return "<Illegal>";
+    default: return "!Impossible!";
     }
 }
 

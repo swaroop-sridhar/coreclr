@@ -3503,6 +3503,52 @@ public:
 
 #endif // DEBUG
 
+ReturnKind GCTypesToReturnKind(CorInfoGCType first, CorInfoGCType second)
+{
+    switch (first) {
+    case TYPE_GC_REF:
+        switch (second) {
+        case TYPE_GC_REF:
+            return RT_Obj_Obj;
+        case TYPE_GC_BYREF:
+            return RT_Obj_ByRef;
+        case TYPE_GC_NONE:
+            return RT_Object;  // {Object, Scalar} == object
+        default:
+            _ASSERTE(false);
+            return RT_Unset;
+        }
+    case TYPE_GC_BYREF:
+        switch (second) {
+        case TYPE_GC_REF:
+            return RT_ByRef_Obj;
+        case TYPE_GC_BYREF:
+            return RT_ByRef_ByRef;
+        case TYPE_GC_NONE:
+            return RT_ByRef; // {Byref, Scalar} == Byref
+        default:
+            _ASSERTE(false);
+            return RT_Unset;
+        }
+    case TYPE_GC_NONE:
+        switch (second) {
+        case TYPE_GC_REF:
+            return RT_Scalar_Obj;
+        case TYPE_GC_BYREF:
+            return RT_Scalar_ByRef;
+        case TYPE_GC_NONE:
+            return RT_Scalar; // {Scalar, Scalar} == Scalar
+        default:
+            _ASSERTE(false);
+            return RT_Unset;
+        }
+    default:
+        // Unhandled case
+        // TYP_GC_OTHER is unexpected
+        _ASSERTE(false);
+        return RT_Unset;
+    }
+}
 
 void                GCInfo::gcInfoBlockHdrSave(GcInfoEncoder* gcInfoEncoder,
     unsigned       methodSize,
@@ -3521,23 +3567,29 @@ void                GCInfo::gcInfoBlockHdrSave(GcInfoEncoder* gcInfoEncoder,
 
     ReturnKind returnKind = RT_Unset;
 
-    switch (compiler->info.compRetType) {
+    switch (compiler->info.compRetType) 
+    {
     case TYP_REF:
         returnKind = RT_Object;
         break;
     case TYP_BYREF:
         returnKind = RT_ByRef;
         break;
-
     case TYP_STRUCT:
-#ifdef FEATURE_UNIX_AMD64_STRUCT_PASSING
-        returnKind = RT_Unset;
-        // if (compiler->IsRegisterPassable(methInfo->args.retTypeClass)) {
-            // Handle this case... 
-        // }
+    {
+        CORINFO_CLASS_HANDLE structType = compiler->info.compMethodInfo->args.retTypeClass;
+        if (compiler->IsMultiRegReturnedType(structType))
+        {
+            CorInfoGCType gcPtrs[2] = { TYPE_GC_NONE, TYPE_GC_NONE };
+            compiler->info.compCompHnd->getClassGClayout(structType, (BYTE*)gcPtrs);
+            returnKind = GCTypesToReturnKind(gcPtrs[0], gcPtrs[1]);
+        }
+        else
+        {
+            returnKind = RT_Scalar;
+        }
         break;
-#endif
-        // fall through
+    }
     default:
         returnKind = RT_Scalar;
     }
