@@ -2238,12 +2238,7 @@ Thread::Thread()
 #endif
 
     m_pAllLoggedTypes = NULL;
-#ifdef FEATURE_UNIX_AMD64_STRUCT_PASSING
-    m_pHijackReturnTypeClass = NULL;
-#endif	
-#ifdef FEATURE_MULTIREG_RETURN
     m_HijackReturnKind = RT_Illegal;
-#endif
 }
 
 //--------------------------------------------------------------------

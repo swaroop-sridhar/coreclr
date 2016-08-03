@@ -780,10 +780,7 @@ void GcInfoEncoder::SetReversePInvokeFrameSlot(INT32 spOffset)
 
 void GcInfoEncoder::SetReturnKind(ReturnKind returnKind)
 {
-    _ASSERTE(returnKind != RT_Illegal);
-#ifndef _TARGET_X86_
-    _ASSERTE(returnKind != RT_Unset);
-#endif // ! _TARGET_X86_
+    _ASSERTE(IsValidReturnKind(returnKind));
 
     m_ReturnKind = returnKind;
 }
