@@ -631,7 +631,7 @@ enum ThreadpoolThreadType
 //
 // Public functions for taking control of a thread at a safe point
 //
-//      VOID OnHijackObjectTripThread() - we've hijacked a JIT object-ref return
+//      VOID OnHijackGCTripThread() - we've hijacked a JIT object-ref return
 //      VOID OnHijackScalarTripThread() - we've hijacked a JIT non-object ref return
 //
 //***************************************************************************
@@ -687,15 +687,8 @@ void InitThreadManager();
 
 #ifdef FEATURE_HIJACK
 
-EXTERN_C void __stdcall OnHijackObjectTripThread();                 // hijacked JIT code is returning an objectref
-EXTERN_C void __stdcall OnHijackInteriorPointerTripThread();        // hijacked JIT code is returning a byref
-EXTERN_C void __stdcall OnHijackScalarTripThread();                 // hijacked JIT code is returning a non-objectref, non-FP
-#ifdef FEATURE_UNIX_AMD64_STRUCT_PASSING
-EXTERN_C void __stdcall OnHijackStructInRegsTripThread();           // hijacked JIT code is returning a struct in registers, based on return types class handle
-#endif // FEATURE_UNIX_AMD64_STRUCT_PASSING
-#ifdef FEATURE_MULTIREG_RETURN
-EXTERN_C void __stdcall OnHijackRetKindTripThread();                // hijacked JIT code based on the ReturnKind specified
-#endif // FEATURE_MULTIREG_RETURN
+EXTERN_C void __stdcall OnHijackGCTripThread();                       // hijacked JIT code is a GC-pointer
+EXTERN_C void __stdcall OnHijackScalarTripThread();                 // hijacked JIT code is returning a non-GC, non-FP
 #ifdef _TARGET_X86_
 EXTERN_C void __stdcall OnHijackFloatingPointTripThread();          // hijacked JIT code is returning an FP value
 #endif // _TARGET_X86_
@@ -1032,18 +1025,7 @@ typedef DWORD (*AppropriateWaitFunc) (void *args, DWORD timeout, DWORD option);
 // once the corresponding HijackTripThread() assembly routines are defined.
 
 #ifdef FEATURE_HIJACK                                                    // Hijack function returning
-EXTERN_C void STDCALL OnHijackObjectWorker(HijackArgs * pArgs);          // ObjectReference
-EXTERN_C void STDCALL OnHijackInteriorPointerWorker(HijackArgs * pArgs); // InteriorPointer
-EXTERN_C void STDCALL OnHijackScalarWorker(HijackArgs * pArgs);          // Scalar
-#ifdef FEATURE_UNIX_AMD64_STRUCT_PASSING
-EXTERN_C void STDCALL OnHijackStructInRegsWorker(HijackArgs * pArgs); // Struct returned in two registers
-#endif // FEATURE_UNIX_AMD64_STRUCT_PASSING
-#ifdef FEATURE_MULTIREG_RETURN
-void OnHijackObject2Worker(HijackArgs * pArgs);                             // Struct: Two ObjectReferences
-void OnHijackInteriorPointer2Worker(HijackArgs * pArgs);                    // Struct: Two InteriorPointers
-void OnHijackObjectInteriorPointerWorker(HijackArgs * pArgs);               // Struct: One ObjectReference, One InteriorPointer
-EXTERN_C void STDCALL OnHijackRetKindWorker(HijackArgs * pArgs);
-#endif // FEATURE_MULTIREG_RETURN
+EXTERN_C void STDCALL OnHijackWorker(HijackArgs * pArgs);              
 #endif // FEATURE_HIJACK
 
 // This is the code we pass around for Thread.Interrupt, mainly for assertions
@@ -1091,18 +1073,7 @@ class Thread: public IUnknown
 #ifdef FEATURE_HIJACK
     // MapWin32FaultToCOMPlusException needs access to Thread::IsAddrOfRedirectFunc()
     friend DWORD MapWin32FaultToCOMPlusException(EXCEPTION_RECORD *pExceptionRecord);
-    friend void STDCALL OnHijackObjectWorker(HijackArgs *pArgs);
-    friend void STDCALL OnHijackInteriorPointerWorker(HijackArgs *pArgs);
-    friend void STDCALL OnHijackScalarWorker(HijackArgs *pArgs);
-#ifdef FEATURE_UNIX_AMD64_STRUCT_PASSING
-    friend void STDCALL OnHijackStructInRegsWorker(HijackArgs *pArgs);
-#endif // FEATURE_UNIX_AMD64_STRUCT_PASSING
-#ifdef FEATURE_MULTIREG_RETURN
-    friend void OnHijackObject2Worker(HijackArgs * pArgs);
-    friend void OnHijackInteriorPointer2Worker(HijackArgs * pArgs);
-    friend void OnHijackObjectInteriorPointerWorker(HijackArgs * pArgs);
-    friend void STDCALL OnHijackRetKindWorker(HijackArgs *pArgs);
-#endif // FEATURE_MULTIREG_RETURN
+    friend void STDCALL OnHijackWorker(HijackArgs * pArgs);
 #ifdef PLATFORM_UNIX
     friend void PALAPI HandleGCSuspensionForInterruptedThread(CONTEXT *interruptedContext);
 #endif // PLATFORM_UNIX
@@ -5605,39 +5576,18 @@ public:
         m_pAllLoggedTypes = pAllLoggedTypes;
     }
 
+#ifdef FEATURE_HIJACK
 private:
 
-    // For Multi-ref struct return, the gc-ptr information is available through:
-    // m_pHijackReturnTypeClass for GcInfo ver 1 (See OnHijackStructInRegsWorker)
-    // m_pHijackReturnKind for GcInfo ver 2 (See OnHijackRetKindWorker)
+    // By the time a frame is scanned by the runtime, m_pHijackReturnKind always 
+    // identifies the gc-ness of the return register(s)
+    // If the ReturnKind information is not available from the GcInfo, the runtime
+    // computes it using the return types's class handle.
 
-#ifdef FEATURE_UNIX_AMD64_STRUCT_PASSING
-    EEClass* m_pHijackReturnTypeClass;
-#endif // FEATURE_UNIX_AMD64_STRUCT_PASSING
-
-#ifdef FEATURE_MULTIREG_RETURN
     ReturnKind m_HijackReturnKind;
-#endif // FEATURE_MULTIREG_RETURN
 
 public:
 
-#ifdef FEATURE_UNIX_AMD64_STRUCT_PASSING
-    EEClass* GetHijackReturnTypeClass()
-    {
-        LIMITED_METHOD_CONTRACT;
-
-        return m_pHijackReturnTypeClass;
-    }
-
-    void SetHijackReturnTypeClass(EEClass* pClass)
-    {
-        LIMITED_METHOD_CONTRACT;
-
-        m_pHijackReturnTypeClass = pClass;
-    }
-#endif // FEATURE_UNIX_AMD64_STRUCT_PASSING
-
-#ifdef FEATURE_MULTIREG_RETURN
     ReturnKind GetHijackReturnKind()
     {
         LIMITED_METHOD_CONTRACT;
@@ -5651,7 +5601,7 @@ public:
 
         m_HijackReturnKind = returnKind;
     }
-#endif // FEATURE_MULTIREG_RETURN
+#endif // FEATURE_HIJACK
 };
 
 // End of class Thread

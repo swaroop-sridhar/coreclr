@@ -304,8 +304,8 @@ void ResumableFrame::UpdateRegDisplay(const PREGDISPLAY pRD)
     RETURN;
 }
 
-// The HijackFrame has to know the registers that are pushed by OnHijackObjectTripThread
-// and OnHijackScalarTripThread, so all three are implemented together.
+// The HijackFrame has to know the registers that are pushed by OnHijackGCTripThread
+//  and OnHijackScalarTripThread, so all three are implemented together.
 void HijackFrame::UpdateRegDisplay(const PREGDISPLAY pRD)
 {
     CONTRACTL {

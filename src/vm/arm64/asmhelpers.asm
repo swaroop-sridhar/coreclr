@@ -31,9 +31,7 @@
     IMPORT GetCurrentSavedRedirectContext
     IMPORT LinkFrameAndThrow
     IMPORT FixContextHandler
-    IMPORT OnHijackObjectWorker
-    IMPORT OnHijackInteriorPointerWorker
-    IMPORT OnHijackScalarWorker
+    IMPORT OnHijackWorker
 #ifdef FEATURE_READYTORUN
     IMPORT DynamicHelperWorker
 #endif
@@ -873,7 +871,7 @@ UM2MThunk_WrapperHelper_RegArgumentsSetup
 #ifdef FEATURE_HIJACK
 ; ------------------------------------------------------------------
 ; Hijack function for functions which return a reference type
-    NESTED_ENTRY OnHijackObjectTripThread
+    NESTED_ENTRY OnHijackGCTripThread
     PROLOG_SAVE_REG_PAIR   fp, lr, #-112!
     ; Spill callee saved registers 
     PROLOG_SAVE_REG_PAIR   x19, x20, #16
@@ -884,32 +882,7 @@ UM2MThunk_WrapperHelper_RegArgumentsSetup
 
     str x0, [sp, #96]
     mov x0, sp
-    bl OnHijackObjectWorker
-    ldr x0, [sp, #96]
-
-    EPILOG_RESTORE_REG_PAIR   x19, x20, #16
-    EPILOG_RESTORE_REG_PAIR   x21, x22, #32
-    EPILOG_RESTORE_REG_PAIR   x23, x24, #48
-    EPILOG_RESTORE_REG_PAIR   x25, x26, #64
-    EPILOG_RESTORE_REG_PAIR   x27, x28, #80
-    EPILOG_RESTORE_REG_PAIR   fp, lr,   #112!
-    EPILOG_RETURN
-    NESTED_END
-
-; ------------------------------------------------------------------
-; Hijack function for functions which return an interior pointer within an object allocated in managed heap
-    NESTED_ENTRY OnHijackInteriorPointerTripThread
-    PROLOG_SAVE_REG_PAIR   fp, lr, #-112!
-    ; Spill callee saved registers 
-    PROLOG_SAVE_REG_PAIR   x19, x20, #16
-    PROLOG_SAVE_REG_PAIR   x21, x22, #32
-    PROLOG_SAVE_REG_PAIR   x23, x24, #48
-    PROLOG_SAVE_REG_PAIR   x25, x26, #64
-    PROLOG_SAVE_REG_PAIR   x27, x28, #80
-
-    str x0, [sp, #96]
-    mov x0, sp
-    bl OnHijackInteriorPointerWorker
+    bl OnHijackWorker
     ldr x0, [sp, #96]
 
     EPILOG_RESTORE_REG_PAIR   x19, x20, #16
@@ -940,7 +913,7 @@ UM2MThunk_WrapperHelper_RegArgumentsSetup
     stp d2, d3, [sp, #128]
 
     mov x0, sp
-    bl OnHijackScalarWorker
+    bl OnHijackWorker
 	
     ; restore any integral return value(s)
     ldp x0, x1, [sp, #96]

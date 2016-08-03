@@ -6948,7 +6948,7 @@ void Thread::UnhijackThread()
         // Can't make the following assertion, because sometimes we unhijack after
         // the hijack has tripped (i.e. in the case we actually got some value from
         // it.
-//       _ASSERTE(*m_ppvHJRetAddrPtr == OnHijackObjectTripThread ||
+//       _ASSERTE(*m_ppvHJRetAddrPtr == OnHijackGCTripThread ||
 //                *m_ppvHJRetAddrPtr == OnHijackScalarTripThread);
 
         STRESS_LOG2(LF_SYNC, LL_INFO100, "Unhijacking return address 0x%p for thread %p\n", m_pvHJRetAddr, this);
@@ -7147,139 +7147,14 @@ HijackFrame::HijackFrame(LPVOID returnAddress, Thread *thread, HijackArgs *args)
     m_Thread->SetFrame(this);
 }
 
-// A hijacked method is returning an ObjectRef to its caller.  Note that we bash the
-// return address in HijackArgs.
-void STDCALL OnHijackObjectWorker(HijackArgs * pArgs)
+void STDCALL OnHijackWorker(HijackArgs * pArgs)
 {
-    CONTRACTL {
+    CONTRACTL{
         THROWS;
         GC_TRIGGERS;
         SO_TOLERANT;
     }
     CONTRACTL_END;
-
-    Thread         *thread = GetThread();
-
-#ifdef FEATURE_STACK_PROBE
-    if (GetEEPolicy()->GetActionOnFailure(FAIL_StackOverflow) == eRudeUnloadAppDomain)
-    {
-        RetailStackProbe(ADJUST_PROBE(DEFAULT_ENTRY_PROBE_AMOUNT), thread);
-    }
-#endif
-
-    CONTRACT_VIOLATION(SOToleranceViolation);
-#ifdef HIJACK_NONINTERRUPTIBLE_THREADS
-    OBJECTREF       oref(ObjectToOBJECTREF(*(Object **) &pArgs->ReturnValue));
-
-    FastInterlockAnd((ULONG *) &thread->m_State, ~Thread::TS_Hijacked);
-
-    // Fix up our caller's stack, so it can resume from the hijack correctly
-    pArgs->ReturnAddress = (size_t)thread->m_pvHJRetAddr;
-
-    // Build a frame so that stack crawling can proceed from here back to where
-    // we will resume execution.
-    FrameWithCookie<HijackFrame> frame((void *)pArgs->ReturnAddress, thread, pArgs);
-
-    GCPROTECT_BEGIN(oref)
-    {
-#ifdef _DEBUG
-        BOOL GCOnTransition = FALSE;
-        if (g_pConfig->FastGCStressLevel()) {
-            GCOnTransition = GC_ON_TRANSITIONS (FALSE);
-        }
-#endif
-
-#ifdef TIME_SUSPEND
-        g_SuspendStatistics.cntHijackTrap++;
-#endif
-
-        CommonTripThread();
-#ifdef _DEBUG
-        if (g_pConfig->FastGCStressLevel()) {
-            GC_ON_TRANSITIONS (GCOnTransition);
-        }
-#endif
-        *((OBJECTREF *) &pArgs->ReturnValue) = oref;
-    }
-    GCPROTECT_END();        // trashes oref here!
-
-    frame.Pop();
-#else
-    PORTABILITY_ASSERT("OnHijackObjectWorker not implemented on this platform.");
-#endif
-}
-
-// A hijacked method is returning an ObjectRef to its caller.  Note that we bash the
-// return address in HijackObjectArgs.
-void STDCALL OnHijackInteriorPointerWorker(HijackArgs * pArgs)
-{
-    CONTRACTL {
-        THROWS;
-        GC_TRIGGERS;
-        SO_TOLERANT;
-    } CONTRACTL_END;
-
-#ifdef HIJACK_NONINTERRUPTIBLE_THREADS
-    Thread         *thread = GetThread();
-    void* ptr = (void*)(pArgs->ReturnValue);
-
-#ifdef FEATURE_STACK_PROBE
-    if (GetEEPolicy()->GetActionOnFailure(FAIL_StackOverflow) == eRudeUnloadAppDomain)
-    {
-        RetailStackProbe(ADJUST_PROBE(DEFAULT_ENTRY_PROBE_AMOUNT), thread);
-    }
-#endif
-
-    CONTRACT_VIOLATION(SOToleranceViolation);
-
-    FastInterlockAnd((ULONG *) &thread->m_State, ~Thread::TS_Hijacked);
-
-    // Fix up our caller's stack, so it can resume from the hijack correctly
-    pArgs->ReturnAddress = (size_t)thread->m_pvHJRetAddr;
-
-    // Build a frame so that stack crawling can proceed from here back to where
-    // we will resume execution.
-    FrameWithCookie<HijackFrame> frame((void *)pArgs->ReturnAddress, thread, pArgs);
-
-    GCPROTECT_BEGININTERIOR(ptr)
-    {
-#ifdef _DEBUG
-        BOOL GCOnTransition = FALSE;
-        if (g_pConfig->FastGCStressLevel()) {
-            GCOnTransition = GC_ON_TRANSITIONS (FALSE);
-        }
-#endif
-
-#ifdef TIME_SUSPEND
-        g_SuspendStatistics.cntHijackTrap++;
-#endif
-
-        CommonTripThread();
-#ifdef _DEBUG
-        if (g_pConfig->FastGCStressLevel()) {
-            GC_ON_TRANSITIONS (GCOnTransition);
-        }
-#endif
-        *(size_t*)&pArgs->ReturnValue = (size_t)ptr;
-    }
-    GCPROTECT_END();        // trashes ptr here!
-
-    frame.Pop();
-#else
-    PORTABILITY_ASSERT("OnHijackInteriorPointerWorker not implemented on this platform.");
-#endif
-}
-
-// A hijacked method is returning a scalar to its caller.  Note that we bash the
-// return address as an int on the stack.  Since this is cdecl, our caller gets the
-// bashed value.  This is not intuitive for C programmers!
-void STDCALL OnHijackScalarWorker(HijackArgs * pArgs)
-{
-    CONTRACTL {
-        THROWS;
-        GC_TRIGGERS;
-        SO_TOLERANT;
-    } CONTRACTL_END;
 
 #ifdef HIJACK_NONINTERRUPTIBLE_THREADS
     Thread         *thread = GetThread();
@@ -7291,10 +7166,11 @@ void STDCALL OnHijackScalarWorker(HijackArgs * pArgs)
         // probe for our entry point amount and throw if not enough stack
         RetailStackProbe(ADJUST_PROBE(DEFAULT_ENTRY_PROBE_AMOUNT), thread);
     }
-#endif
+#endif // FEATURE_STACK_PROBE
 
     CONTRACT_VIOLATION(SOToleranceViolation);
-    FastInterlockAnd((ULONG *) &thread->m_State, ~Thread::TS_Hijacked);
+
+    thread->ResetThreadState(Thread::TS_Hijacked);
 
     // Fix up our caller's stack, so it can resume from the hijack correctly
     pArgs->ReturnAddress = (size_t)thread->m_pvHJRetAddr;
@@ -7306,382 +7182,29 @@ void STDCALL OnHijackScalarWorker(HijackArgs * pArgs)
 #ifdef _DEBUG
     BOOL GCOnTransition = FALSE;
     if (g_pConfig->FastGCStressLevel()) {
-        GCOnTransition = GC_ON_TRANSITIONS (FALSE);
+        GCOnTransition = GC_ON_TRANSITIONS(FALSE);
     }
-#endif
+#endif // _DEBUG
 
 #ifdef TIME_SUSPEND
     g_SuspendStatistics.cntHijackTrap++;
-#endif
+#endif // TIME_SUSPEND
 
     CommonTripThread();
+
 #ifdef _DEBUG
     if (g_pConfig->FastGCStressLevel()) {
-        GC_ON_TRANSITIONS (GCOnTransition);
+        GC_ON_TRANSITIONS(GCOnTransition);
     }
-#endif
+#endif // _DEBUG
 
     frame.Pop();
 #else
-    PORTABILITY_ASSERT("OnHijackScalarWorker not implemented on this platform.");
-#endif
+    PORTABILITY_ASSERT("OnHijackWorker not implemented on this platform.");
+#endif // HIJACK_NONINTERRUPTIBLE_THREADS
 }
 
-#ifdef FEATURE_UNIX_AMD64_STRUCT_PASSING
-// A hijacked method is returning a struct in registers to its caller.
-// The struct can possibly contain object references that we have to
-// protect.
-void STDCALL OnHijackStructInRegsWorker(HijackArgs * pArgs)
-{
-    CONTRACTL {
-        THROWS;
-        GC_TRIGGERS;
-        SO_TOLERANT;
-    } CONTRACTL_END;
-
-#ifdef HIJACK_NONINTERRUPTIBLE_THREADS
-    Thread         *thread = GetThread();
-
-    EEClass* eeClass = thread->GetHijackReturnTypeClass();
-
-    OBJECTREF oref[CLR_SYSTEMV_MAX_EIGHTBYTES_COUNT_TO_PASS_IN_REGISTERS];
-    int orefCount = 0;
-    for (int i = 0; i < eeClass->GetNumberEightBytes(); i++)
-    {
-        if ((eeClass->GetEightByteClassification(i) == SystemVClassificationTypeIntegerReference) ||
-            (eeClass->GetEightByteClassification(i) == SystemVClassificationTypeIntegerByRef))
-        {
-            oref[orefCount++] = ObjectToOBJECTREF(*(Object **) &pArgs->ReturnValue[i]);
-        }
-    }
-
-#ifdef FEATURE_STACK_PROBE
-    if (GetEEPolicy()->GetActionOnFailure(FAIL_StackOverflow) == eRudeUnloadAppDomain)
-    {
-        RetailStackProbe(ADJUST_PROBE(DEFAULT_ENTRY_PROBE_AMOUNT), thread);
-    }
-#endif
-
-    CONTRACT_VIOLATION(SOToleranceViolation);
-
-    thread->ResetThreadState(Thread::TS_Hijacked);
-
-    // Fix up our caller's stack, so it can resume from the hijack correctly
-    pArgs->ReturnAddress = (size_t)thread->m_pvHJRetAddr;
-
-    // Build a frame so that stack crawling can proceed from here back to where
-    // we will resume execution.
-    FrameWithCookie<HijackFrame> frame((void *)pArgs->ReturnAddress, thread, pArgs);
-
-    GCPROTECT_ARRAY_BEGIN(oref[0], orefCount)
-    {
-#ifdef _DEBUG
-        BOOL GCOnTransition = FALSE;
-        if (g_pConfig->FastGCStressLevel()) {
-            GCOnTransition = GC_ON_TRANSITIONS (FALSE);
-        }
-#endif
-
-#ifdef TIME_SUSPEND
-        g_SuspendStatistics.cntHijackTrap++;
-#endif
-
-        CommonTripThread();
-#ifdef _DEBUG
-        if (g_pConfig->FastGCStressLevel()) {
-            GC_ON_TRANSITIONS (GCOnTransition);
-        }
-#endif
-
-        // Update the references in the returned struct
-        orefCount = 0;
-        for (int i = 0; i < eeClass->GetNumberEightBytes(); i++)
-        {
-            if ((eeClass->GetEightByteClassification(i) == SystemVClassificationTypeIntegerReference) ||
-                (eeClass->GetEightByteClassification(i) == SystemVClassificationTypeIntegerByRef))
-            {
-                *((OBJECTREF *) &pArgs->ReturnValue[i]) = oref[orefCount++];
-            }
-        }
-    }
-    GCPROTECT_END();
-
-    frame.Pop();
-#else
-    PORTABILITY_ASSERT("OnHijackInteriorPointerWorker not implemented on this platform.");
-#endif
-}
-
-#endif //FEATURE_UNIX_AMD64_STRUCT_PASSING
-
-#ifdef FEATURE_MULTIREG_RETURN
-
-void OnHijackObject2Worker(HijackArgs * pArgs)
-{
-    CONTRACTL{
-        THROWS;
-    GC_TRIGGERS;
-    SO_TOLERANT;
-    } CONTRACTL_END;
-
-#ifdef HIJACK_NONINTERRUPTIBLE_THREADS
-    Thread         *thread = GetThread();
-
-    OBJECTREF oref[2] = {
-        ObjectToOBJECTREF(*(Object **)&pArgs->ReturnValue[0]),
-        ObjectToOBJECTREF(*(Object **)&pArgs->ReturnValue[1]) };
-
-#ifdef FEATURE_STACK_PROBE
-    if (GetEEPolicy()->GetActionOnFailure(FAIL_StackOverflow) == eRudeUnloadAppDomain)
-    {
-        RetailStackProbe(ADJUST_PROBE(DEFAULT_ENTRY_PROBE_AMOUNT), thread);
-    }
-#endif // FEATURE_STACK_PROBE
-
-    CONTRACT_VIOLATION(SOToleranceViolation);
-
-    thread->ResetThreadState(Thread::TS_Hijacked);
-
-    // Fix up our caller's stack, so it can resume from the hijack correctly
-    pArgs->ReturnAddress = (size_t)thread->m_pvHJRetAddr;
-
-    // Build a frame so that stack crawling can proceed from here back to where
-    // we will resume execution.
-    FrameWithCookie<HijackFrame> frame((void *)pArgs->ReturnAddress, thread, pArgs);
-
-    GCPROTECT_ARRAY_BEGIN(oref[0], 2)
-    {
-#ifdef _DEBUG
-        BOOL GCOnTransition = FALSE;
-        if (g_pConfig->FastGCStressLevel()) {
-            GCOnTransition = GC_ON_TRANSITIONS(FALSE);
-        }
-#endif // _DEBUG
-
-#ifdef TIME_SUSPEND
-        g_SuspendStatistics.cntHijackTrap++;
-#endif // TIME_SUSPEND
-
-        CommonTripThread();
-#ifdef _DEBUG
-        if (g_pConfig->FastGCStressLevel()) {
-            GC_ON_TRANSITIONS(GCOnTransition);
-        }
-#endif // _DEBUG
-
-        // Update the references in the returned struct
-        *((OBJECTREF *)&pArgs->ReturnValue[0]) = oref[0];
-        *((OBJECTREF *)&pArgs->ReturnValue[1]) = oref[1];
-    }
-    GCPROTECT_END();
-
-    frame.Pop();
-#else 
-    PORTABILITY_ASSERT("OnHijackObject2Worker not implemented on this platform.");
-#endif //  HIJACK_NONINTERRUPTIBLE_THREADS
-}
-
-void OnHijackInteriorPointer2Worker(HijackArgs * pArgs)
-{
-    CONTRACTL{
-        THROWS;
-    GC_TRIGGERS;
-    SO_TOLERANT;
-    } CONTRACTL_END;
-
-#ifdef HIJACK_NONINTERRUPTIBLE_THREADS
-    Thread         *thread = GetThread();
-
-    void* ptr[2] = { (void*)pArgs->ReturnValue[0], (void*)pArgs->ReturnValue[1] };
-
-#ifdef FEATURE_STACK_PROBE
-    if (GetEEPolicy()->GetActionOnFailure(FAIL_StackOverflow) == eRudeUnloadAppDomain)
-    {
-        RetailStackProbe(ADJUST_PROBE(DEFAULT_ENTRY_PROBE_AMOUNT), thread);
-    }
-#endif // FEATURE_STACK_PROBE
-
-    CONTRACT_VIOLATION(SOToleranceViolation);
-
-    thread->ResetThreadState(Thread::TS_Hijacked);
-
-    // Fix up our caller's stack, so it can resume from the hijack correctly
-    pArgs->ReturnAddress = (size_t)thread->m_pvHJRetAddr;
-
-    // Build a frame so that stack crawling can proceed from here back to where
-    // we will resume execution.
-    FrameWithCookie<HijackFrame> frame((void *)pArgs->ReturnAddress, thread, pArgs);
-
-    GCPROTECT_BEGININTERIOR_ARRAY(ptr[0], 2)
-    {
-#ifdef _DEBUG
-        BOOL GCOnTransition = FALSE;
-        if (g_pConfig->FastGCStressLevel()) {
-            GCOnTransition = GC_ON_TRANSITIONS(FALSE);
-        }
-#endif // _DEBUG
-
-#ifdef TIME_SUSPEND
-        g_SuspendStatistics.cntHijackTrap++;
-#endif // TIME_SUSPEND
-
-        CommonTripThread();
-#ifdef _DEBUG
-        if (g_pConfig->FastGCStressLevel()) {
-            GC_ON_TRANSITIONS(GCOnTransition);
-        }
-#endif // _DEBUG
-
-        // Update the references in the returned struct
-        *(size_t*)&pArgs->ReturnValue[0] = (size_t)ptr[0];
-        *(size_t*)&pArgs->ReturnValue[1] = (size_t)ptr[1];
-    }
-    GCPROTECT_END(); // trashes ptrs here!
-
-    frame.Pop();
-#else
-    PORTABILITY_ASSERT("OnHijackInteriorPointer2Worker not implemented on this platform.");
-#endif  // HIJACK_NONINTERRUPTIBLE_THREADS
-}
-
-void OnHijackObjectInteriorPointerWorker(HijackArgs * pArgs)
-{
-    CONTRACTL{
-        THROWS;
-    GC_TRIGGERS;
-    SO_TOLERANT;
-    } CONTRACTL_END;
-
-#ifdef HIJACK_NONINTERRUPTIBLE_THREADS
-    Thread         *thread = GetThread();
-
-    OBJECTREF       oref(ObjectToOBJECTREF(*(Object **)&pArgs->ReturnValue[0]));
-    void* ptr = (void*)(pArgs->ReturnValue[1]);
-
-#ifdef FEATURE_STACK_PROBE
-    if (GetEEPolicy()->GetActionOnFailure(FAIL_StackOverflow) == eRudeUnloadAppDomain)
-    {
-        RetailStackProbe(ADJUST_PROBE(DEFAULT_ENTRY_PROBE_AMOUNT), thread);
-    }
-#endif // FEATURE_STACK_PROBE
-
-    CONTRACT_VIOLATION(SOToleranceViolation);
-
-    thread->ResetThreadState(Thread::TS_Hijacked);
-
-    // Fix up our caller's stack, so it can resume from the hijack correctly
-    pArgs->ReturnAddress = (size_t)thread->m_pvHJRetAddr;
-
-    // Build a frame so that stack crawling can proceed from here back to where
-    // we will resume execution.
-    FrameWithCookie<HijackFrame> frame((void *)pArgs->ReturnAddress, thread, pArgs);
-
-    GCPROTECT_BEGIN(oref)
-    GCPROTECT_BEGININTERIOR(ptr)
-    {
-#ifdef _DEBUG
-        BOOL GCOnTransition = FALSE;
-        if (g_pConfig->FastGCStressLevel()) {
-            GCOnTransition = GC_ON_TRANSITIONS(FALSE);
-        }
-#endif // _DEBUG
-
-#ifdef TIME_SUSPEND
-        g_SuspendStatistics.cntHijackTrap++;
-#endif // TIME_SUSPEND
-
-        CommonTripThread();
-#ifdef _DEBUG
-        if (g_pConfig->FastGCStressLevel()) {
-            GC_ON_TRANSITIONS(GCOnTransition);
-        }
-#endif // _DEBUG
-
-        // Update the references in the returned struct
-        *((OBJECTREF *)&pArgs->ReturnValue[0]) = oref;
-        *(size_t*)&pArgs->ReturnValue[1] = (size_t)ptr;
-    }
-    GCPROTECT_END();        // trashes ptr here!
-    GCPROTECT_END();        // trashes oref here!
-
-    frame.Pop();
-#else
-    PORTABILITY_ASSERT("OnHijackObjectInteriorPointerWorker not implemented on this platform.");
-#endif //  HIJACK_NONINTERRUPTIBLE_THREADS
-}
-
-inline void SwapReturnRegisters(HijackArgs * pArgs)
-{
-    size_t swap = pArgs->ReturnValue[0];
-    pArgs->ReturnValue[0] = pArgs->ReturnValue[1];
-    pArgs->ReturnValue[1] = swap;
-}
-
-void STDCALL OnHijackRetKindWorker(HijackArgs * pArgs)
-{
-    CONTRACTL{
-        THROWS;
-    GC_TRIGGERS;
-    SO_TOLERANT;
-    } CONTRACTL_END;
-
-    Thread         *thread = GetThread();
-    ReturnKind returnKind = thread->GetHijackReturnKind();
-
-    switch (returnKind)
-    {
-    case RT_Scalar:
-        OnHijackScalarWorker(pArgs);
-        break;
-
-    case RT_Object:
-        OnHijackObjectWorker(pArgs);
-        break;
-
-    case RT_ByRef:
-        OnHijackInteriorPointerWorker(pArgs);
-        break;
- 
-    //   RT_firstReg_secondReg
-    case RT_Scalar_Obj:
-        SwapReturnRegisters(pArgs);
-        OnHijackObjectWorker(pArgs);
-        SwapReturnRegisters(pArgs);
-        break;
-
-    case RT_Scalar_ByRef:  
-        SwapReturnRegisters(pArgs);
-        OnHijackInteriorPointerWorker(pArgs);
-        SwapReturnRegisters(pArgs);
-        break;
-
-    case RT_Obj_Obj:
-        OnHijackObject2Worker(pArgs);
-        break;
-
-    case RT_ByRef_ByRef:
-        OnHijackInteriorPointer2Worker(pArgs);
-        break;
-
-    case RT_Obj_ByRef:
-        OnHijackObjectInteriorPointerWorker(pArgs);
-        break;
-
-    case RT_ByRef_Obj:
-        SwapReturnRegisters(pArgs);
-        OnHijackObjectInteriorPointerWorker(pArgs);
-        SwapReturnRegisters(pArgs);
-        break;
-
-    default:
-        _ASSERTE(false); // Unexpected case
-        break;
-    }
-}
-
-#endif // FEATURE_MULTIREG_RETURN
-
-VOID * GetHijackAddrFromMethodTable(Thread *pThread, EECodeInfo *codeInfo)
+ReturnKind GetReturnKindFromMethodTable(Thread *pThread, EECodeInfo *codeInfo)
 {
 #ifdef _WIN64
     // For simplicity, we don't hijack in funclets, but if you ever change that, 
@@ -7695,10 +7218,7 @@ VOID * GetHijackAddrFromMethodTable(Thread *pThread, EECodeInfo *codeInfo)
     ClrFlsValueSwitch threadStackWalking(TlsIdx_StackWalkerWalkingThread, pThread);
 
     MethodDesc *methodDesc = codeInfo->GetMethodDesc();
-
-    if (methodDesc == nullptr) {
-        return OnHijackScalarTripThread;
-    }
+    _ASSERTE(methodDesc != nullptr);
 
 #ifdef _TARGET_X86_
     MetaSig msig(methodDesc);
@@ -7708,27 +7228,52 @@ VOID * GetHijackAddrFromMethodTable(Thread *pThread, EECodeInfo *codeInfo)
         // on-the-fly, so we use a different callback helper on x86 where this
         // piece of information is needed in order to perform the right save &
         // restore of the return value around the call to OnHijackScalarWorker.
-        return OnHijackFloatingPointTripThread;
+        return RT_Float;
     }
 #endif // _TARGET_X86_
+
     MethodTable* pMT = NULL;
     MetaSig::RETURNTYPE type = methodDesc->ReturnsObject(INDEBUG_COMMA(false) &pMT);
     if (type == MetaSig::RETOBJ)
-        return OnHijackObjectTripThread;
-    else if (type == MetaSig::RETBYREF)
-        return OnHijackInteriorPointerTripThread;
-#ifdef FEATURE_UNIX_AMD64_STRUCT_PASSING
-    else if (type == MetaSig::RETVALUETYPE)
     {
-        pThread->SetHijackReturnTypeClass(pMT->GetClass());
-        return OnHijackStructInRegsTripThread;
+        return RT_Object;
+    }
+
+    if (type == MetaSig::RETBYREF)
+    {
+        return RT_ByRef;
+    }
+
+#ifdef FEATURE_UNIX_AMD64_STRUCT_PASSING
+    if (type == MetaSig::RETVALUETYPE)
+    {
+        EEClass *eeClass = pMT->GetClass();
+        ReturnKind regKinds[2] = { RT_Unset, RT_Unset };
+        int orefCount = 0;
+        for (int i = 0; i < 2; i++)
+        {
+            if (eeClass->GetEightByteClassification(i) == SystemVClassificationTypeIntegerReference)
+            {
+                regKinds[i] = RT_Object;
+            }
+            else if (eeClass->GetEightByteClassification(i) == SystemVClassificationTypeIntegerByRef)
+            {
+                regKinds[i] = RT_ByRef;
+            }
+            else
+            {
+                regKinds[i] = RT_Scalar;
+            }
+        }
+        ReturnKind structReturnKind = GetStructReturnKind(regKinds[0], regKinds[1]);
+        return structReturnKind;
     }
 #endif // FEATURE_UNIX_AMD64_STRUCT_PASSING
 
-    return OnHijackScalarTripThread;
+    return RT_Scalar;
 }
 
-VOID * GetHijackAddrFromGcInfo(Thread *pThread, EECodeInfo *codeInfo)
+ReturnKind GetReturnKind(Thread *pThread, EECodeInfo *codeInfo)
 {
     ReturnKind returnKind = RT_Illegal;
 
@@ -7736,90 +7281,44 @@ VOID * GetHijackAddrFromGcInfo(Thread *pThread, EECodeInfo *codeInfo)
     // X86 GCInfo updates yet to be implemented.
 #else
     GCInfoToken gcInfoToken = codeInfo->GetGCInfoToken();
-    if (gcInfoToken.IsReturnKindAvailable()) {
+    if (gcInfoToken.IsReturnKindAvailable()) 
+    {
         GcInfoDecoder gcInfoDecoder(gcInfoToken, DECODE_RETURN_KIND);
         ReturnKind returnKind = gcInfoDecoder.GetReturnKind();
-        _ASSERTE(returnKind != RT_Illegal);
     }
 #endif // _TARGET_X86_
 
-    // Actually, OnHijackRetKindTripThread()/OnHijackRetKindWorker() 
-    // can handle all cases if HijackReturnKind is set.
-    // However, since different TripThread() routines are already 
-    // available for Scalar/Object/Interior pointer, we use them directly.
-
-    switch (returnKind) {
-    case RT_Scalar:
-        return OnHijackScalarTripThread;
-
-    case RT_Object:
-        return OnHijackObjectTripThread;
-
-    case RT_ByRef:
-        return OnHijackInteriorPointerTripThread;
-
-    case RT_Scalar_Obj:
-    case RT_Scalar_ByRef:
-    case RT_Obj_Obj:
-    case RT_Obj_ByRef:
-    case RT_ByRef_Obj:
-    case RT_ByRef_ByRef:
-
-#ifdef FEATURE_MULTIREG_RETURN
-        pThread->SetHijackReturnKind(returnKind);
-        return OnHijackRetKindTripThread;
-#else
-        _ASSERTE(false); // Unexpected case of StructReturn
-#endif
-        return nullptr;
-
-#ifdef _TARGET_X86_
-    case RT_Float:
-        return OnHijackFloatingPointTripThread;
-#else
-    case RT_Unset:
-        return nullptr;
-#endif // _TARGET_X86_
-
-    case RT_Illegal:
-    default:
-        return nullptr;
+    if (!IsValidReturnKind(returnKind))
+    {
+        returnKind = GetReturnKindFromMethodTable(pThread, codeInfo);
     }
+    else
+    {
+        _ASSERTE(returnKind == GetReturnKindFromMethodTable(pThread, codeInfo));
+    }
+
+    _ASSERTE(IsValidReturnKind(returnKind));
+    return returnKind;
 }
 
 VOID * GetHijackAddr(Thread *pThread, EECodeInfo *codeInfo)
 {
-    VOID* addrFromGcInfo = GetHijackAddrFromGcInfo(pThread, codeInfo);
+    ReturnKind returnKind = GetReturnKind(pThread, codeInfo);
+    pThread->SetHijackReturnKind(returnKind);
 
-    if (addrFromGcInfo != nullptr) {
+#ifdef _TARGET_X86_
+    if (returnKind == RT_Float)
+    {
+        return OnHijackFloatingPointTripThread;
+    }
+#endif // _TARGET_X86_
 
-#ifdef _DEBUG
-        // Check that the Hijack routines obtained from GcInfo and MethodTable
-        // are the same.
-        VOID* addrFromMT = GetHijackAddrFromMethodTable(pThread, codeInfo);
-#if defined(FEATURE_UNIX_AMD64_STRUCT_PASSING) && defined(FEATURE_MULTIREG_RETURN)
-        // Some of the cases like {Object, Scalar} are hijacked directly via 
-        // OnHijackObjectTripThread based on GcInfo, but could be 
-        // OnHijackStructInRegsTripThread based on the signature.
-        _ASSERTE((addrFromGcInfo == addrFromMT) ||
-            (addrFromMT == OnHijackStructInRegsTripThread));
-
-        // addrFromGcInfo == OnHijackRetKindTripThread implies
-        // addrFromMT == OnHijackStructInRegsTripThread
-        _ASSERTE((addrFromGcInfo != OnHijackRetKindTripThread) ||
-            (addrFromMT == OnHijackStructInRegsTripThread));
-#else
-        // Scalar, Object, Byref cases should be the same when returning in a single register
-        _ASSERTE(addrFromGcInfo == addrFromMT);
-#endif // MULTIREG_RETURN cases
-#endif // !_DEBUG
-
-        return addrFromGcInfo;
+    if (returnKind == RT_Scalar)
+    {
+        return OnHijackScalarTripThread;
     }
 
-    VOID* addrFromMT = GetHijackAddrFromMethodTable(pThread, codeInfo);
-    _ASSERTE(addrFromMT != nullptr);
-    return addrFromMT;
+    return OnHijackGCTripThread;
 }
 
 #ifndef PLATFORM_UNIX

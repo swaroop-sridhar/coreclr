@@ -440,7 +440,7 @@ size_t      GCDump::DumpGCTable(PTR_CBYTE      gcInfoBlock,
 #endif
 
     ReturnKind returnKind = hdrdecoder.GetReturnKind();
-    gcPrintf("Code size: %s\n", ReturnKindToString(returnKind));
+    gcPrintf("Return Kind: %s\n", ReturnKindToString(returnKind));
 
     UINT32 cbEncodedMethodSize = hdrdecoder.GetCodeLength();
     gcPrintf("Code size: %x\n", cbEncodedMethodSize);

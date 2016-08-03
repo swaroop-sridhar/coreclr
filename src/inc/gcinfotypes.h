@@ -264,12 +264,56 @@ enum ReturnKind {
     RT_Illegal = 0xFF
 };
 
-inline ReturnKind GetStructReturnKind(ReturnKind firstReg, ReturnKind secondReg)
+// Identify ReturnKinds containing useful information
+inline bool IsValidReturnKind(ReturnKind returnKind)
 {
-    _ASSERTE(firstReg  == RT_Scalar || firstReg  == RT_Object || firstReg  == RT_ByRef);
-    _ASSERTE(secondReg == RT_Scalar || secondReg == RT_Object || secondReg == RT_ByRef);
+    return (returnKind != RT_Illegal)
+#ifndef _TARGET_X86_
+        && (returnKind != RT_Unset)
+#endif // _TARGET_X86_
+        ;
+}
 
-    return (ReturnKind) (secondReg << 2 | firstReg);
+// Identify ReturnKinds that can be a part of a multi-reg struct return
+inline bool IsValidFieldReturnKind(ReturnKind returnKind)
+{
+    return (returnKind == RT_Scalar || returnKind == RT_Object || returnKind == RT_ByRef);
+}
+
+inline bool IsValidReturnRegister(size_t regNo)
+{
+    return (regNo == 0)
+#ifdef FEATURE_MULTIREG_RETURN
+        || (regNo == 1)
+#endif // FEATURE_MULTIREG_RETURN
+        ;
+}
+
+// Helpers for combining/extracting individual ReturnKinds from/to Struct ReturnKinds.
+// Encoding is two bits per register
+
+inline ReturnKind GetStructReturnKind(ReturnKind reg0, ReturnKind reg1)
+{
+    _ASSERTE(IsValidFieldReturnKind(reg0) && IsValidFieldReturnKind(reg1));
+
+    ReturnKind structReturnKind = (ReturnKind)(reg1 << 2 | reg0);
+
+    _ASSERTE(IsValidReturnKind(structReturnKind));
+
+    return structReturnKind;
+}
+
+inline ReturnKind ExtractRegReturnKind(ReturnKind returnKind, size_t regNo)
+{
+    _ASSERTE(IsValidReturnKind(returnKind));
+    _ASSERTE(IsValidReturnRegister(regNo));
+
+    ReturnKind regReturnKind = (ReturnKind)((returnKind >> (regNo * 2)) & 3);
+
+    _ASSERTE(IsValidReturnKind(regReturnKind));
+    _ASSERTE((regNo == 0) || IsValidFieldReturnKind(regReturnKind));
+
+    return regReturnKind;
 }
 
 inline const char *ReturnKindToString(ReturnKind returnKind)

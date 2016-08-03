@@ -68,6 +68,13 @@ struct GCInfoToken
     {
         return (Version >= MIN_GCINFO_VERSION_WITH_REV_PINVOKE_FRAME);
     }
+
+    static UINT32 ReadyToRunVersionToGcInfoVersion(UINT32 readyToRunMajorVersion)
+    {
+        // GcInfo version is 1 up to ReadyTorun version 1.x
+        // GcInfo version is current from  ReadyToRun version 2.0
+        return (readyToRunMajorVersion == 1) ? 1 : GCINFO_VERSION;
+    }
 };
 
 /*****************************************************************************/

@@ -3512,8 +3512,7 @@ ReturnKind GCTypeToReturnKind(CorInfoGCType gcType)
     case TYPE_GC_REF:   return RT_Object;  
     case TYPE_GC_BYREF: return RT_ByRef; 
     default: 
-        // Unhandled case, // TYP_GC_OTHER is unexpected
-        _ASSERTE(false);
+        _ASSERTE(!"TYP_GC_OTHER is unexpected");
         return RT_Illegal;
     }
 }

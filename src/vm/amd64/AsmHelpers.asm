@@ -23,9 +23,7 @@ extern ThePreStub:proc
 extern  ProfileEnter:proc
 extern  ProfileLeave:proc
 extern  ProfileTailcall:proc
-extern OnHijackObjectWorker:proc
-extern OnHijackInteriorPointerWorker:proc
-extern OnHijackScalarWorker:proc
+extern OnHijackWorker:proc
 extern JIT_RareDisableHelperWorker:proc
 
 ifdef _DEBUG
@@ -432,8 +430,8 @@ endif ; _DEBUG
 
 ; A JITted method's return address was hijacked to return to us here.  
 ;
-;VOID __stdcall OnHijackObjectTripThread();
-NESTED_ENTRY OnHijackObjectTripThread, _TEXT 
+;VOID __stdcall OnHijackGCTripThread();
+NESTED_ENTRY OnHijackGCTripThread, _TEXT 
 
         ; Don't fiddle with this unless you change HijackFrame::UpdateRegDisplay
         ; and HijackObjectArgs
@@ -446,36 +444,14 @@ NESTED_ENTRY OnHijackObjectTripThread, _TEXT
 
         END_PROLOGUE
     
-        call                OnHijackObjectWorker
+        call                OnHijackWorker
 
         add                 rsp, 20h
         pop                 rax
         POP_CALLEE_SAVED_REGISTERS
         ret                 ; return to the correct place, adjusted by our caller
-NESTED_END OnHijackObjectTripThread, _TEXT
+NESTED_END OnHijackGCTripThread, _TEXT
 
-
-; VOID OnHijackInteriorPointerTripThread()
-NESTED_ENTRY OnHijackInteriorPointerTripThread, _TEXT
-
-        ; Don't fiddle with this unless you change HijackFrame::UpdateRegDisplay
-        ; and HijackObjectArgs
-        push                rax ; make room for the real return address (Rip)
-        PUSH_CALLEE_SAVED_REGISTERS
-        push_vol_reg        rax
-        mov                 rcx, rsp
-
-        alloc_stack         20h
-
-        END_PROLOGUE
-    
-        call                OnHijackInteriorPointerWorker
-
-        add                 rsp, 20h
-        pop                 rax
-        POP_CALLEE_SAVED_REGISTERS
-        ret                 ; return to the correct place, adjusted by our caller
-NESTED_END OnHijackInteriorPointerTripThread, _TEXT
 
 ; VOID OnHijackScalarTripThread()
 NESTED_ENTRY OnHijackScalarTripThread, _TEXT
@@ -493,7 +469,7 @@ NESTED_ENTRY OnHijackScalarTripThread, _TEXT
         
         END_PROLOGUE
     
-        call                OnHijackScalarWorker
+        call                OnHijackWorker
 
         movdqa              xmm0, [rsp + 20h]
 
