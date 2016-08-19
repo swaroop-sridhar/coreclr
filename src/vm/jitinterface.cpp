@@ -11530,7 +11530,7 @@ void * CEEJitInfo::allocGCInfo (size_t size)
         COMPlusThrowHR(CORJIT_OUTOFMEM);
     }
 
-    _ASSERTE(m_CodeHeader->GetGCInfo() != 0 && block == m_CodeHeader->GetGCInfo());
+    _ASSERTE(m_CodeHeader-> GetGCInfo() != 0 && block == m_CodeHeader->GetGCInfo());
 
     EE_TO_JIT_TRANSITION();
 

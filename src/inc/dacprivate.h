@@ -20,6 +20,7 @@
 #include <msodw.h>
 #endif // FEATURE_PAL
 
+#include "daccess.h"
 //----------------------------------------------------------------------------
 //
 // Utility class to allow for zero initialization of our Dacp- structs.
@@ -545,8 +546,8 @@ enum JITTypes {TYPE_UNKNOWN=0,TYPE_JIT,TYPE_PJIT};
 
 struct DacpCodeHeaderData : ZeroInit<DacpCodeHeaderData>
 {        
-    CLRDATA_ADDRESS GCInfo;
-    JITTypes                   JITType;
+    GCInfoToken     GcInfoToken;
+    JITTypes        JITType;
     CLRDATA_ADDRESS MethodDescPtr;
     CLRDATA_ADDRESS MethodStart;
     DWORD                    MethodSize;
@@ -557,6 +558,11 @@ struct DacpCodeHeaderData : ZeroInit<DacpCodeHeaderData>
     HRESULT Request(ISOSDacInterface *sos, CLRDATA_ADDRESS IPAddr)
     {
         return sos->GetCodeHeaderData(IPAddr, this);
+    }
+
+    CLRDATA_ADDRESS GCInfo()
+    {
+        return (CLRDATA_ADDRESS)PTR_TO_TADDR(GcInfoToken.Info);
     }
 };
 

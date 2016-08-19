@@ -7987,9 +7987,10 @@ DECLARE_API(GCInfo)
         ExtOut("preJIT generated code\n");
     }
 
-    taGCInfoAddr = TO_TADDR(codeHeaderData.GCInfo);
+    taGCInfoAddr = TO_TADDR(codeHeaderData.GCInfo());
+    UINT32 gcInfoVersion = codeHeaderData.GcInfoToken.Version;
 
-    ExtOut("GC info %p\n", SOS_PTR(taGCInfoAddr));
+    ExtOut("GC info %p Version %u\n", SOS_PTR(taGCInfoAddr), gcInfoVersion);
 
     // assume that GC encoding table is never more than
     // 40 + methodSize * 2
@@ -8017,7 +8018,7 @@ DECLARE_API(GCInfo)
 
     // Mutable table pointer since we need to pass the appropriate
     // offset into the table to DumpGCTable.
-    GCInfoToken gcInfoToken = { table, GCINFO_VERSION };
+    GCInfoToken gcInfoToken = { table, gcInfoVersion };
     unsigned int methodSize = (unsigned int)codeHeaderData.MethodSize;
 
     g_targetMachine->DumpGCInfo(gcInfoToken, methodSize, ExtOut, true /*encBytes*/, true /*bPrintHeader*/);
@@ -8304,9 +8305,9 @@ DECLARE_API(u)
         
         memset (gcEncodingInfo.table, 0, tableSize);
         // We avoid using move here, because we do not want to return
-        if (!SafeReadMemory(TO_TADDR(codeHeaderData.GCInfo), gcEncodingInfo.table, tableSize, NULL))
+        if (!SafeReadMemory(TO_TADDR(codeHeaderData.GCInfo()), gcEncodingInfo.table, tableSize, NULL))
         {
-            ExtOut("Could not read memory %p\n", SOS_PTR(codeHeaderData.GCInfo));
+            ExtOut("Could not read memory %p\n", SOS_PTR(codeHeaderData.GCInfo()));
             return Status;
         }
 

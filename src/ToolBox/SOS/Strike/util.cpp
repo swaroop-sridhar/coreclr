@@ -1014,7 +1014,7 @@ void IP2MethodDesc (DWORD_PTR IP, DWORD_PTR &methodDesc, JITTypes &jitType,
 
     methodDesc = (DWORD_PTR) codeHeaderData.MethodDescPtr;
     jitType = (JITTypes) codeHeaderData.JITType;
-    gcinfoAddr = (DWORD_PTR) codeHeaderData.GCInfo;    
+    gcinfoAddr = (DWORD_PTR) codeHeaderData.GCInfo();    
 }
 
 BOOL IsValueField (DacpFieldDescData *pFD)

@@ -245,7 +245,7 @@ BOOL DacValidateMD(LPCVOID pMD)
     return DacValidateMD((MethodDesc *)pMD);
 }
 
-VOID GetJITMethodInfo (EECodeInfo * pCodeInfo, JITTypes *pJITType, CLRDATA_ADDRESS *pGCInfo)
+VOID GetJITMethodInfo (EECodeInfo * pCodeInfo, JITTypes *pJITType, GCInfoToken *pGcInfoToken)
 {
     DWORD dwType = pCodeInfo->GetJitManager()->GetCodeType();
     if (IsMiIL(dwType))
@@ -261,7 +261,7 @@ VOID GetJITMethodInfo (EECodeInfo * pCodeInfo, JITTypes *pJITType, CLRDATA_ADDRE
         *pJITType = TYPE_UNKNOWN;
     }
 
-    *pGCInfo = (CLRDATA_ADDRESS)PTR_TO_TADDR(pCodeInfo->GetGCInfo());
+    *pGcInfoToken = pCodeInfo->GetGCInfoToken();
 }
 
 
@@ -1134,7 +1134,7 @@ ClrDataAccess::GetCodeHeaderData(CLRDATA_ADDRESS ip, struct DacpCodeHeaderData *
         {
             codeHeaderData->MethodDescPtr = HOST_CDADDR(methodDescI);
             codeHeaderData->JITType = TYPE_UNKNOWN;
-            codeHeaderData->GCInfo = NULL;
+            codeHeaderData->GcInfoToken = { NULL, GCINFO_VERSION };
             codeHeaderData->MethodStart = NULL;
             codeHeaderData->MethodSize = 0;
             codeHeaderData->ColdRegionStart = NULL;
@@ -1144,7 +1144,7 @@ ClrDataAccess::GetCodeHeaderData(CLRDATA_ADDRESS ip, struct DacpCodeHeaderData *
     {
         codeHeaderData->MethodDescPtr = HOST_CDADDR(codeInfo.GetMethodDesc());
 
-        GetJITMethodInfo(&codeInfo, &codeHeaderData->JITType, &codeHeaderData->GCInfo);
+        GetJITMethodInfo(&codeInfo, &codeHeaderData->JITType, &codeHeaderData->GcInfoToken);
 
         codeHeaderData->MethodStart = 
             (CLRDATA_ADDRESS) codeInfo.GetStartAddress();
