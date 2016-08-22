@@ -1198,19 +1198,19 @@ void DumpGCInfo(MethodDesc* method)
     _ASSERTE(codeInfo.GetRelOffset() == 0);
 
     ICodeManager* codeMan = codeInfo.GetCodeManager();
-    GCInfoToken table = codeInfo.GetGCInfoToken();
+    GCInfoToken gcInfoToken = codeInfo.GetGCInfoToken();
 
-    unsigned methodSize = (unsigned)codeMan->GetFunctionSize(table);
+    unsigned methodSize = (unsigned)codeMan->GetFunctionSize(gcInfoToken);
 
-    GCDump gcDump(table.Version);
-    PTR_CBYTE gcInfo = PTR_CBYTE(table.Info);
+    GCDump gcDump(gcInfoToken.Version);
+    PTR_CBYTE gcInfo = PTR_CBYTE(gcInfoToken.Info);
 
     gcDump.gcPrintf = printfToDbgOut;
 
     InfoHdr header;
 
     printfToDbgOut ("Method info block:\n");
-    gcInfo += gcDump.DumpInfoHdr(gcInfo, &header, &methodSize, 0);
+    gcInfo += gcDump.DumpInfoHdr(gcInfoToken, &header, &methodSize, 0);
 
     printfToDbgOut ("\n");
     printfToDbgOut ("Pointer table:\n");

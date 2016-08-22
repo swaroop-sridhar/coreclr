@@ -45,7 +45,7 @@ public:
      * Return value     : Size in bytes of the header encoding
      */
 
-    unsigned FASTCALL   DumpInfoHdr (PTR_CBYTE      gcInfoBlock,
+    unsigned FASTCALL   DumpInfoHdr (GCInfoToken    gcInfoToken,
                                      InfoHdr    *   header,         /* OUT */
                                      unsigned   *   methodSize,     /* OUT */
                                      bool           verifyGCTables = false);
@@ -70,10 +70,10 @@ public:
      * verifyGCTables   : If the JIT has been compiled with VERIFY_GC_TABLES
      */
 
-    void     FASTCALL   DumpPtrsInFrame(PTR_CBYTE   infoBlock,
-                                     PTR_CBYTE      codeBlock,
-                                     unsigned       offs,
-                                     bool           verifyGCTables = false);
+    void     FASTCALL   DumpPtrsInFrame(GCInfoToken gcInfoToken,
+                                        PTR_CBYTE   codeBlock,
+                                        unsigned    offs,
+                                        bool        verifyGCTables = false);
 
 
 public:

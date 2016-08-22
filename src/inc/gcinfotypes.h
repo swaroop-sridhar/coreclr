@@ -468,7 +468,6 @@ struct InfoHdr : public InfoHdrSmall {
     unsigned int   gsCookieOffset;    // 19,20,21,22
     unsigned int   syncStartOffset;   // 23,24,25,26
     unsigned int   syncEndOffset;     // 27,28,29,30
-
                                       // 31 bytes total
 
                                       // Checks whether "this" is compatible with "target".
@@ -541,7 +540,7 @@ inline void GetInfoHdr(int index, InfoHdr * header)
     header->syncEndOffset = 0;
 }
 
-PTR_CBYTE FASTCALL decodeHeader(PTR_CBYTE table, InfoHdr* header);
+PTR_CBYTE FASTCALL decodeHeader(PTR_CBYTE table, UINT32 version, InfoHdr* header);
 
 BYTE FASTCALL encodeHeaderFirst(const InfoHdr& header, InfoHdr* state, int* more, int *pCached);
 BYTE FASTCALL encodeHeaderNext(const InfoHdr& header, InfoHdr* state);

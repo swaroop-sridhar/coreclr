@@ -60,12 +60,13 @@ const char *        CalleeSavedRegName(unsigned reg)
 
 /*****************************************************************************/
 
-unsigned            GCDump::DumpInfoHdr (PTR_CBYTE      table,
+unsigned            GCDump::DumpInfoHdr (GCInfoToken    gcInfoToken,
                                          InfoHdr*       header,
                                          unsigned *     methodSize,
                                          bool           verifyGCTables)
 {
     unsigned        count;
+    PTR_CBYTE       table = (PTR_CBYTE)gcInfoToken.Info;
     PTR_CBYTE       tableStart  = table;
     PTR_CBYTE       bp          = table;
 
@@ -76,7 +77,7 @@ unsigned            GCDump::DumpInfoHdr (PTR_CBYTE      table,
 
     table += decodeUnsigned(table, methodSize);
 
-    table = decodeHeader(table, header);
+    table = decodeHeader(table, gcInfoToken.Version, header);
 
     BOOL hasArgTabOffset = FALSE;
     if (header->untrackedCnt == HAS_UNTRACKED)
@@ -931,12 +932,12 @@ DONE_REGTAB:
 
 /*****************************************************************************/
 
-void                GCDump::DumpPtrsInFrame(PTR_CBYTE   infoBlock,
+void                GCDump::DumpPtrsInFrame(GCInfoToken gcInfoToken,
                                             PTR_CBYTE   codeBlock,
                                             unsigned    offs,
                                             bool        verifyGCTables)
 {
-    PTR_CBYTE       table = infoBlock;
+    PTR_CBYTE       table = (PTR_CBYTE)gcInfoToken.Info;
 
     size_t          methodSize;
     size_t          stackSize;
@@ -963,7 +964,7 @@ void                GCDump::DumpPtrsInFrame(PTR_CBYTE   infoBlock,
     // Typically only uses one-byte to store everything.
     //
     InfoHdr header;
-    table = decodeHeader(table, &header);
+    table = decodeHeader(table, gcInfoToken.Version, &header);
     
     if (header.untrackedCnt == HAS_UNTRACKED)
     {

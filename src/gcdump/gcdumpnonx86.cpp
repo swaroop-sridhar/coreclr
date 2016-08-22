@@ -505,7 +505,7 @@ size_t      GCDump::DumpGCTable(PTR_CBYTE      gcInfoBlock,
 
 /*****************************************************************************/
 
-void    GCDump::DumpPtrsInFrame(PTR_CBYTE   infoBlock,
+void    GCDump::DumpPtrsInFrame(GCInfoToken gcInfoToken,
                                 PTR_CBYTE   codeBlock,
                                 unsigned    offs,
                                 bool        verifyGCTables)

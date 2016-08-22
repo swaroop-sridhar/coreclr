@@ -3241,14 +3241,14 @@ const bool verifyGCTables = false;
  *  Dump the info block header.
  */
 
-unsigned GCInfo::gcInfoBlockHdrDump(const BYTE* table, InfoHdr* header, unsigned* methodSize)
+unsigned GCInfo::gcInfoBlockHdrDump(GCInfoToken gcInfoToken, InfoHdr* header, unsigned* methodSize)
 {
     GCDump gcDump(GCINFO_VERSION);
 
     gcDump.gcPrintf = gcDump_logf; // use my printf (which logs to VM)
     printf("Method info block:\n");
 
-    return gcDump.DumpInfoHdr(table, header, methodSize, verifyGCTables);
+    return gcDump.DumpInfoHdr(gcInfoToken, header, methodSize, verifyGCTables);
 }
 
 /*****************************************************************************/
@@ -3273,7 +3273,8 @@ void GCInfo::gcFindPtrsInFrame(const void* infoBlock, const void* codeBlock, uns
     GCDump gcDump(GCINFO_VERSION);
     gcDump.gcPrintf = gcDump_logf; // use my printf (which logs to VM)
 
-    gcDump.DumpPtrsInFrame((const BYTE*)infoBlock, (const BYTE*)codeBlock, offs, verifyGCTables);
+    GCInfoToken gcInfoToken = { (PTR_VOID)infoBlock, GCINFO_VERSION };
+    gcDump.DumpPtrsInFrame(gcInfoToken, (const BYTE*)codeBlock, offs, verifyGCTables);
 }
 
 #endif // DUMP_GC_TABLES

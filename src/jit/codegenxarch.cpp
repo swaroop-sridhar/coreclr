@@ -8897,7 +8897,8 @@ void* CodeGen::genCreateAndStoreGCInfoJIT32(unsigned codeSize,
         printf("GC Info for method %s\n", compiler->info.compFullName);
         printf("GC info size = %3u\n", compiler->compInfoBlkSize);
 
-        size = gcInfo.gcInfoBlockHdrDump(base, &dumpHeader, &methodSize);
+        GCInfoToken gcInfoToken = { (PTR_VOID)base, GCINFO_VERSION };
+        size = gcInfo.gcInfoBlockHdrDump(gcInfoToken, &dumpHeader, &methodSize);
         // printf("size of header encoding is %3u\n", size);
         printf("\n");
 

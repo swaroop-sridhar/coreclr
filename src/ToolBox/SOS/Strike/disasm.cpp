@@ -1073,7 +1073,7 @@ void X86Machine::DumpGCInfo(GCInfoToken gcInfoToken, unsigned methodSize, printf
     {
         gcDump.gcPrintf = PrintNothing;
     }
-    pTable += gcDump.DumpInfoHdr(pTable, &header, &methodSize, 0);
+    pTable += gcDump.DumpInfoHdr(gcInfoToken, &header, &methodSize, 0);
     if (bPrintHeader)
     {
         gcPrintf("\n");

@@ -366,7 +366,7 @@ private:
     void gcFindPtrsInFrame(const void* infoBlock, const void* codeBlock, unsigned offs);
 
 #ifdef JIT32_GCENCODER
-    unsigned gcInfoBlockHdrDump(const BYTE* table,
+    unsigned gcInfoBlockHdrDump(GCInfoToken gcInfoToken,
                                 InfoHdr*    header,      /* OUT */
                                 unsigned*   methodSize); /* OUT */
 

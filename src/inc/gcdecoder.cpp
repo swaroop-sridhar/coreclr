@@ -86,7 +86,7 @@ size_t FASTCALL decodeSigned(PTR_CBYTE src, int* val)
 #pragma optimize("tgy", on)
 #endif
 
-PTR_CBYTE FASTCALL decodeHeader(PTR_CBYTE table, InfoHdr* header)
+PTR_CBYTE FASTCALL decodeHeader(PTR_CBYTE table, UINT32 version, InfoHdr* header)
 {
     LIMITED_METHOD_DAC_CONTRACT;
 
