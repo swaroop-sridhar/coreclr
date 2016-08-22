@@ -21,6 +21,7 @@
 #endif // FEATURE_PAL
 
 #include "daccess.h"
+#include "gcinfo.h"
 //----------------------------------------------------------------------------
 //
 // Utility class to allow for zero initialization of our Dacp- structs.

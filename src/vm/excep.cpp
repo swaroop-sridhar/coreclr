@@ -1679,7 +1679,7 @@ bool FinallyIsUnwinding(EHRangeTreeNode *pNode,
 BOOL LeaveCatch(ICodeManager* pEECM,
                 Thread *pThread,
                 CONTEXT *pCtx,
-                void *methodInfoPtr,
+                GCInfoToken gcInfoToken,
                 unsigned offset)
 {
     CONTRACTL
@@ -1703,7 +1703,7 @@ BOOL LeaveCatch(ICodeManager* pEECM,
     PopNestedExceptionRecords(esp, pCtx, pThread->GetExceptionListPtr());
 
     // Do JIT-specific work
-    pEECM->LeaveCatch(methodInfoPtr, offset, pCtx);
+    pEECM->LeaveCatch(gcInfoToken, offset, pCtx);
 
     SetSP(pCtx, (UINT_PTR)esp);
     return TRUE;
@@ -1762,7 +1762,7 @@ HRESULT IsLegalTransition(Thread *pThread,
                           ICodeManager* pEECM,
                           PREGDISPLAY pReg,
                           SLOT addrStart,
-                          void *methodInfoPtr,
+                          GCInfoToken gcInfoToken,
                           PCONTEXT pCtx)
 {
     CONTRACTL
@@ -1875,7 +1875,7 @@ HRESULT IsLegalTransition(Thread *pThread,
                         if (!LeaveCatch(pEECM,
                                         pThread,
                                         pFilterCtx,
-                                        methodInfoPtr,
+                                        gcInfoToken,
                                         offFrom))
                             return E_FAIL;
                     }
@@ -1930,7 +1930,7 @@ HRESULT IsLegalTransition(Thread *pThread,
 
                         if (!fCanSetIPOnly)
                         {
-                            if (!pEECM->LeaveFinally(methodInfoPtr,
+                            if (!pEECM->LeaveFinally(gcInfoToken,
                                                      offFrom,
                                                      pFilterCtx))
                                 return E_FAIL;
