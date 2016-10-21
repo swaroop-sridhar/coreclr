@@ -2708,6 +2708,7 @@ void Compiler::lvaSortByRefCount()
     lvaRefSorted = refTab = new (this, CMK_LvaTable) LclVarDsc*[lvaCount];
 
     /* Fill in the table used for sorting */
+    JitDump("%s:\n", info.compMethodName);
 
     for (lclNum = 0, varDsc = lvaTable; lclNum < lvaCount; lclNum++, varDsc++)
     {
@@ -2742,6 +2743,7 @@ void Compiler::lvaSortByRefCount()
         {
             /* Zero ref count, make this untracked */
             varDsc->lvTracked   = 0;
+            //JitDump("Dead %u\n", lvaLclSize(lclNum));
             varDsc->lvRefCntWtd = 0;
         }
 
@@ -2749,6 +2751,7 @@ void Compiler::lvaSortByRefCount()
         if (varTypeIsLong(varDsc) && varDsc->lvPromoted)
         {
             varDsc->lvTracked = 0;
+            JitDump("Long %u\n", lvaLclSize(lclNum));
         }
 #endif // !defined(_TARGET_64BIT_) && !defined(LEGACY_BACKEND)
 
@@ -2772,6 +2775,7 @@ void Compiler::lvaSortByRefCount()
             if (varDsc->lvPromoted)
             {
                 varDsc->lvTracked = 0;
+                JitDump("Struct %u\n", lvaLclSize(lclNum));
             }
             else if ((varDsc->lvType == TYP_STRUCT) && !varDsc->lvRegStruct)
             {
@@ -2789,10 +2793,13 @@ void Compiler::lvaSortByRefCount()
             // untracked when a blockOp is used to assign the struct.
             //
             varDsc->lvTracked = 0; // so, don't mark as tracked
+            JitDump("%u Field %u\n", lclNum, lvaLclSize(lclNum));
         }
         else if (varDsc->lvPinned)
         {
             varDsc->lvTracked = 0;
+            gtDispLclVar(lclNum);
+            JitDump("Pinned %u\n", lvaLclSize(lclNum));
 #ifdef JIT32_GCENCODER
             lvaSetVarDoNotEnregister(lclNum DEBUGARG(DNER_PinningRef));
 #endif
@@ -2837,6 +2844,8 @@ void Compiler::lvaSortByRefCount()
 
             default:
                 varDsc->lvTracked = 0;
+                gtDispLclVar(lclNum);
+                JitDump(" @ %7s %u\n", varTypeName(type), lvaLclSize(lclNum));
         }
     }
 
@@ -2853,6 +2862,7 @@ void Compiler::lvaSortByRefCount()
         for (lclNum = lclMAX_TRACKED; lclNum < lvaCount; lclNum++)
         {
             lvaRefSorted[lclNum]->lvTracked = 0;
+            JitDump("Limit %u\n", lvaLclSize(lclNum));
         }
     }
 

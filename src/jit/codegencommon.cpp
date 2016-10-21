@@ -8273,8 +8273,10 @@ void CodeGen::genFnProlog()
     unsigned   varNum;
     LclVarDsc* varDsc;
 
+    JitDump("** %s:\n", compiler->info.compMethodName);
     for (varNum = 0, varDsc = compiler->lvaTable; varNum < compiler->lvaCount; varNum++, varDsc++)
     {
+
         if (varDsc->lvIsParam && !varDsc->lvIsRegArg)
         {
             continue;
@@ -8317,6 +8319,14 @@ void CodeGen::genFnProlog()
         {
             continue;
         }
+
+        compiler->gtDispLclVar(varNum);
+        JitDump(" @ %7s %u %s %s \n", 
+            varTypeName(genActualType(varDsc->TypeGet())), 
+            compiler->lvaLclSize(varNum),
+            varDsc->lvIsInReg() ? "REG": "FRAME",
+            varDsc->lvTracked ? "TRACKED": "UNTRACKED");
+
 
         if (varDsc->lvIsInReg())
         {
