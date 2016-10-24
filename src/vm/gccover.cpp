@@ -38,6 +38,7 @@
 MethodDesc* AsMethodDesc(size_t addr);
 static SLOT getTargetOfCall(SLOT instrPtr, PCONTEXT regs, SLOT*nextInstr);
 bool isCallToStopForGCJitHelper(SLOT instrPtr);
+
 #if defined(_TARGET_ARM_) || defined(_TARGET_ARM64_)
 static void replaceSafePointInstructionWithGcStressInstr(UINT32 safePointOffset, LPVOID codeStart);
 static bool replaceInterruptibleRangesWithGcStressInstr (UINT32 startOffset, UINT32 stopOffset, LPVOID codeStart);
@@ -424,6 +425,17 @@ extern "C" FCDECL0(VOID, JIT_RareDisableHelper);
 FCDECL0(VOID, JIT_RareDisableHelper);
 #endif
 
+bool ReturnsGCValue(EECodeInfo *codeInfo)
+{
+    GCInfoToken gcInfoToken = codeInfo->GetGCInfoToken();
+    _ASSERTE(gcInfoToken.IsReturnKindAvailable());
+
+    ReturnKind returnKind = codeInfo->GetCodeManager()->GetReturnKind(gcInfoToken);
+    _ASSERTE(IsValidReturnKind(returnKind));
+
+    return IsGCReturnKind(returnKind);
+}
+
 /****************************************************************************/
 /* sprinkle interupt instructions that will stop on every GCSafe location
    regionOffsetAdj - Represents the offset of the current region 
@@ -533,25 +545,22 @@ void GCCoverageInfo::SprinkleBreakpoints(
             break;
 
         case InstructionType::Call_DirectUnconditional:
-            if(fGcStressOnDirectCalls.val(CLRConfig::INTERNAL_GcStressOnDirectCalls))
-            {       
 #ifdef _TARGET_AMD64_
-                if(safePointDecoder.IsSafePoint((UINT32)(cur + len - codeStart + regionOffsetAdj)))
+            if (safePointDecoder.IsSafePoint((UINT32)(cur + len - codeStart + regionOffsetAdj)))
 #endif
-                {
-                    SLOT nextInstr;
-                    SLOT target = getTargetOfCall(cur, NULL, &nextInstr);
+            {
+                SLOT nextInstr;
+                SLOT target = getTargetOfCall(cur, NULL, &nextInstr);
 
-                    if (target != 0)
-                    {
-                        // JIT_RareDisableHelper() is expected to be an indirect call.
-                        // If we encounter a direct call (in future), skip the call 
-                        _ASSERTE(target != (SLOT)JIT_RareDisableHelper); 
-                        targetMD = getTargetMethodDesc((PCODE)target);
-                    }
+                if (target != 0)
+                {
+                    // JIT_RareDisableHelper() is expected to be an indirect call.
+                    // If we encounter a direct call (in future), skip the call 
+                    _ASSERTE(target != (SLOT)JIT_RareDisableHelper);
+                    targetMD = getTargetMethodDesc((PCODE)target);
                 }
             }
-            break;
+        break;
 
 #ifdef _TARGET_AMD64_
         case InstructionType::Branch_IndirectUnconditional:
@@ -566,7 +575,7 @@ void GCCoverageInfo::SprinkleBreakpoints(
 
         if (prevDirectCallTargetMD != 0)
         {
-            if (prevDirectCallTargetMD->ReturnsObject(true) != MetaSig::RETNONOBJ)
+            if (ReturnsGCValue(&codeInfo))
                 *cur = INTERRUPT_INSTR_PROTECT_RET;  
             else
                 *cur = INTERRUPT_INSTR;
@@ -787,32 +796,9 @@ void replaceSafePointInstructionWithGcStressInstr(UINT32 safePointOffset, LPVOID
                              *((DWORD*)instrPtr) != INTERRUPT_INSTR_PROTECT_RET);
                 }
 #endif
-                //
-                // When applying GC coverage breakpoints at native image load time, the code here runs
-                // before eager fixups are applied for the module being loaded.  The direct call target
-                // never requires restore, however it is possible that it is initially in an invalid state
-                // and remains invalid until one or more eager fixups are applied.
-                //
-                // MethodDesc::ReturnsObject() consults the method signature, meaning it consults the
-                // metadata in the owning module.  For generic instantiations stored in non-preferred
-                // modules, reaching the owning module requires following the module override pointer for
-                // the enclosing MethodTable.  In this case, the module override pointer is generally
-                // invalid until an associated eager fixup is applied.
-                //
-                // In situations like this, MethodDesc::ReturnsObject() will try to dereference an
-                // unresolved fixup and will AV.
-                //
-                // Given all of this, skip the MethodDesc::ReturnsObject() call by default to avoid
-                // unexpected AVs.  This implies leaving out the GC coverage breakpoints for direct calls
-                // unless COMPlus_GcStressOnDirectCalls=1 is explicitly set in the environment.
-                //
-
-                static ConfigDWORD fGcStressOnDirectCalls;
-
-                if (fGcStressOnDirectCalls.val(CLRConfig::INTERNAL_GcStressOnDirectCalls))
                 {
                     // If the method returns an object then should protect the return object
-                    if (targetMD->ReturnsObject(true) != MetaSig::RETNONOBJ)
+                    if (ReturnsGCValue(&codeInfo))
                     {
                         // replace with corresponding 2 or 4 byte illegal instruction (which roots the return value)
 #if defined(_TARGET_ARM_)
