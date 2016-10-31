@@ -224,10 +224,68 @@ IF NOT "!ERRORLEVEL!"=="%CLRTestExpectedExitCode%" (
 )
       ]]></BatchCLRTestLaunchCmds>
       <BatchCLRTestLaunchCmds Condition="'$(CLRTestKind)' == 'BuildAndRun'"><![CDATA[
+
+set ExePath=$(InputAssemblyName)
+set MONOLINKBIN=__Link
+set Assemblies=
+
+if defined RunMonoLinker ( 
+    IF NOT EXIST !MONOLINKDIR! (
+      ECHO MonoLinker Not Found
+      Exit /b 1
+    )
+
+    REM Clean up old MonoLinked binaries, if any
+    IF EXIST %MONOLINKBIN% rmdir /s /q %MONOLINKBIN%
+    REM Remove Native images for Crossgened tests, because they interfere with the discovery of the exe containing the entry-point.
+    del /q /f *.ni.*
+
+    REM Include all .exe files in this directory as entry points (some tests had multiple .exe file modules)
+    FOR /F "delims=" %%E IN ('dir /b *.exe') DO SET Assemblies=!Assemblies! -a %%E
+
+    REM Run MonoLinker
+    ECHO %MONOLINKDIR%\monolinker.exe -out %MONOLINKBIN% -d %CORE_ROOT% -x %MONOLINKDIR%\corlib.xml -b true -c link -l none !Assemblies!
+    %MONOLINKDIR%\monolinker.exe -out %MONOLINKBIN% -d %CORE_ROOT% -x %MONOLINKDIR%\corlib.xml -b true -c link -l none !Assemblies!
+    IF NOT "!ERRORLEVEL!"=="0" (
+      ECHO EXECUTION OF MONOLINKER - FAILED !ERRORLEVEL!
+      IF EXIST %MONOLINKBIN% rmdir /s /q %MONOLINKBIN%
+      Exit /b 1
+    )
+
+    REM This step is fragile for tests that have multiple EXE files, but so far so good.
+    REM Need to fix MonoLinker to preserve file names; then we can just set ExePath=%MONOLINKBIN%\$(InputAssemblyName)
+    FOR /F "delims=" %%F IN ('dir /b %MONOLINKBIN%\*.exe') DO Set ExePath="%MONOLINKBIN%\%%F"
+
+    REM Copy CORECLR native binaries to %MONOLINKBIN%, so that we can run the test based on that directory
+    copy %CORE_ROOT%\CoreRun.exe %MONOLINKBIN% > nul
+    copy %CORE_ROOT%\clretwrc.dll %MONOLINKBIN% > nul 2> nul
+    copy %CORE_ROOT%\clrjit.dll %MONOLINKBIN% > nul 2> nul
+    copy %CORE_ROOT%\coreclr.dll %MONOLINKBIN% > nul 2> nul
+    rem copy %CORE_ROOT%\dbgshim.dll %MONOLINKBIN% > nul 2> nul
+    rem copy %CORE_ROOT%\ildasmrc.dll %MONOLINKBIN% > nul 2> nul
+    copy %CORE_ROOT%\mscordaccore.dll %MONOLINKBIN% > nul 2> nul
+    copy %CORE_ROOT%\mscordbi.dll %MONOLINKBIN% > nul 2> nul
+    copy %CORE_ROOT%\mscorrc.debug.dll %MONOLINKBIN% > nul 2> nul
+    copy %CORE_ROOT%\mscorrc.dll %MONOLINKBIN% > nul 2> nul
+    copy %CORE_ROOT%\sos.dll %MONOLINKBIN% > nul 2> nul
+
+    set __CR=%CORE_ROOT%
+    echo set CORE_ROOT=%~dp0%MONOLINKBIN%
+    set CORE_ROOT=%~dp0%MONOLINKBIN%
+)
+
 $(BatchCLRTestLaunchCmds)
-ECHO %LAUNCHER% $(InputAssemblyName) %CLRTestExecutionArguments%
-%LAUNCHER% $(InputAssemblyName) %CLRTestExecutionArguments%
+
+ECHO %LAUNCHER% %ExePath% %CLRTestExecutionArguments%
+%LAUNCHER% %ExePath% %CLRTestExecutionArguments%
 set CLRTestExitCode=!ERRORLEVEL!
+
+if defined RunMonoLinker ( 
+    REM Restore Core_Root, probably not necessary any more.
+    set CORE_ROOT=%__CR%
+    REM Clean up the MONOLINKBIN directory after test execution, otherwise RunTests will run out of disk space.
+    IF EXIST %MONOLINKBIN% rmdir /s /q %MONOLINKBIN%
+)
       ]]></BatchCLRTestLaunchCmds>
 
       <BatchCLRTestLaunchCmds Condition="'$(CLRTestKind)' == 'RunOnly'"><![CDATA[

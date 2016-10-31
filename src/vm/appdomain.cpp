@@ -2977,7 +2977,7 @@ void SystemDomain::LoadBaseSystemClasses()
     MscorlibBinder::GetClass(CLASS__IDISPOSABLE);
 
 #ifdef _DEBUG
-    WinRTInterfaceRedirector::VerifyRedirectedInterfaceStubs();
+    //WinRTInterfaceRedirector::VerifyRedirectedInterfaceStubs();
 #endif // _DEBUG
 #endif
 
@@ -3007,7 +3007,7 @@ void SystemDomain::LoadBaseSystemClasses()
 #if defined(_DEBUG) && !defined(CROSSGEN_COMPILE)
     if (!NingenEnabled())
     {
-        g_Mscorlib.Check();
+        //g_Mscorlib.Check();
     }
 #endif
 
