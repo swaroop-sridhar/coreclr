@@ -11,11 +11,76 @@
     }
   },
   "runtimes": {
-    "win7-x86": {},
-    "win7-x64": {},
-    "ubuntu.14.04-x64": {},
-    "osx.10.10-x64": {},
-    "centos.7-x64": {},
+    "win7-x86": {
+      "dependencies": {
+        "runtime.win7-x86.Microsoft.NETCore.CoreDisTools": "1.0.1-prerelease-*" 
+      }
+    },
+    "win7-x64": {
+      "dependencies": {
+        "runtime.win7-x64.Microsoft.NETCore.CoreDisTools": "1.0.1-prerelease-*" 
+      }
+    },
+    "ubuntu.14.04-x86": {
+      "dependencies": {
+        "runtime.ubuntu.14.04-x86.Microsoft.NETCore.CoreDisTools": "1.0.1-prerelease-*" 
+      }
+    },
+    "ubuntu.14.04-x64": {
+      "dependencies": {
+        "runtime.ubuntu.14.04-x64.Microsoft.NETCore.CoreDisTools": "1.0.1-prerelease-*" 
+      }
+    },
+    "ubuntu.16.04-x86": {
+      "dependencies": {
+        " runtime.ubuntu.16.04-x86.Microsoft.NETCore.CoreDisTools": "1.0.1-prerelease-*" 
+      }
+    },
+    "ubuntu.16.04-x64": {
+      "dependencies": {
+        " runtime.ubuntu.16.04-x64.Microsoft.NETCore.CoreDisTools": "1.0.1-prerelease-*" 
+      }
+    },
+    "osx.10.10-x86": {
+      "dependencies": {
+        "runtime.osx.10.10-x86.Microsoft.NETCore.CoreDisTools": "1.0.1-prerelease-*" 
+      }
+    },
+    "osx.10.10-x64": {
+      "dependencies": {
+        "runtime.osx.10.10-x64.Microsoft.NETCore.CoreDisTools": "1.0.1-prerelease-*" 
+      }
+    },
+    "osx.10.11-x86": {
+      "dependencies": {
+        "runtime.osx.10.11-x86.Microsoft.NETCore.CoreDisTools": "1.0.1-prerelease-*" 
+      }
+    },
+    "osx.10.11-x64": {
+      "dependencies": {
+        "runtime.osx.10.11-x64.Microsoft.NETCore.CoreDisTools": "1.0.1-prerelease-*" 
+      }
+    },
+    "centos.7-x86": {
+      "dependencies": {
+        "runtime.centos.7-x86.Microsoft.NETCore.CoreDisTools": "1.0.1-prerelease-*" 
+      }
+    },
+    "centos.7-x64": {
+      "dependencies": {
+        "runtime.centos.7-x64.Microsoft.NETCore.CoreDisTools": "1.0.1-prerelease-*" 
+      }
+    },
+    "centos.7.1-x86": {
+      "dependencies": {
+        "runtime.centos.7.1-x86.Microsoft.NETCore.CoreDisTools": "1.0.1-prerelease-*" 
+      }
+    },
+    "centos.7.1-x64": {
+      "dependencies": {
+        "runtime.centos.7.1-x64.Microsoft.NETCore.CoreDisTools": "1.0.1-prerelease-*" 
+      }
+    },
     "rhel.7-x64": {},
     "debian.8-x64": {}
   }
