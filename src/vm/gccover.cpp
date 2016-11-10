@@ -455,8 +455,6 @@ void GCCoverageInfo::SprinkleBreakpoints(
 
     EECodeInfo codeInfo((PCODE)codeStart);
 
-    static ConfigDWORD fGcStressOnDirectCalls; // ConfigDWORD must be a static variable
-
 
 #ifdef _TARGET_AMD64_
     GCCoverageRangeEnumerator rangeEnum(codeMan, gcInfoToken, codeStart, codeSize);
@@ -533,7 +531,6 @@ void GCCoverageInfo::SprinkleBreakpoints(
             break;
 
         case InstructionType::Call_DirectUnconditional:
-            if(fGcStressOnDirectCalls.val(CLRConfig::INTERNAL_GcStressOnDirectCalls))
             {       
 #ifdef _TARGET_AMD64_
                 if(safePointDecoder.IsSafePoint((UINT32)(cur + len - codeStart + regionOffsetAdj)))
@@ -807,9 +804,6 @@ void replaceSafePointInstructionWithGcStressInstr(UINT32 safePointOffset, LPVOID
                 // unless COMPlus_GcStressOnDirectCalls=1 is explicitly set in the environment.
                 //
 
-                static ConfigDWORD fGcStressOnDirectCalls;
-
-                if (fGcStressOnDirectCalls.val(CLRConfig::INTERNAL_GcStressOnDirectCalls))
                 {
                     // If the method returns an object then should protect the return object
                     if (targetMD->ReturnsObject(true) != MetaSig::RETNONOBJ)
