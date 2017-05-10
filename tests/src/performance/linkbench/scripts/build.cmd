@@ -1,3 +1,4 @@
+setlocal ENABLEDELAYEDEXPANSION
 @echo off
 
 REM Usage: Build.cmd <LinkBench assets directory>
@@ -5,7 +6,6 @@ setlocal
 
 set AssetDir=%1
 set ExitCode=0
-mkdir LinkBench 2> nul
 pushd %LinkBenchRoot%
 
 set __CORFLAGS="%VS140COMNTOOLS%\..\..\..\Microsoft SDKs\Windows\v10.0A\bin\NETFX 4.6.1 Tools\CorFlags.exe"
@@ -67,7 +67,7 @@ pushd %LinkBenchRoot%\JitBench\src\MusicStore
 copy %AssetDir%\MusicStore\Get-Crossgen.ps1
 powershell -noprofile -executionPolicy RemoteSigned -file Get-Crossgen.ps1
 pushd  bin\release\netcoreapp2.0\win10-x64\
-mkdir R2R 2> nul
+mkdir R2R 
 call :SetupR2R unlinked
 if errorlevel 1 set ExitCode=1 
 call :SetupR2R linked
@@ -91,7 +91,7 @@ pushd %LinkBenchRoot%\roslyn
 REM Fetch ILLink
 if not exist illink mkdir illink
 cd illink
-copy %AssetDir%\Roslyn\illinkcsproj illink.csproj >nul
+copy %AssetDir%\Roslyn\illinkcsproj illink.csproj 
 %__dotnet1% restore --packages pkg
 if errorlevel 1 set ExitCode=1 
 set __IlLinkDll=%cd%\pkg\microsoft.netcore.illink\0.1.9-preview\lib\netcoreapp1.1\illink.dll
@@ -112,8 +112,8 @@ mkdir Linked
 REM Copy Unmanaged Assets
 cd publish
 FOR /F "delims=" %%I IN ('DIR /b *') DO (
-    %__CORFLAGS% %%I >nul 2> nul
-    if errorlevel 1 copy %%I ..\Linked >nul
+    %__CORFLAGS% %%I 
+    if errorlevel 1 copy %%I ..\Linked 
 )
 copy *.ni.dll ..\Linked
 
@@ -133,9 +133,9 @@ copy ..\..\..\..\..\..\crossgen.exe
 FOR /F %%I IN ('dir /b *.dll ^| find /V /I ".ni.dll"  ^| find /V /I "System.Private.CoreLib" ^| find /V /I "mscorlib.dll"') DO (
     REM Don't crossgen Corlib, since the native image already exists.
     REM For all other MSIL files (corflags returns 0), run crossgen
-    %__CORFLAGS% %%I >nul 2>nul
+    %__CORFLAGS% %%I 
     if not errorlevel 1 (
-        crossgen.exe /Platform_Assemblies_Paths . %%I >nul 2>nul
+        crossgen.exe /Platform_Assemblies_Paths . %%I 
         if errorlevel 1 (
             exit /b 1
         )
