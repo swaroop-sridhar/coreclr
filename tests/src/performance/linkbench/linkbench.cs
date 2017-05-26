@@ -251,21 +251,20 @@ namespace LinkBench
                 "WebAPI\\bin\\release\\netcoreapp2.0\\win10-x64\\linked",
                 () => { Benchmark.AddLinkerReference("WebAPI\\WebAPI.csproj");
                         Benchmark.PreventPublishFiltering("WebAPI\\WebAPI.csproj"); }),
-            //Remove the MusicStore from the run as the scenario is currently flaky and breaking performance runs
-            /*new Benchmark("MusicStore",
+            new Benchmark("MusicStore",
                 "JitBench\\src\\MusicStore\\bin\\release\\netcoreapp2.0\\win10-x64\\unlinked",
                 "JitBench\\src\\MusicStore\\bin\\release\\netcoreapp2.0\\win10-x64\\linked",
                 () => { Benchmark.AddLinkerReference("JitBench\\src\\MusicStore\\MusicStore.csproj");
                        Benchmark.SetRuntimeFrameworkVersion("JitBench\\src\\MusicStore\\MusicStore.csproj"); }),
             new Benchmark("MusicStore_R2R",
                 "JitBench\\src\\MusicStore\\bin\\release\\netcoreapp2.0\\win10-x64\\R2R\\unlinked",
-                "JitBench\\src\\MusicStore\\bin\\release\\netcoreapp2.0\\win10-x64\\R2R\\linked"),*/
+                "JitBench\\src\\MusicStore\\bin\\release\\netcoreapp2.0\\win10-x64\\R2R\\linked"),
             new Benchmark("Corefx",
                 "corefx\\bin\\ILLinkTrimAssembly\\netcoreapp-Windows_NT-Release-x64\\pretrimmed",
                 "corefx\\bin\\ILLinkTrimAssembly\\netcoreapp-Windows_NT-Release-x64\\trimmed"),
-            /*new Benchmark("Roslyn",
+            new Benchmark("Roslyn",
                 "roslyn\\Binaries\\Release\\Exes\\CscCore\\win7-x64\\publish",
-                "roslyn\\Binaries\\Release\\Exes\\CscCore\\win7-x64\\Linked") */
+                "roslyn\\Binaries\\Release\\Exes\\CscCore\\win7-x64\\Linked") 
         };
 
         static int UsageError()
@@ -371,8 +370,7 @@ namespace LinkBench
             AssetsDir = linkBenchSrcDir + "assets\\";
 
             Environment.SetEnvironmentVariable("LinkBenchRoot", LinkBenchRoot);
-            Environment.SetEnvironmentVariable("__dotnet1", LinkBenchRoot + "\\.Net1\\dotnet.exe");
-            Environment.SetEnvironmentVariable("__dotnet2", LinkBenchRoot + "\\.Net2\\dotnet.exe");
+            Environment.SetEnvironmentVariable("__dotnet", LinkBenchRoot + "\\.Net\\dotnet.exe");
 
             // Update the build files to facilitate the link step
             if (doSetup)

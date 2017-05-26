@@ -27,9 +27,9 @@ exit /b %ExitCode%
 :HelloWorld
 echo Build ** HelloWorld **
 pushd %LinkBenchRoot%\HelloWorld
-call %__dotnet2% restore -r win10-x64
-call %__dotnet2% publish -c release -r win10-x64 /p:LinkDuringPublish=false --output bin\release\netcoreapp2.0\win10-x64\Unlinked
-call %__dotnet2% publish -c release -r win10-x64 --output bin\release\netcoreapp2.0\win10-x64\Linked
+call %__dotnet% restore -r win10-x64
+call %__dotnet% publish -c release -r win10-x64 /p:LinkDuringPublish=false --output bin\release\netcoreapp2.0\win10-x64\Unlinked
+call %__dotnet% publish -c release -r win10-x64 --output bin\release\netcoreapp2.0\win10-x64\Linked
 if errorlevel 1 set ExitCode=1 
 popd
 exit /b
@@ -37,9 +37,9 @@ exit /b
 :WebAPI
 echo Build ** WebAPI **
 pushd %LinkBenchRoot%\WebAPI
-call %__dotnet2% restore -r win10-x64
-call %__dotnet2% publish -c release -r win10-x64 /p:LinkDuringPublish=false --output bin\release\netcoreapp2.0\win10-x64\unlinked
-call %__dotnet2% publish -c release -r win10-x64 --output bin\release\netcoreapp2.0\win10-x64\linked
+call %__dotnet% restore -r win10-x64
+call %__dotnet% publish -c release -r win10-x64 /p:LinkDuringPublish=false --output bin\release\netcoreapp2.0\win10-x64\unlinked
+call %__dotnet% publish -c release -r win10-x64 --output bin\release\netcoreapp2.0\win10-x64\linked
 if errorlevel 1 set ExitCode=1 
 popd
 exit /b
@@ -48,9 +48,9 @@ exit /b
 echo Build ** MusicStore **
 pushd %LinkBenchRoot%\JitBench\src\MusicStore
 copy %AssetDir%\MusicStore\MusicStoreReflection.xml .
-call %__dotnet2% restore -r win10-x64 
-call %__dotnet2% publish -c release -r win10-x64 /p:LinkerRootDescriptors=MusicStoreReflection.xml /p:LinkDuringPublish=false --output bin\release\netcoreapp2.0\win10-x64\unlinked
-call %__dotnet2% publish -c release -r win10-x64 /p:LinkerRootDescriptors=MusicStoreReflection.xml --output bin\release\netcoreapp2.0\win10-x64\linked
+call %__dotnet% restore -r win10-x64 
+call %__dotnet% publish -c release -r win10-x64 /p:LinkerRootDescriptors=MusicStoreReflection.xml /p:LinkDuringPublish=false --output bin\release\netcoreapp2.0\win10-x64\unlinked
+call %__dotnet% publish -c release -r win10-x64 /p:LinkerRootDescriptors=MusicStoreReflection.xml --output bin\release\netcoreapp2.0\win10-x64\linked
 if errorlevel 1 set ExitCode=1 
 popd
 exit /b
@@ -92,7 +92,7 @@ REM Fetch ILLink
 if not exist illink mkdir illink
 cd illink
 copy %AssetDir%\Roslyn\illinkcsproj illink.csproj 
-call %__dotnet1% restore --packages pkg
+call %__dotnet% restore --packages pkg
 if errorlevel 1 set ExitCode=1 
 set __IlLinkDll=%cd%\pkg\microsoft.netcore.illink\0.1.9-preview\lib\netcoreapp1.1\illink.dll
 cd ..
@@ -100,7 +100,7 @@ cd ..
 REM Build CscCore
 call Restore.cmd
 cd src\Compilers\CSharp\CscCore
-call %__dotnet1% publish -c Release -r win7-x64
+call %__dotnet% publish -c Release -r win7-x64
 if errorlevel 1 set ExitCode=1 
 REM Published CscCore to Binaries\Release\Exes\CscCore\win7-x64\publish
 cd ..\..\..\..
@@ -118,7 +118,7 @@ FOR /F "delims=" %%I IN ('DIR /b *') DO (
 copy *.ni.dll ..\Linked
 
 REM Run Linker
-call %__dotnet1% %__IlLinkDll% -t -c link -a @%AssetDir%\Roslyn\RoslynRoots.txt -x %AssetDir%\Roslyn\RoslynRoots.xml -l none -out ..\Linked
+call %__dotnet% %__IlLinkDll% -t -c link -a @%AssetDir%\Roslyn\RoslynRoots.txt -x %AssetDir%\Roslyn\RoslynRoots.xml -l none -out ..\Linked
 if errorlevel 1 set ExitCode=1 
 popd
 exit /b

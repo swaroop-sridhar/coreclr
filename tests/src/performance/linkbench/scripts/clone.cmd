@@ -4,7 +4,7 @@ setlocal ENABLEDELAYEDEXPANSION
 set EXITCODE=0
 pushd %LinkBenchRoot%
 
-if not exist %__dotnet1% call :DotNet
+if not exist %__dotnet% call :DotNet
 
 if defined __test_HelloWorld call :HelloWorld
 if defined __test_WebAPI call :WebAPI
@@ -17,20 +17,16 @@ popd
 exit /b %EXITCODE%
 
 :DotNet
-REM Roslyn needs SDK 1.0.0, other benchmarks need SDK 2.0.0
-mkdir .Net1
-mkdir .Net2
+mkdir .Net
 powershell -noprofile -executionPolicy RemoteSigned wget  https://raw.githubusercontent.com/dotnet/cli/master/scripts/obtain/dotnet-install.ps1 -OutFile dotnet-install.ps1
-powershell -noprofile -executionPolicy RemoteSigned -file dotnet-install.ps1 -InstallDir .Net1
-powershell -noprofile -executionPolicy RemoteSigned -file dotnet-install.ps1 -Channel master -InstallDir .Net2 -version 2.0.0-preview2-005905
-if not exist %__dotnet1% set EXITCODE=1&& echo DotNet.1.0.0 uninstalled
-if not exist %__dotnet2% set EXITCODE=1&& echo DotNet.2.0.0 uninstalled
+powershell -noprofile -executionPolicy RemoteSigned -file dotnet-install.ps1 -Channel master -InstallDir .Net
+if not exist %__dotnet% set EXITCODE=1&& echo DotNet uninstalled
 exit /b 
 
 :HelloWorld
 mkdir HelloWorld
 cd HelloWorld
-call %__dotnet2% new console
+call %__dotnet% new console
 if errorlevel 1 set EXITCODE=1
 cd ..
 exit /b 
@@ -38,7 +34,7 @@ exit /b
 :WebAPI
 mkdir WebAPI
 cd WebAPI
-call %__dotnet2% new webapi
+call %__dotnet% new webapi
 if errorlevel 1 set EXITCODE=1
 cd ..
 exit /b
