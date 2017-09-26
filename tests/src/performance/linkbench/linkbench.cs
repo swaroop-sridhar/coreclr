@@ -364,14 +364,6 @@ namespace LinkBench
             {
                 foreach (Benchmark benchmark in Benchmarks)
                 {
-                    if (String.Compare(benchmark.Name, "CoreFX", true) == 0)
-                    {
-                        // CoreFX is not enabled by default, because the lab cannot run it yet.
-                        // Jenkins runs on an older OS with path-length limit, which causes
-                        // CoreFX build to fail.
-                        continue;
-                    }
-
                     benchmark.SetToRun();
                 }
             }
@@ -398,6 +390,7 @@ namespace LinkBench
             Environment.SetEnvironmentVariable("LinkBenchRoot", LinkBenchRoot);
             Environment.SetEnvironmentVariable("__dotnet", LinkBenchRoot + "\\.Net\\dotnet.exe");
             Environment.SetEnvironmentVariable("__dotnet1", LinkBenchRoot + "\\.Net1\\dotnet.exe");
+            Environment.SetEnvironmentVariable("__dotnet2", LinkBenchRoot + "\\.Net2");
 
             // Update the build files to facilitate the link step
             if (doSetup)

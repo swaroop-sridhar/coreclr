@@ -35,8 +35,11 @@ REM      Since IlLink.exe from this package only runs on .Net v1
 powershell -noprofile -executionPolicy RemoteSigned wget  https://raw.githubusercontent.com/dotnet/cli/master/scripts/obtain/dotnet-install.ps1 -OutFile dotnet-install.ps1
 if not exist %__dotnet%  mkdir .Net  && powershell -noprofile -executionPolicy RemoteSigned -file dotnet-install.ps1 -Channel master -InstallDir .Net -version 2.0.0-preview2-005905
 if not exist %__dotnet1% mkdir .Net1 && powershell -noprofile -executionPolicy RemoteSigned -file dotnet-install.ps1 -InstallDir .Net1
+if not exist %__dotnet2%  mkdir .Net2  && powershell -noprofile -executionPolicy RemoteSigned -file dotnet-install.ps1 -Channel master -InstallDir %__dotnet2%
+
 if not exist %__dotnet% set EXITCODE=1&& echo DotNet not installed
 if not exist %__dotnet1% set EXITCODE=1&& echo DotNet.1 not installed
+if not exist %__dotnet2% set EXITCODE=1&& echo DotNet.2 not installed
 exit /b 
 
 :HelloWorld

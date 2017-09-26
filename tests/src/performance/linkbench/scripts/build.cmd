@@ -135,6 +135,14 @@ call Restore.cmd
 REM Fetch the appropriate version of MSBuild to build and publish CscCore 
 for /f "delims=`" %%i in ('powershell -noprofile -executionPolicy RemoteSigned -command "& { . build\scripts\build-utils.ps1;Ensure-MSBuild }"') do set MSBUILD=%%i
 REM publish CscCore for win7-x64
+set DOTNET_MSBUILD_SDK_RESOLVER_SDKS_DIR=%__dotnet2%
+echo DOTNET_MSBUILD_SDK_RESOLVER_SDKS_DIR is %DOTNET_MSBUILD_SDK_RESOLVER_SDKS_DIR%
+echo "%MSBUILD%" src\Compilers\CSharp\CscCore\CscCore.csproj /t:Publish /p:RuntimeIdentifier=win7-x64 /p:Configuration=Release /p:TreatWarningsAsErrors=true /warnaserror /nologo /nodeReuse:false /m 
+set PATH=%PATH%;%__dotnet2%
+echo where dotnet
+where dotnet
+echo dotnet --info
+dotnet --info
 "%MSBUILD%" src\Compilers\CSharp\CscCore\CscCore.csproj /t:Publish /p:RuntimeIdentifier=win7-x64 /p:Configuration=Release /p:TreatWarningsAsErrors=true /warnaserror /nologo /nodeReuse:false /m 
 if errorlevel 1 set ExitCode=1&& echo Roslyn: publish failed 
 REM Published CscCore to Binaries\Release\Exes\CscCore\win7-x64\publish
