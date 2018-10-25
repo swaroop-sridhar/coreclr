@@ -559,6 +559,11 @@ FCFuncStart(gAssemblyLoadContextFuncs)
 #endif // defined(FEATURE_MULTICOREJIT)
 FCFuncEnd()
 
+// managed -> runtime, defines runtime methods
+FCFuncStart(gNativeLibraryFuncs)
+    QCFuncElement("LoadLibrary", NativeLibrary::LoadLibrary)
+FCFuncEnd()
+
 FCFuncStart(gAssemblyNameFuncs)
     FCFuncElement("nInit", AssemblyNameNative::Init)
     FCFuncElement("nGetPublicKeyToken", AssemblyNameNative::GetPublicKeyToken)
@@ -1299,6 +1304,7 @@ FCClassElement("MngdSafeArrayMarshaler", "System.StubHelpers", gMngdSafeArrayMar
 FCClassElement("ModuleBuilder", "System.Reflection.Emit", gCOMModuleBuilderFuncs)
 FCClassElement("ModuleHandle", "System", gCOMModuleHandleFuncs)
 FCClassElement("Monitor", "System.Threading", gMonitorFuncs)
+FCClassElement("NativeLibrary", "System.Runtime.InteropServices", gNativeLibraryFuncs)
 #ifdef FEATURE_COMINTEROP
 FCClassElement("OAVariantLib", "Microsoft.Win32", gOAVariantFuncs)
 #endif

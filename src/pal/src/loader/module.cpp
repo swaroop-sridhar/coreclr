@@ -660,6 +660,18 @@ done:
     return hModule;
 }
 
+// 
+VOID *
+PALAPI
+PAL_GetLibraryNativeHandle(
+    IN HMODULE hmodule)
+{
+    MODSTRUCT *module = (MODSTRUCT*) hmodule;
+    module->refcount_get_native_handle++;
+    return module->dl_handle;
+}
+
+
 /*++
 Function:
   PAL_RegisterModule
@@ -902,6 +914,7 @@ BOOL LOADInitializeModules()
     }
     exe_module.lib_name = nullptr;
     exe_module.refcount = -1;
+    exe_module.refcount_get_native_handle = 0;
     exe_module.next = &exe_module;
     exe_module.prev = &exe_module;
     exe_module.pDllMain = nullptr;
@@ -1466,6 +1479,7 @@ static MODSTRUCT *LOADAllocModule(void *dl_handle, LPCSTR name)
 #else   // NEED_DLCOMPAT
     module->refcount = 1;
 #endif  // NEED_DLCOMPAT
+    module->refcount_get_native_handle = 0;
     module->self = module;
     module->hinstance = nullptr;
     module->threadLibCalls = TRUE;
@@ -1510,9 +1524,17 @@ static MODSTRUCT *LOADAddModule(void *dl_handle, LPCSTR libraryNameOrPath)
 
             if (module->refcount != -1)
             {
-                module->refcount++;
+                if (module->refcount_get_native_handle == 0)
+                {
+                    module->refcount++;
+                    dlclose(dl_handle);
+                }
+                else
+                {
+                    module->refcount_get_native_handle--;
+                }
             }
-            dlclose(dl_handle);
+
             return module;
         }
         module = module->next;
