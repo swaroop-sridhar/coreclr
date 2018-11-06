@@ -85,6 +85,14 @@ public:
     static FCDECL2(Object*, GetDelegateForFunctionPointerInternal, LPVOID FPtr, ReflectClassBaseObject* refTypeUNSAFE);
     static FCDECL1(LPVOID, GetFunctionPointerForDelegateInternal, Object* refDelegateUNSAFE);
 
+
+    //====================================================================
+    // These methods provide the native callbacks for library loading APIs
+    //====================================================================
+    static INT_PTR QCALLTYPE MarshalNative::LoadLibraryFromPath(LPCWSTR path, bool shouldThrow);
+    static INT_PTR QCALLTYPE MarshalNative::LoadLibraryByName(LPCWSTR name, QCall::AssemblyHandle callingAssembly, 
+                                                              DWORD dllImportSearchPathFlag, bool shouldThrow);
+
 #ifdef FEATURE_COMINTEROP
     //====================================================================
     // map GUID to Type

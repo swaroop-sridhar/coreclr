@@ -923,6 +923,39 @@ FCIMPL1(int, MarshalNative::GetHRForException_WinRT, Object* eUNSAFE)
 }
 FCIMPLEND
 
+// static
+INT_PTR QCALLTYPE MarshalNative::LoadLibraryFromPath(LPCWSTR path, bool shouldThrow)
+{
+    QCALL_CONTRACT;
+
+    HMODULE handle = nullptr;
+
+    BEGIN_QCALL;
+
+    handle = NDirect::LoadLibraryFromPath(path, shouldThrow);
+
+    END_QCALL;
+
+    return reinterpret_cast<INT_PTR>(handle);
+}
+
+// static
+INT_PTR QCALLTYPE MarshalNative::LoadLibraryByName(LPCWSTR name, QCall::AssemblyHandle callingAssembly, 
+                                                   DWORD dllImportSearchPathFlag, bool shouldThrow)
+{
+    QCALL_CONTRACT;
+
+    HMODULE handle = nullptr;
+    Assembly *pAssembly = callingAssembly->GetAssembly();
+
+    BEGIN_QCALL;
+
+    handle = NDirect::LoadLibraryByName(name, pAssembly, dllImportSearchPathFlag, shouldThrow);
+
+    END_QCALL;
+
+    return reinterpret_cast<INT_PTR>(handle);
+}
 
 #ifdef FEATURE_COMINTEROP
 

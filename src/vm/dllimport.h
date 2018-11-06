@@ -77,7 +77,9 @@ public:
     static HRESULT HasNAT_LAttribute(IMDInternalImport *pInternalImport, mdToken token, DWORD dwMemberAttrs);
 
     static LPVOID NDirectGetEntryPoint(NDirectMethodDesc *pMD, HINSTANCE hMod);
-    static HMODULE LoadLibraryFromPath(LPCWSTR libraryPath);
+    static HMODULE LoadLibraryFromPath(LPCWSTR libraryPath, bool shouldThrow);
+    static HMODULE LoadLibraryByName(LPCWSTR name, Assembly *callingAssembly, 
+                                     DWORD dllImportSearchPathFlag, bool shouldThrow);
     static HINSTANCE LoadLibraryModule(NDirectMethodDesc * pMD, LoadLibErrorTracker *pErrorTracker);
 
 
@@ -123,8 +125,10 @@ private:
 
     static HMODULE LoadFromNativeDllSearchDirectories(AppDomain* pDomain, LPCWSTR libName, DWORD flags, LoadLibErrorTracker *pErrorTracker);
     static HMODULE LoadFromPInvokeAssemblyDirectory(Assembly *pAssembly, LPCWSTR libName, DWORD flags, LoadLibErrorTracker *pErrorTracker);
-
     static HMODULE LoadLibraryModuleViaHost(NDirectMethodDesc * pMD, AppDomain* pDomain, const wchar_t* wszLibName);
+    static HMODULE LoadLibraryModuleBySearch(NDirectMethodDesc * pMD, LoadLibErrorTracker * pErrorTracker, const wchar_t* wszLibName);
+    static HMODULE LoadLibraryModuleBySearch(Assembly *callingAssembly, bool searchAssemblyDirectory, DWORD dllImportSearchPathFlag, LoadLibErrorTracker * pErrorTracker, const wchar_t* wszLibName);
+
 
 #if !defined(FEATURE_PAL)
     // Indicates if the OS supports the new secure LoadLibraryEx flags introduced in KB2533623
