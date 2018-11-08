@@ -923,6 +923,121 @@ FCIMPL1(int, MarshalNative::GetHRForException_WinRT, Object* eUNSAFE)
 }
 FCIMPLEND
 
+// static
+INT_PTR QCALLTYPE MarshalNative::LoadLibraryFromPath(LPCWSTR path, BOOL throwOnError)
+{
+    QCALL_CONTRACT;
+
+    NATIVE_LIBRARY_HANDLE handle = nullptr;
+
+    BEGIN_QCALL;
+
+    handle = NDirect::LoadLibraryFromPath(path, throwOnError);
+
+    END_QCALL;
+
+    return reinterpret_cast<INT_PTR>(handle);
+}
+
+// static
+INT_PTR QCALLTYPE MarshalNative::LoadLibraryByName(LPCWSTR name, QCall::AssemblyHandle callingAssembly, 
+                                                   DWORD dllImportSearchPathFlag, BOOL throwOnError)
+{
+    QCALL_CONTRACT;
+
+    NATIVE_LIBRARY_HANDLE handle = nullptr;
+    Assembly *pAssembly = callingAssembly->GetAssembly();
+
+    BEGIN_QCALL;
+
+    handle = NDirect::LoadLibraryByName(name, pAssembly, dllImportSearchPathFlag, throwOnError);
+
+    END_QCALL;
+
+    return reinterpret_cast<INT_PTR>(handle);
+}
+
+// static
+void QCALLTYPE MarshalNative::FreeNativeLibrary(INT_PTR handle)
+{
+    QCALL_CONTRACT;
+    BOOL retVal = 0;
+
+    BEGIN_QCALL;
+
+    if (handle == NULL)
+    {
+        COMPlusThrow(kArgumentNullException, W("ArgumentNull_handle"));
+        goto lExit;
+    }
+
+#ifndef FEATURE_PAL
+    retVal = FreeLibrary((HMODULE)handle);
+#else // !FEATURE_PAL
+    retVal = PAL_FreeLibraryDirect((NATIVE_LIBRARY_HANDLE)handle);
+#endif // !FEATURE_PAL
+
+    if (retVal == 0)
+    {
+        COMPlusThrow(kInvalidOperationException, W("ArgumentNull_handle"));
+    }
+    
+lExit: ;
+    END_QCALL;
+}
+
+//static 
+INT_PTR QCALLTYPE MarshalNative::GetNativeLibraryExport(INT_PTR handle, LPCWSTR symbolName, BOOL throwOnError)
+{
+    QCALL_CONTRACT;
+
+    INT_PTR address = NULL;
+    NewArrayHolder<char> lpstr = NULL;
+
+    BEGIN_QCALL;
+
+    if(handle == NULL) 
+    {
+        if(throwOnError)
+            COMPlusThrow(kArgumentNullException, W("ArgumentNull_handle"));
+    }
+    else if(symbolName == NULL)
+    {
+        if(throwOnError)
+            COMPlusThrow(kArgumentNullException, W("ArgumentNull_symbolName"));
+    }
+    else
+    {
+        MAKE_UTF8PTR_FROMWIDE_NOTHROW(lpstr, symbolName);
+
+        if(lpstr == NULL)
+        {
+            if(throwOnError)
+                COMPlusThrow(kArgumentException, W("Failed UTF8 conversion for symbolName"));
+        }
+        else
+        {
+#ifndef FEATURE_PAL
+            address = reinterpret_cast<INT_PTR>(GetProcAddress((HMODULE)handle, lpstr));
+#else // !FEATURE_PAL
+            address = reinterpret_cast<INT_PTR>(PAL_GetProcAddressDirect((NATIVE_LIBRARY_HANDLE)handle, lpstr));
+#endif // !FEATURE_PAL
+
+            if((address == NULL) && throwOnError)
+            {
+#ifndef FEATURE_PAL
+                COMPlusThrow(kEntryPointNotFoundException, IDS_EE_NDIRECT_GETPROCADDR_WIN_DLL, symbolName);
+#else // !FEATURE_PAL
+                COMPlusThrow(kEntryPointNotFoundException, IDS_EE_NDIRECT_GETPROCADDR_UNIX_SO, symbolName);
+#endif // !FEATURE_PAL
+            }
+        }
+    }
+
+    END_QCALL;
+
+    return address;
+}
 
 #ifdef FEATURE_COMINTEROP
 

@@ -1755,5 +1755,113 @@ namespace System.Runtime.InteropServices
             RuntimeImports.RhZeroMemory(s, (UIntPtr)(Win32Native.lstrlenW(s) * 2));
             FreeHGlobal(s);
         }
+
+        /// APIs for managing Native Libraries 
+
+        /// <summary>
+        /// NativeLibrary Loader: Simple API
+        /// This method is a wrapper around OS loader, using "default" flags.
+        /// </summary>
+        /// <param name="libraryName">The name of the native library to be loaded</param>
+        /// <returns>The NativeLibrary object for the loaded library</returns>  
+        /// <exception cref="System.DllNotFoundException ">Thrown if the library can't be found.</exception>
+        /// <exception cref="System.BadImageFormatException">Thrown if the library is not valid.</exception>
+        public static IntPtr LoadLibrary(string libraryPath)
+        {
+            return LoadLibraryFromPath(libraryPath, true);
+        }
+
+        /// <summary>
+        /// NativeLibrary Loader: Simple API that doesn't throw
+        /// </summary>
+        /// <param name="libraryName">The name of the native library to be loaded</param>
+        /// <param name="handle">The out-parameter for the loaded NativeLibrary object</param>
+        /// <returns>True on successful load, false otherwise</returns>  
+        public static bool TryLoadLibrary(string libraryPath, out IntPtr handle)
+        {
+            handle = LoadLibraryFromPath(libraryPath, false);
+            return handle != IntPtr.Zero;
+        }
+
+        /// <summary>
+        /// NativeLibrary Loader: High-level API
+        /// Given a library name, this function searches specific paths based on the 
+        /// runtime configuration and attributes of the calling module.
+        /// This LoadLibrary() method does not invoke the managed call-backs for native library resolution: 
+        /// * AssemblyLoadContext.LoadUnmanagedDll()
+        /// </summary>
+        /// <param name="libraryName">The name of the native library to be loaded</param>
+        /// <param name="dllImportSearchPath">The search path</param>
+        /// <param name="assembly">The assembly loading the native library</param>
+        /// <returns>The NativeLibrary object for the loaded library</returns>  
+        /// <exception cref="System.DllNotFoundException ">Thrown if the library can't be found.</exception>
+        /// <exception cref="System.BadImageFormatException">Thrown if the library is not valid.</exception>        
+        public static IntPtr LoadLibrary(string libraryName, Assembly assembly, DllImportSearchPath? searchPath)
+        {
+            return LoadLibraryByName(libraryName, ((RuntimeAssembly)assembly).GetNativeHandle(), (uint) searchPath, true);
+        }
+
+        /// <summary>
+        /// NativeLibrary Loader: High-level API that doesn't throw.
+        /// </summary>
+        /// <param name="libraryName">The name of the native library to be loaded</param>
+        /// <param name="dllImportSearchPath">The search path</param>
+        /// <param name="assembly">The assembly loading the native library</param>
+        /// <param name="handle">The out-parameter for the loaded NativeLibrary object</param>
+        /// <returns>True on successful load, false otherwise</returns>  
+        public static bool TryLoadLibrary(string libraryName, Assembly assembly, DllImportSearchPath? searchPath, out IntPtr handle)
+        {
+            handle = LoadLibraryByName(libraryName, ((RuntimeAssembly)assembly).GetNativeHandle(), (uint) searchPath, false);
+            return handle != IntPtr.Zero;
+        }
+
+        /// <summary>
+        /// Free a loaded library
+        /// Given a library handle, free it.
+        /// </summary>
+        /// <param name="handle">The native library handle to be freed</param>
+        /// <exception cref="System.InvalidOperationException">If the handle is invalid</exception>
+        public static void FreeLibrary(IntPtr handle)
+        {
+            FreeNativeLibrary(handle);
+        }
+
+        /// <summary>
+        /// Get the address of an exported Symbol
+        /// This is a simple wrapper around OS calls, and does not perform any name mangling.
+        /// </summary>
+        /// <param name="handle">The  native library handle</param>
+        /// <param name="name">The name of the exported symbol</param>
+        /// <returns>The address of the symbol</returns>  
+        /// <exception cref="System.InvalidOperationException">If the handle is invalid</exception>
+        /// <exception cref="System.ArgumentException">If the symbol is not found</exception>
+        public static IntPtr GetLibraryExport(IntPtr handle, string name)
+        {
+            return GetNativeLibraryExport(handle, name, true);
+        }
+
+        /// <summary>
+        /// Get the address of an exported Symbol, but do not throw
+        /// </summary>
+        /// <param name="handle">The  native library handle</param>
+        /// <param name="name">The name of the exported symbol</param>
+        /// <param name="address"> The out-parameter for the symbol address, if it exists</param>
+        /// <returns>True on success, false otherwise</returns>  
+        public static bool TryGetLibraryExport(IntPtr handle, string name, out IntPtr address)
+        {
+            address = GetNativeLibraryExport(handle, name, false);
+            return address != IntPtr.Zero;
+        }
+
+        /// External functions that implement the NativeLibrary interface
+
+        [DllImport(JitHelpers.QCall, CharSet = CharSet.Unicode)]
+        internal static extern IntPtr LoadLibraryFromPath(string libraryName, bool throwOnError);
+        [DllImport(JitHelpers.QCall, CharSet = CharSet.Unicode)]
+        internal static extern IntPtr LoadLibraryByName(string libraryName, RuntimeAssembly callingAssembly, uint dllImportSearchPathFlag, bool throwOnError);
+        [DllImport(JitHelpers.QCall, CharSet = CharSet.Unicode)]
+        internal static extern void FreeNativeLibrary(IntPtr handle);
+        [DllImport(JitHelpers.QCall, CharSet = CharSet.Unicode)]
+        internal static extern IntPtr GetNativeLibraryExport(IntPtr handle, string symbolName, bool throwOnError);
     }
 }
