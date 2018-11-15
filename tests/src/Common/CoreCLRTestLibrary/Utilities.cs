@@ -57,6 +57,8 @@ namespace TestLibrary
             }
         }
 
+        public static bool IsMacOSX => (Environment.OSVersion.Platform == PlatformID.MacOSX);
+        public static bool IsUnix => (Environment.OSVersion.Platform == PlatformID.Unix);
         public static bool IsWindows => (Path.DirectorySeparatorChar == '\\');
 
         public static bool IsWindowsNanoServer => (!IsWindowsIoTCore && GetInstallationType().Equals("Nano Server", StringComparison.OrdinalIgnoreCase));
@@ -297,6 +299,11 @@ namespace TestLibrary
                 ref int pcbData);
 
             public static IntPtr HKEY_LOCAL_MACHINE => new IntPtr(unchecked((int)0x80000002));
+        }
+
+        public static string GetCurrentDirectory()
+        {
+            return "";
         }
     }
 }

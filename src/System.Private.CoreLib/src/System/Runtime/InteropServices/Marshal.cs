@@ -1798,7 +1798,8 @@ namespace System.Runtime.InteropServices
         /// <exception cref="System.BadImageFormatException">Thrown if the library is not valid.</exception>        
         public static IntPtr LoadLibrary(string libraryName, Assembly assembly, DllImportSearchPath? searchPath)
         {
-            return LoadLibraryByName(libraryName, ((RuntimeAssembly)assembly).GetNativeHandle(), (uint) searchPath, true);
+            uint searchPathFlag = searchPath.HasValue ? (uint)searchPath.Value : 0;
+            return LoadLibraryByName(libraryName, ((RuntimeAssembly)assembly).GetNativeHandle(), searchPathFlag, true);
         }
 
         /// <summary>
@@ -1811,7 +1812,8 @@ namespace System.Runtime.InteropServices
         /// <returns>True on successful load, false otherwise</returns>  
         public static bool TryLoadLibrary(string libraryName, Assembly assembly, DllImportSearchPath? searchPath, out IntPtr handle)
         {
-            handle = LoadLibraryByName(libraryName, ((RuntimeAssembly)assembly).GetNativeHandle(), (uint) searchPath, false);
+            uint searchPathFlag = searchPath.HasValue ? (uint)searchPath.Value : 0;
+            handle = LoadLibraryByName(libraryName, ((RuntimeAssembly)assembly).GetNativeHandle(), searchPathFlag, false);
             return handle != IntPtr.Zero;
         }
 

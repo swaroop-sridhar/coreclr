@@ -6176,6 +6176,67 @@ NATIVE_LIBRARY_HANDLE NDirect::LoadLibraryByName(LPCWSTR libraryName, Assembly *
 }
 
 // static
+void NDirect::FreeNativeLibrary(NATIVE_LIBRARY_HANDLE handle)
+{
+    STANDARD_VM_CONTRACT;
+
+    if (handle == NULL)
+        COMPlusThrowArgumentNull(W("handle"));
+
+#ifndef FEATURE_PAL
+    BOOL retVal = FreeLibrary(handle);
+#else // !FEATURE_PAL
+    BOOL retVal = PAL_FreeLibraryDirect(handle);
+#endif // !FEATURE_PAL
+
+    if (retVal == 0)
+        COMPlusThrow(kInvalidOperationException, W("ArgumentNull_handle"));
+}
+
+//static 
+INT_PTR NDirect::GetNativeLibraryExport(NATIVE_LIBRARY_HANDLE handle, LPCWSTR symbolName, BOOL throwOnError)
+{
+    STANDARD_VM_CONTRACT;
+
+    INT_PTR address = NULL;
+
+    if(handle == NULL) 
+    {
+        if(throwOnError)
+            COMPlusThrowArgumentNull(W("handle"));
+        return NULL;
+    }
+
+    if(symbolName == NULL)
+    {
+        if(throwOnError)
+            COMPlusThrowArgumentNull(W("symbolName"));
+        return NULL;
+    }
+
+    MAKE_UTF8PTR_FROMWIDE_NOTHROW(lpstr, symbolName);
+
+    if(lpstr == NULL)
+    {
+        if(throwOnError)
+            COMPlusThrowArgumentNull(W("symbolName"), null);
+        return NULL;
+    }
+
+#ifndef FEATURE_PAL
+    address = reinterpret_cast<INT_PTR>(GetProcAddress((HMODULE)handle, lpstr));
+    if((address == NULL) && throwOnError)
+        COMPlusThrow(kEntryPointNotFoundException, IDS_EE_NDIRECT_GETPROCADDR_WIN_DLL, symbolName);
+#else // !FEATURE_PAL
+    address = reinterpret_cast<INT_PTR>(PAL_GetProcAddressDirect((NATIVE_LIBRARY_HANDLE)handle, lpstr));
+    if((address == NULL) && throwOnError)
+        COMPlusThrow(kEntryPointNotFoundException, IDS_EE_NDIRECT_GETPROCADDR_UNIX_SO, symbolName);
+#endif // !FEATURE_PAL
+
+    return address;
+}
+
+// static
 NATIVE_LIBRARY_HANDLE NDirect::LoadLibraryModuleViaHost(NDirectMethodDesc * pMD, AppDomain* pDomain, const wchar_t* wszLibName)
 {
     STANDARD_VM_CONTRACT;
