@@ -319,7 +319,7 @@ int
 DebugBreakCommand()
 {
 #ifdef ENABLE_RUN_ON_DEBUG_BREAK
-    extern MODSTRUCT exe_module;
+    LPCWSTR exe_name = LOADGetExeName();
 
     char *command_string = EnvironGetenv(PAL_RUN_ON_DEBUG_BREAK);
     if (command_string)
@@ -328,9 +328,9 @@ DebugBreakCommand()
         PathCharString exe_bufString;
         int libNameLength = 10;
 
-        if (exe_module.lib_name != NULL)
+        if (exe_name != NULL)
         {
-            libNameLength = PAL_wcslen(exe_module.lib_name);
+            libNameLength = PAL_wcslen(exe_name);
         }
         
         SIZE_T dwexe_buf = strlen(EXE_TEXT) + libNameLength + 1;
@@ -346,7 +346,7 @@ DebugBreakCommand()
             goto FAILED;
         }
 
-        if (snprintf (exe_buf, sizeof (CHAR) * (dwexe_buf + 1), EXE_TEXT "%ls", (wchar_t *)exe_module.lib_name) <= 0)
+        if (snprintf (exe_buf, sizeof (CHAR) * (dwexe_buf + 1), EXE_TEXT "%ls", (wchar_t *)exe_name) <= 0)
         {
             goto FAILED;
         }

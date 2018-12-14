@@ -84,11 +84,14 @@ using namespace CorUnix;
 CRITICAL_SECTION module_critsec;
 
 HMODULE pal_handle = nullptr;
+LPWSTR pal_path = nullptr;
+
+HMODULE exe_handle;
+LPWSTR exe_name;   
+
 char * g_szCoreCLRPath = nullptr;
 int MaxWCharToAcpLength = 3;
 
-HMODULE exe_module; /* handle returned by dlopen() */
-LPWSTR exe_name;    /* full path of module */
 
 /* static function declarations ***********************************************/
 
@@ -150,7 +153,7 @@ LoadLibraryExA(
     }
 
     LPSTR lpstr = nullptr;
-    HMODULE hModule = nullptr;
+    HMODULE handle = nullptr;
 
     PERF_ENTRY(LoadLibraryA);
     ENTRY("LoadLibraryExA (lpLibFileName=%p (%s)) \n",
@@ -172,7 +175,7 @@ LoadLibraryExA(
     }
     FILEDosToUnixPathA(lpstr);
 
-    hModule = LOADLoadLibrary(lpstr, TRUE);
+    handle = LOADLoadLibrary(lpstr, TRUE);
 
     /* let LOADLoadLibrary call SetLastError */
  Done:
@@ -181,9 +184,9 @@ LoadLibraryExA(
         free(lpstr);
     }
 
-    LOGEXIT("LoadLibraryExA returns HMODULE %p\n", hModule);
+    LOGEXIT("LoadLibraryExA returns HMODULE %p\n", handle);
     PERF_EXIT(LoadLibraryExA);
-    return hModule;
+    return handle;
     
 }
 
@@ -210,7 +213,7 @@ LoadLibraryExW(
     CHAR * lpstr;
     INT name_length;
     PathCharString pathstr;
-    HMODULE hModule = nullptr;
+    HMODULE handle = nullptr;
 
     PERF_ENTRY(LoadLibraryExW);
     ENTRY("LoadLibraryExW (lpLibFileName=%p (%S)) \n",
@@ -237,12 +240,12 @@ LoadLibraryExW(
     pathstr.CloseBuffer(name_length);
 
     /* let LOADLoadLibrary call SetLastError in case of failure */
-    hModule = LOADLoadLibrary(lpstr, TRUE);
+    handle = LOADLoadLibrary(lpstr, TRUE);
 
 done:
-    LOGEXIT("LoadLibraryExW returns HMODULE %p\n", hModule);
+    LOGEXIT("LoadLibraryExW returns HMODULE %p\n", handle);
     PERF_EXIT(LoadLibraryExW);
-    return hModule;
+    return handle;
 }
 
 /*++
@@ -254,7 +257,7 @@ See MSDN doc.
 FARPROC
 PALAPI
 GetProcAddress(
-    IN HMODULE hModule,
+    IN HMODULE handle,
     IN LPCSTR lpProcName)
 {
     FARPROC ProcAddress = nullptr;
@@ -262,7 +265,7 @@ GetProcAddress(
 
     PERF_ENTRY(GetProcAddress);
     ENTRY("GetProcAddress (hModule=%p, lpProcName=%p (%s))\n",
-          hModule, lpProcName ? lpProcName : "NULL", lpProcName ? lpProcName : "NULL");
+          handle, lpProcName ? lpProcName : "NULL", lpProcName ? lpProcName : "NULL");
 
     /* try to assert on attempt to locate symbol by ordinal */
     /* this can't be an exact test for HIWORD((DWORD)lpProcName) == 0
@@ -287,7 +290,7 @@ GetProcAddress(
     // If we're looking for a symbol inside the PAL, we try the PAL_ variant
     // first because otherwise we run the risk of having the non-PAL_
     // variant preferred over the PAL's implementation.
-    if (pal_handle && hModule == pal_handle)
+    if (pal_handle && handle == pal_handle)
     {
         int iLen = 4 + strlen(lpProcName) + 1;
         LPSTR lpPALProcName = (LPSTR) alloca(iLen);
@@ -306,7 +309,7 @@ GetProcAddress(
             goto done;
         }
 
-        ProcAddress = (FARPROC) dlsym(hModule, lpPALProcName);
+        ProcAddress = (FARPROC) dlsym(handle, lpPALProcName);
         symbolName = lpPALProcName;
     }
 
@@ -314,18 +317,18 @@ GetProcAddress(
     // inside the PAL, fall back to a normal search.
     if (ProcAddress == nullptr)
     {
-        ProcAddress = (FARPROC) dlsym(hModule, lpProcName);
+        ProcAddress = (FARPROC) dlsym(handle, lpProcName);
     }
 
     if (ProcAddress)
     {
         TRACE("Symbol %s found at address %p in module %p\n",
-              lpProcName, ProcAddress, hModule);
+              lpProcName, ProcAddress, handle);
     }
     else
     {
         TRACE("Symbol %s not found in module %p\n",
-              lpProcName, hModule);
+              lpProcName, handle);
         SetLastError(ERROR_PROC_NOT_FOUND);
     }
 done:
@@ -343,17 +346,17 @@ See MSDN doc.
 BOOL
 PALAPI
 FreeLibrary(
-    IN OUT HMODULE hModule)
+    IN OUT HMODULE handle)
 {
     PERF_ENTRY(FreeLibrary);
-    ENTRY("FreeLibrary (hLibModule=%p)\n", hModule);
+    ENTRY("FreeLibrary (hLibModule=%p)\n", handle);
 
     if (terminator)
     {
         /* PAL shutdown is in progress - ignore FreeLibrary calls */
         goto done;
     }
-    if (dlclose(hModule) != 0)
+    if (dlclose(handle) != 0)
     {
         /* report dlclose() failure, but proceed anyway. */
         WARN("dlclose() call failed!\n");
@@ -376,12 +379,12 @@ PALIMPORT
 VOID
 PALAPI
 FreeLibraryAndExitThread(
-    IN HMODULE hLibModule,
+    IN HMODULE handle,
     IN DWORD dwExitCode)
 {
     PERF_ENTRY(FreeLibraryAndExitThread);
     ENTRY("FreeLibraryAndExitThread()\n"); 
-    FreeLibrary(hLibModule);
+    FreeLibrary(handle);
     ExitThread(dwExitCode);
     LOGEXIT("FreeLibraryAndExitThread\n");
     PERF_EXIT(FreeLibraryAndExitThread);
@@ -719,8 +722,8 @@ BOOL LOADInitializeModules()
     // Initialize module for main executable
     TRACE("Initializing module for main executable\n");
 
-    exe_module = dlopen(nullptr, RTLD_LAZY);
-    if (exe_module == nullptr)
+    exe_handle = dlopen(nullptr, RTLD_LAZY);
+    if (exe_handle == nullptr)
     {
         ERROR("Executable module will be broken : dlopen(nullptr) failed\n");
         return FALSE;
@@ -748,6 +751,38 @@ BOOL LOADSetExeName(LPWSTR name)
 {
     exe_name = name;
     return TRUE;
+}
+
+/*++
+Function :
+    LOADGetExeName
+
+    Get the exe name path
+
+Return value :
+    LPWSTR exe path and name
+
+--*/
+extern "C"
+LPCWSTR LOADGetExeName()
+{
+    return exe_name;
+}
+
+/*++
+Function :
+    LOADGetExeHandle
+
+    Get the exe module handle
+
+Return value :
+    The Exe Module Handle
+
+--*/
+extern "C"
+HMODULE LOADGetExeHandle()
+{
+    return exe_handle;
 }
 
 // Checks the library path for null or empty string. On error, calls SetLastError() and returns false.
@@ -811,16 +846,13 @@ Return value :
 --*/
 static HMODULE LOADLoadLibrary(LPCSTR shortAsciiName, BOOL fDynamic)
 {
-    HMODULE module = nullptr;
-    HMODULE dl_handle = nullptr;
-
     shortAsciiName = FixLibCName(shortAsciiName);
     
     _ASSERTE(shortAsciiName != nullptr);
     _ASSERTE(shortAsciiName[0] != '\0');
 
-    HMODULE dl_handle = dlopen(shortAsciiName, RTLD_LAZY);
-    if (dl_handle == nullptr)
+    HMODULE handle = dlopen(shortAsciiName, RTLD_LAZY);
+    if (handle == nullptr)
     {
         SetLastError(ERROR_MOD_NOT_FOUND);
     }
@@ -829,7 +861,7 @@ static HMODULE LOADLoadLibrary(LPCSTR shortAsciiName, BOOL fDynamic)
         TRACE("dlopen() found module %s\n", shortAsciiName);
     }
 
-    return module;
+    return handle;
 }
 
 /*++
@@ -846,15 +878,15 @@ Return value:
 --*/
 BOOL LOADInitializeCoreCLRModule()
 {
-    HMODULE hmod = LOADGetPalLibrary();
-    if (!hmod)
+    HMODULE handle = LOADGetPalHandle();
+    if (!handle)
     {
         ERROR("Can not load the PAL module\n");
         return FALSE;
     }
 
     typedef BOOL (PALAPI *PDLLMAIN)(HMODULE, DWORD, LPVOID);
-    PDLLMAIN pRuntimeDllMain = (PDLLMAIN)dlsym(hmod, "CoreDllMain");
+    PDLLMAIN pRuntimeDllMain = (PDLLMAIN)dlsym(handle, "CoreDllMain");
 
     if (!pRuntimeDllMain)
     {
@@ -862,12 +894,12 @@ BOOL LOADInitializeCoreCLRModule()
         return FALSE;
     }
 
-    return pRuntimeDllMain(hmod, DLL_PROCESS_ATTACH, nullptr);
+    return pRuntimeDllMain(handle, DLL_PROCESS_ATTACH, nullptr);
 }
 
 /*++
 Function :
-    LOADGetPalLibrary
+    LOADPalLibrary
 
     Load and initialize the PAL module.
 
@@ -878,19 +910,20 @@ Return value :
     The PAL Module handle
 
 --*/
-HMODULE LOADGetPalLibrary()
+
+static HMODULE LOADPalLibrary()
 {
     if (pal_handle == nullptr)
     {
-        // Initialize the pal module (the module containing LOADGetPalLibrary). Assumes that 
+        // Initialize the pal module (the module containing LOADPalLibrary). Assumes that 
         // the PAL is linked into the coreclr module because we use the module name containing 
         // this function for the coreclr path.
         TRACE("Loading module for PAL library\n");
 
         Dl_info info;
-        if (dladdr((PVOID)&LOADGetPalLibrary, &info) == 0)
+        if (dladdr((PVOID)&LOADPalLibrary, &info) == 0)
         {
-            ERROR("LOADGetPalLibrary: dladdr() failed.\n");
+            ERROR("LOADPalLibrary: dladdr() failed.\n");
             goto exit;
         }
         // Stash a copy of the CoreCLR installation path in a global variable.
@@ -902,17 +935,18 @@ HMODULE LOADGetPalLibrary()
 
             if (g_szCoreCLRPath == nullptr)
             {
-                ERROR("LOADGetPalLibrary: InternalMalloc failed!");
+                ERROR("LOADPalLibrary: InternalMalloc failed!");
                 goto exit;
             }
 
             if (strcpy_s(g_szCoreCLRPath, cbszCoreCLRPath, info.dli_fname) != SAFECRT_SUCCESS)
             {
-                ERROR("LOADGetPalLibrary: strcpy_s failed!");
+                ERROR("LOADPalLibrary: strcpy_s failed!");
                 goto exit;
             }
         }
         
+        pal_path = UTIL_MBToWC_Alloc(info.dli_fname, -1);
         pal_handle = LOADLoadLibrary(info.dli_fname, FALSE);
     }
 
@@ -920,3 +954,49 @@ exit:
     return pal_handle;
 }
 
+
+/*++
+Function :
+    LOADGetPalHandle
+
+    Load and initialize the PAL module.
+
+Parameters :
+    None
+
+Return value :
+    The PAL Module handle
+
+--*/
+HMODULE LOADGetPalHandle()
+{
+    if (pal_handle == nullptr)
+    {
+        LOADPalLibrary();
+    }
+
+    return pal_handle;
+}
+
+/*++
+Function :
+    LOADGetPalPath
+
+    Load and initialize the PAL module.
+
+Parameters :
+    None
+
+Return value :
+    The PAL Module handle
+
+--*/
+LPCWSTR LOADGetPalPath()
+{
+    if (pal_path == nullptr)
+    {
+        LOADPalLibrary();
+    }
+    
+    return pal_path;
+}

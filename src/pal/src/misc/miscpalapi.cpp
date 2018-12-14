@@ -66,13 +66,13 @@ PAL_GetPALDirectoryW(PathWCharString& lpDirectoryName)
 
     PERF_ENTRY(PAL_GetPALDirectoryW);
 
-    MODSTRUCT *module = LOADGetPalLibrary();
+    HMODULE module = LOADGetPalHandle();
     if (!module)
     {
         SetLastError(ERROR_INTERNAL_ERROR);
         goto EXIT;
     }
-    lpFullPathAndName = module->lib_name;
+    lpFullPathAndName = LOADGetPalPath();
     if (lpFullPathAndName == NULL)
     {
         SetLastError(ERROR_INTERNAL_ERROR);
