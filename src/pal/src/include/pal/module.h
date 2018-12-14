@@ -47,7 +47,7 @@ Function :
     Set the exe name path
 
 Parameters :
-    LPWSTR man exe path and name
+    LPWSTR name exe path and name
 
 Return value :
     TRUE  if initialization succeedded
@@ -55,6 +55,31 @@ Return value :
 
 --*/
 BOOL LOADSetExeName(LPWSTR name);
+
+/*++
+Function :
+    LOADGetExeName
+
+    Get the exe name path
+
+Return value :
+    LPWSTR exe path and name
+
+--*/
+LPCWSTR LOADGetExeName();
+
+
+/*++
+Function :
+    LOADGetExeHandle
+
+    Get the exe module handle
+
+Return value :
+    The Exe Module Handle
+
+--*/
+HMODULE LOADGetExeHandle();
 
 /*++
 Function:
@@ -103,9 +128,10 @@ BOOL LOADInitializeCoreCLRModule();
 
 /*++
 Function :
-    LOADGetPalLibrary
+    LOADGetPalHandle
 
-    Load and initialize the PAL module.
+    Get the handle for the PAL module 
+    (after possibly Loading and initializing it)
 
 Parameters :
     None
@@ -114,7 +140,23 @@ Return value :
     The PAL Module handle
 
 --*/
-HMODULE LOADGetPalLibrary();
+HMODULE LOADGetPalHandle();
+
+/*++
+Function :
+    LOADGetPalPath
+
+    Get the full path for the PAL module 
+    (after possibly Loading and initializing it)
+
+Parameters :
+    None
+
+Return value :
+    The path for the PAL module
+
+--*/
+LPCWSTR LOADGetPalPath();
 
 #ifdef __cplusplus
 }

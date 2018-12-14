@@ -7,7 +7,6 @@ cmake_minimum_required(VERSION 2.8.12.2)
 
 add_subdirectory(pal_entrypoint)
 add_subdirectory(PAL_errno)
-add_subdirectory(PAL_GetPALDirectoryW)
 add_subdirectory(pal_initializedebug)
 add_subdirectory(PAL_Initialize_Terminate)
 

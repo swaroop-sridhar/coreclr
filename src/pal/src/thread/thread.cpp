@@ -172,12 +172,6 @@ static void InternalEndCurrentThreadWrapper(void *arg)
     pthread_setspecific(thObjKey, pThread);
     (void)PAL_Enter(PAL_BoundaryTop);
     
-    /* Call entry point functions of every attached modules to
-       indicate the thread is exiting */
-    /* note : no need to enter a critical section for serialization, the loader 
-       will lock its own critical section */
-    LOADCallDllMain(DLL_THREAD_DETACH, NULL);
-
 #if !HAVE_MACH_EXCEPTIONS
     pThread->FreeSignalAlternateStack();
 #endif // !HAVE_MACH_EXCEPTIONS
@@ -1687,14 +1681,6 @@ CPalThread::ThreadEntry(
     }
 
     pThread->synchronizationInfo.SetThreadState(TS_RUNNING);
-
-    if (UserCreatedThread == pThread->GetThreadType())
-    {
-        /* Inform all loaded modules that a thread has been created */
-        /* note : no need to take a critical section to serialize here; the loader 
-           will take the module critical section */
-        LOADCallDllMain(DLL_THREAD_ATTACH, NULL);
-    }
 
 #ifdef PAL_PERF
     PERFAllocThreadInfo();
