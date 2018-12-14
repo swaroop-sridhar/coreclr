@@ -928,7 +928,7 @@ INT_PTR QCALLTYPE MarshalNative::LoadLibraryFromPath(LPCWSTR path, BOOL throwOnE
 {
     QCALL_CONTRACT;
 
-    NATIVE_LIBRARY_HANDLE handle = nullptr;
+    HMODULE handle = nullptr;
 
     BEGIN_QCALL;
 
@@ -946,7 +946,7 @@ INT_PTR QCALLTYPE MarshalNative::LoadLibraryByName(LPCWSTR name, QCall::Assembly
 {
     QCALL_CONTRACT;
 
-    NATIVE_LIBRARY_HANDLE handle = nullptr;
+    HMODULE handle = nullptr;
     Assembly *pAssembly = callingAssembly->GetAssembly();
 
     BEGIN_QCALL;
@@ -965,7 +965,7 @@ void QCALLTYPE MarshalNative::FreeNativeLibrary(INT_PTR handle)
 
     BEGIN_QCALL;
 
-    NDirect::FreeNativeLibrary((NATIVE_LIBRARY_HANDLE) handle);
+    NDirect::FreeNativeLibrary((HMODULE) handle);
     
     END_QCALL;
 }
@@ -979,7 +979,7 @@ INT_PTR QCALLTYPE MarshalNative::GetNativeLibraryExport(INT_PTR handle, LPCWSTR 
     
     BEGIN_QCALL;
 
-    address = NDirect::GetNativeLibraryExport((NATIVE_LIBRARY_HANDLE)handle, symbolName, throwOnError);
+    address = NDirect::GetNativeLibraryExport((HMODULE)handle, symbolName, throwOnError);
 
     END_QCALL;
 

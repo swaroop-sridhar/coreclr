@@ -25,22 +25,6 @@ extern "C"
 {
 #endif // __cplusplus
 
-typedef HINSTANCE (PALAPI *PREGISTER_MODULE)(LPCSTR);           /* used to create the HINSTANCE for above DLLMain entry point */
-typedef VOID (PALAPI *PUNREGISTER_MODULE)(HINSTANCE);           /* used to cleanup the HINSTANCE for above DLLMain entry point */
-
-typedef struct _MODSTRUCT
-{
-    NATIVE_LIBRARY_HANDLE dl_handle;  /* handle returned by dlopen() */
-    LPWSTR lib_name;                  /* full path of module */
-    INT refcount;                     /* reference count */
-                                      /* -1 means infinite reference count - module is never released */
-
-    /* reference to modules in tree */
-    struct _MODSTRUCT *prev;
-    struct _MODSTRUCT *next;
-} MODSTRUCT;
-
-
 /*++
 Function :
     LOADInitializeModules
@@ -71,36 +55,6 @@ Return value :
 
 --*/
 BOOL LOADSetExeName(LPWSTR name);
-
-/*++
-Function:
-  LockModuleList
-
-Abstract
-  Enter the critical section associated to the module list
-
-Parameter
-  void
-
-Return
-  void
---*/
-void LockModuleList();
-
-/*++
-Function:
-  UnlockModuleList
-
-Abstract
-  Leave the critical section associated to the module list
-
-Parameter
-  void
-
-Return
-  void
---*/
-void UnlockModuleList();
 
 /*++
 Function:
