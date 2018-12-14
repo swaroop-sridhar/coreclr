@@ -13,8 +13,3 @@ CoreCLRCreateCordbObjectEx
 ; Out-of-proc creation path from the shim - ICLRDebugging
 OpenVirtualProcessImpl
 OpenVirtualProcessImpl2
-
-; PAL module registration
-DllMain
-PAL_RegisterModule
-PAL_UnregisterModule

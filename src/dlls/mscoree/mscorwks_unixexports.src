@@ -11,10 +11,6 @@ GetMetaDataInternalInterface
 GetMetaDataInternalInterfaceFromPublic
 GetMetaDataPublicInterfaceFromInternal
 
-; PAL module registration
-PAL_RegisterModule
-PAL_UnregisterModule
-
 ; Functions exported by the coreclr
 CoreDllMain
 DllMain

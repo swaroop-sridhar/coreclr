@@ -923,6 +923,71 @@ FCIMPL1(int, MarshalNative::GetHRForException_WinRT, Object* eUNSAFE)
 }
 FCIMPLEND
 
+<<<<<<< 203a26092cc9d9d471f694a1cc0274cf78d97e04
+=======
+// static
+INT_PTR QCALLTYPE MarshalNative::LoadLibraryFromPath(LPCWSTR path, BOOL throwOnError)
+{
+    QCALL_CONTRACT;
+
+    HMODULE handle = nullptr;
+
+    BEGIN_QCALL;
+
+    handle = NDirect::LoadLibraryFromPath(path, throwOnError);
+
+    END_QCALL;
+
+    return reinterpret_cast<INT_PTR>(handle);
+}
+
+// static
+INT_PTR QCALLTYPE MarshalNative::LoadLibraryByName(LPCWSTR name, QCall::AssemblyHandle callingAssembly, 
+                                                   BOOL hasDllImportSearchPathFlag, DWORD dllImportSearchPathFlag, 
+                                                   BOOL throwOnError)
+{
+    QCALL_CONTRACT;
+
+    HMODULE handle = nullptr;
+    Assembly *pAssembly = callingAssembly->GetAssembly();
+
+    BEGIN_QCALL;
+
+    handle = NDirect::LoadLibraryByName(name, pAssembly, hasDllImportSearchPathFlag, dllImportSearchPathFlag, throwOnError);
+
+    END_QCALL;
+
+    return reinterpret_cast<INT_PTR>(handle);
+}
+
+// static
+void QCALLTYPE MarshalNative::FreeNativeLibrary(INT_PTR handle)
+{
+    QCALL_CONTRACT;
+
+    BEGIN_QCALL;
+
+    NDirect::FreeNativeLibrary((HMODULE) handle);
+    
+    END_QCALL;
+}
+
+//static 
+INT_PTR QCALLTYPE MarshalNative::GetNativeLibraryExport(INT_PTR handle, LPCWSTR symbolName, BOOL throwOnError)
+{
+    QCALL_CONTRACT;
+
+    INT_PTR address = NULL;
+    
+    BEGIN_QCALL;
+
+    address = NDirect::GetNativeLibraryExport((HMODULE)handle, symbolName, throwOnError);
+
+    END_QCALL;
+
+    return address;
+}
+
 #ifdef FEATURE_COMINTEROP
 
 //====================================================================

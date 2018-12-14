@@ -144,8 +144,8 @@
 
 #if !defined (FEATURE_PAL)
 // Native system libray handle.
-// In Windows, NATIVE_LIBRARY_HANDLE is the same as HMODULE.
-typedef HMODULE NATIVE_LIBRARY_HANDLE;
+// In Windows, HMODULE is the same as HMODULE.
+typedef HMODULE HMODULE;
 #endif // !FEATURE_PAL
 
 #endif	// __PALCLR_WIN_H__

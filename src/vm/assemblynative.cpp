@@ -300,7 +300,7 @@ INT_PTR QCALLTYPE AssemblyNative::InternalLoadUnmanagedDllFromPath(LPCWSTR unman
 {
     QCALL_CONTRACT;
 
-    NATIVE_LIBRARY_HANDLE moduleHandle = nullptr;
+    HMODULE moduleHandle = nullptr;
 
     BEGIN_QCALL;
 

@@ -6065,11 +6065,11 @@ private:
 // * External callers like AssemblyNative::InternalLoadUnmanagedDllFromPath() and the upcoming 
 //   System.Runtime.Interop.Marshall.LoadLibrary() need the raw system handle
 // * Internal callers like LoadLibraryModule() can convert this handle to a HMODULE via PAL APIs on Unix
-static NATIVE_LIBRARY_HANDLE LocalLoadLibraryHelper( LPCWSTR name, DWORD flags, LoadLibErrorTracker *pErrorTracker )
+static HMODULE LocalLoadLibraryHelper( LPCWSTR name, DWORD flags, LoadLibErrorTracker *pErrorTracker )
 {
     STANDARD_VM_CONTRACT;
 
-    NATIVE_LIBRARY_HANDLE hmod = NULL;
+    HMODULE hmod = NULL;
 
 #ifndef FEATURE_PAL
 
@@ -6092,12 +6092,9 @@ static NATIVE_LIBRARY_HANDLE LocalLoadLibraryHelper( LPCWSTR name, DWORD flags, 
             return hmod;
         }
     }
+#endif // !FEATURE_PAL
 
     hmod = CLRLoadLibraryEx(name, NULL, flags & 0xFF);
-    
-#else // !FEATURE_PAL
-    hmod = PAL_LoadLibraryDirect(name);
-#endif // !FEATURE_PAL
         
     if (hmod == NULL)
     {
@@ -6174,7 +6171,7 @@ BOOL GetDllImportSearchPathFlags(NDirectMethodDesc * pMD, DWORD *dllImportSearch
 }
 
 // static
-NATIVE_LIBRARY_HANDLE NDirect::LoadLibraryFromPath(LPCWSTR libraryPath, BOOL throwOnError)
+HMODULE NDirect::LoadLibraryFromPath(LPCWSTR libraryPath, BOOL throwOnError)
 {
     CONTRACTL
     {
@@ -6184,7 +6181,7 @@ NATIVE_LIBRARY_HANDLE NDirect::LoadLibraryFromPath(LPCWSTR libraryPath, BOOL thr
     CONTRACTL_END;
 
     LoadLibErrorTracker errorTracker;
-    const NATIVE_LIBRARY_HANDLE hmod =
+    const HMODULE hmod =
         LocalLoadLibraryHelper(libraryPath, GetLoadWithAlteredSearchPathFlag(), &errorTracker);
     
     if (throwOnError && (hmod == nullptr))
@@ -6196,7 +6193,7 @@ NATIVE_LIBRARY_HANDLE NDirect::LoadLibraryFromPath(LPCWSTR libraryPath, BOOL thr
 }
 
 // static 
-NATIVE_LIBRARY_HANDLE NDirect::LoadLibraryByName(LPCWSTR libraryName, Assembly *callingAssembly, 
+HMODULE NDirect::LoadLibraryByName(LPCWSTR libraryName, Assembly *callingAssembly, 
                                                  BOOL hasDllImportSearchFlags, DWORD dllImportSearchFlags, 
                                                  BOOL throwOnError)
 {
@@ -6228,7 +6225,7 @@ NATIVE_LIBRARY_HANDLE NDirect::LoadLibraryByName(LPCWSTR libraryName, Assembly *
                                     &dllImportSearchPathFlags, &searchAssemblyDirectory);
     }
 
-    NATIVE_LIBRARY_HANDLE hmod = 
+    HMODULE hmod = 
         LoadLibraryModuleBySearch(callingAssembly, searchAssemblyDirectory, dllImportSearchPathFlags, &errorTracker, libraryName);
 
     if (throwOnError && (hmod == nullptr))
@@ -6241,7 +6238,7 @@ NATIVE_LIBRARY_HANDLE NDirect::LoadLibraryByName(LPCWSTR libraryName, Assembly *
 }
 
 // static
-NATIVE_LIBRARY_HANDLE NDirect::LoadLibraryModuleBySearch(NDirectMethodDesc * pMD, LoadLibErrorTracker * pErrorTracker, PCWSTR wszLibName)
+HMODULE NDirect::LoadLibraryModuleBySearch(NDirectMethodDesc * pMD, LoadLibErrorTracker * pErrorTracker, PCWSTR wszLibName)
 {
     STANDARD_VM_CONTRACT;
    
@@ -6255,7 +6252,7 @@ NATIVE_LIBRARY_HANDLE NDirect::LoadLibraryModuleBySearch(NDirectMethodDesc * pMD
 }
 
 // static
-void NDirect::FreeNativeLibrary(NATIVE_LIBRARY_HANDLE handle)
+void NDirect::FreeNativeLibrary(HMODULE handle)
 {
     STANDARD_VM_CONTRACT;
     
@@ -6264,18 +6261,14 @@ void NDirect::FreeNativeLibrary(NATIVE_LIBRARY_HANDLE handle)
     if (handle == NULL)
         return;
 
-#ifndef FEATURE_PAL
     BOOL retVal = FreeLibrary(handle);
-#else // !FEATURE_PAL
-    BOOL retVal = PAL_FreeLibraryDirect(handle);
-#endif // !FEATURE_PAL
 
     if (retVal == 0)
         COMPlusThrow(kInvalidOperationException, W("Arg_InvalidOperationException"));
 }
 
 //static 
-INT_PTR NDirect::GetNativeLibraryExport(NATIVE_LIBRARY_HANDLE handle, LPCWSTR symbolName, BOOL throwOnError)
+INT_PTR NDirect::GetNativeLibraryExport(HMODULE handle, LPCWSTR symbolName, BOOL throwOnError)
 {
     CONTRACTL
     {
@@ -6287,15 +6280,9 @@ INT_PTR NDirect::GetNativeLibraryExport(NATIVE_LIBRARY_HANDLE handle, LPCWSTR sy
 
     MAKE_UTF8PTR_FROMWIDE(lpstr, symbolName);
 
-#ifndef FEATURE_PAL
     INT_PTR address = reinterpret_cast<INT_PTR>(GetProcAddress((HMODULE)handle, lpstr));
     if ((address == NULL) && throwOnError)
         COMPlusThrow(kEntryPointNotFoundException, IDS_EE_NDIRECT_GETPROCADDR_WIN_DLL, symbolName);
-#else // !FEATURE_PAL
-    INT_PTR address = reinterpret_cast<INT_PTR>(PAL_GetProcAddressDirect((NATIVE_LIBRARY_HANDLE)handle, lpstr));
-    if ((address == NULL) && throwOnError)
-        COMPlusThrow(kEntryPointNotFoundException, IDS_EE_NDIRECT_GETPROCADDR_UNIX_SO, symbolName);
-#endif // !FEATURE_PAL
 
     return address;
 }
@@ -6312,7 +6299,7 @@ BOOL IsWindowsAPISet(PCWSTR wszLibName)
 #endif // !PLATFORM_UNIX
 
 // static
-NATIVE_LIBRARY_HANDLE NDirect::LoadLibraryModuleViaHost(NDirectMethodDesc * pMD, PCWSTR wszLibName)
+HMODULE NDirect::LoadLibraryModuleViaHost(NDirectMethodDesc * pMD, PCWSTR wszLibName)
 {
     STANDARD_VM_CONTRACT;
     //Dynamic Pinvoke Support:
@@ -6390,6 +6377,7 @@ NATIVE_LIBRARY_HANDLE NDirect::LoadLibraryModuleViaHost(NDirectMethodDesc * pMD,
 
     GCPROTECT_END();
 
+<<<<<<< 203a26092cc9d9d471f694a1cc0274cf78d97e04
     return hmod;
 }
 
@@ -6520,11 +6508,11 @@ NATIVE_LIBRARY_HANDLE NDirect::LoadLibraryModuleViaCallback(NDirectMethodDesc * 
 }
 
 // Try to load the module alongside the assembly where the PInvoke was declared.
-NATIVE_LIBRARY_HANDLE NDirect::LoadFromPInvokeAssemblyDirectory(Assembly *pAssembly, LPCWSTR libName, DWORD flags, LoadLibErrorTracker *pErrorTracker)
+HMODULE NDirect::LoadFromPInvokeAssemblyDirectory(Assembly *pAssembly, LPCWSTR libName, DWORD flags, LoadLibErrorTracker *pErrorTracker)
 {
     STANDARD_VM_CONTRACT;
 
-    NATIVE_LIBRARY_HANDLE hmod = NULL;
+    HMODULE hmod = NULL;
 
     SString path = pAssembly->GetManifestFile()->GetPath();
 
@@ -6542,11 +6530,11 @@ NATIVE_LIBRARY_HANDLE NDirect::LoadFromPInvokeAssemblyDirectory(Assembly *pAssem
 }
 
 // Try to load the module from the native DLL search directories
-NATIVE_LIBRARY_HANDLE NDirect::LoadFromNativeDllSearchDirectories(LPCWSTR libName, DWORD flags, LoadLibErrorTracker *pErrorTracker)
+HMODULE NDirect::LoadFromNativeDllSearchDirectories(LPCWSTR libName, DWORD flags, LoadLibErrorTracker *pErrorTracker)
 {
     STANDARD_VM_CONTRACT;
 
-    NATIVE_LIBRARY_HANDLE hmod = NULL;
+    HMODULE  hmod = NULL;
     AppDomain* pDomain = GetAppDomain();
 
     if (pDomain->HasNativeDllSearchDirectories())
@@ -6668,13 +6656,14 @@ static void DetermineLibNameVariations(const WCHAR** libNameVariations, int* num
 
 // Search for the library and variants of its name in probing directories.
 //static 
-NATIVE_LIBRARY_HANDLE NDirect::LoadLibraryModuleBySearch(Assembly *callingAssembly, 
+
+HMODULE NDirect::LoadLibraryModuleBySearch(Assembly *callingAssembly, 
                                                          BOOL searchAssemblyDirectory, DWORD dllImportSearchPathFlags,
                                                          LoadLibErrorTracker * pErrorTracker, LPCWSTR wszLibName)
 {
     STANDARD_VM_CONTRACT;
 
-    NATIVE_LIBRARY_HANDLE hmod = NULL;
+    HMODULE hmod = NULL;
 
 #if defined(FEATURE_CORESYSTEM) && !defined(PLATFORM_UNIX)
     // Try to go straight to System32 for Windows API sets. This is replicating quick check from
@@ -6810,9 +6799,6 @@ HINSTANCE NDirect::LoadLibraryModule(NDirectMethodDesc * pMD, LoadLibErrorTracke
         hmod = LoadLibraryModuleViaHost(pMD, wszLibName);
         if (hmod != NULL)
         {
-#ifdef FEATURE_PAL
-            hmod = PAL_RegisterLibraryDirect(hmod, wszLibName);
-#endif // FEATURE_PAL
             return hmod.Extract();
         }
     }
@@ -6840,9 +6826,6 @@ HINSTANCE NDirect::LoadLibraryModule(NDirectMethodDesc * pMD, LoadLibErrorTracke
         hmod = LoadLibraryModuleViaEvent(pMD, wszLibName);
         if (hmod != NULL)
         {
-#ifdef FEATURE_PAL
-            hmod = PAL_RegisterLibraryDirect(hmod, wszLibName);
-#endif // FEATURE_PAL
             return hmod.Extract();
         }
     }

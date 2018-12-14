@@ -69,11 +69,6 @@ extern "C" {
 #include <pal_error.h>
 #include <pal_mstypes.h>
 
-// Native system libray handle.
-// On Unix systems, NATIVE_LIBRARY_HANDLE type represents a library handle not registered with the PAL.
-// To get a HMODULE on Unix, call PAL_RegisterLibraryDirect() on a NATIVE_LIBRARY_HANDLE.
-typedef void * NATIVE_LIBRARY_HANDLE;
-
 /******************* Processor-specific glue  *****************************/
 
 #ifndef _MSC_VER
@@ -477,18 +472,6 @@ PALIMPORT
 void
 PALAPI
 PAL_IgnoreProfileSignal(int signalNum);
-
-PALIMPORT
-HINSTANCE
-PALAPI
-PAL_RegisterModule(
-    IN LPCSTR lpLibFileName);
-
-PALIMPORT
-VOID 
-PALAPI
-PAL_UnregisterModule(
-    IN HINSTANCE hInstance);
 
 PALIMPORT
 BOOL
@@ -2607,32 +2590,6 @@ LoadLibraryExW(
         IN /*Reserved*/ HANDLE hFile,
         IN DWORD dwFlags);
 
-PALIMPORT
-NATIVE_LIBRARY_HANDLE
-PALAPI
-PAL_LoadLibraryDirect(
-        IN LPCWSTR lpLibFileName);
-
-PALIMPORT
-HMODULE
-PALAPI
-PAL_RegisterLibraryDirect(
-        IN NATIVE_LIBRARY_HANDLE dl_handle,
-        IN LPCWSTR lpLibFileName);
-
-PALIMPORT
-BOOL
-PALAPI
-PAL_FreeLibraryDirect(
-        IN NATIVE_LIBRARY_HANDLE dl_handle);
-
-PALIMPORT
-FARPROC
-PALAPI
-PAL_GetProcAddressDirect(
-        IN NATIVE_LIBRARY_HANDLE dl_handle,
-        IN LPCSTR lpProcName);
-
 /*++
 Function:
   PAL_LOADLoadPEFile
@@ -2696,12 +2653,6 @@ PALAPI
 FreeLibraryAndExitThread(
     IN HMODULE hLibModule,
     IN DWORD dwExitCode);
-
-PALIMPORT
-BOOL
-PALAPI
-DisableThreadLibraryCalls(
-    IN HMODULE hLibModule);
 
 PALIMPORT
 DWORD
