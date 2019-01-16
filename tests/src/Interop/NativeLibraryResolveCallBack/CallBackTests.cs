@@ -5,7 +5,6 @@ using System;
 using System.IO;
 using System.Reflection;
 using System.Runtime.InteropServices;
-using TestLibrary;
 
 using Console = Internal.Console;
 
@@ -27,7 +26,7 @@ public class CallBackTests
                         throw new ArgumentException();
                     }
 
-                    return NativeLibrary.Load("ResolveLib", asm, dllImportSearchPath);
+                    return NativeLibrary.Load("ResolveLib", asm, null);
                 };
 
             DllImportResolver anotherResolver =
@@ -36,10 +35,18 @@ public class CallBackTests
 
             try
             {
+                NativeSum(10, 10);
+                Console.WriteLine("Exception expected: no callback registered yet");
+                return 101;
+            }
+            catch (DllNotFoundException e) {}
+
+            try
+            {
                 NativeLibrary.SetDllImportResolver(null, resolver);
 
-                Console.WriteLine("Expected exception not thrown");
-                return 101;
+                Console.WriteLine("Exception expected: assembly parameter null");
+                return 102;
             }
             catch (ArgumentNullException e) { }
 
@@ -47,8 +54,8 @@ public class CallBackTests
             {
                 NativeLibrary.SetDllImportResolver(assembly, null);
 
-                Console.WriteLine("Expected exception not thrown");
-                return 102;
+                Console.WriteLine("Exception expected: resolver parameter null");
+                return 103;
             }
             catch (ArgumentNullException e) { }
 
@@ -60,21 +67,21 @@ public class CallBackTests
                 // Try to set another resolver on the same assembly.
                 NativeLibrary.SetDllImportResolver(assembly, anotherResolver);
 
-                Console.WriteLine("Expected Exception not thrown");
-                return 103;
+                Console.WriteLine("Exception expected: Trying to register second resolver");
+                return 104;
             }
             catch (InvalidOperationException e) { }
 
             if (NativeSum(10, 10) != 20)
             {
                 Console.WriteLine("Unexpected ReturnValue from NativeSum()");
-                return 104;
+                return 105;
             }
         }
         catch (Exception e)
         {
             Console.WriteLine($"Unexpected exception: {e.ToString()} {e.Message}");
-            return 105;
+            return 106;
         }
 
         return 100;

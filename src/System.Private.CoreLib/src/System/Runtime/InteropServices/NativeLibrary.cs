@@ -9,6 +9,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.ConstrainedExecution;
 using Win32Native = Microsoft.Win32.Win32Native;
 using System.Diagnostics;
+using System.Threading;
 
 namespace System.Runtime.InteropServices
 {
@@ -209,7 +210,8 @@ namespace System.Runtime.InteropServices
 
             if (s_nativeDllResolveMap == null)
             {
-                s_nativeDllResolveMap = new ConditionalWeakTable<Assembly, DllImportResolver>();
+                Interlocked.CompareExchange(ref s_nativeDllResolveMap,
+                    new ConditionalWeakTable<Assembly, DllImportResolver>(), null);
             }
 
             try
@@ -219,7 +221,7 @@ namespace System.Runtime.InteropServices
             catch (ArgumentException e)
             {
                 // ConditionalWealTable throws ArgumentException if the Key already exists
-                throw new InvalidOperationException("Resolver is alerady Set for the Assembly");
+                throw new InvalidOperationException(SR.InvalidOperation_CannotRegisterSecondResolver);
             }
         }
 
@@ -236,9 +238,12 @@ namespace System.Runtime.InteropServices
         internal static IntPtr LoadLibraryCallbackStub(string libraryName, Assembly assembly,
                                                        bool hasDllImportSearchPathFlags, uint dllImportSearchPathFlags)
         {
-            DllImportResolver resolver;
+            if (s_nativeDllResolveMap == null)
+            {
+                return IntPtr.Zero;
+            }
 
-            if (!s_nativeDllResolveMap.TryGetValue(assembly, out resolver))
+            if (!s_nativeDllResolveMap.TryGetValue(assembly, out DllImportResolver resolver))
             {
                 return IntPtr.Zero;
             }
