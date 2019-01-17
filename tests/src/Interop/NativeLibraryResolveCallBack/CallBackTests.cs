@@ -13,6 +13,7 @@ public class CallBackTests
 {
     public static int Main()
     {
+#if false
         try
         {
             Assembly assembly = Assembly.GetExecutingAssembly();
@@ -83,11 +84,56 @@ public class CallBackTests
             Console.WriteLine($"Unexpected exception: {e.ToString()} {e.Message}");
             return 106;
         }
+#endif
 
-        return 100;
+        return P1(1, 1) + P2(2, 2) + P3(3, 3) + P4(4, 4) + P5(5, 5) + P6(6, 6) + P7(7, 7) + P8(8, 8) + P9(9, 9) + P10(10, 10) + P11(11, 11) + P12(12, 12);
     }
 
-    [DllImport("NativeLib")]
+    [DllImport("NativeLib1", EntryPoint = "NativeSum")]
     [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
-    static extern int NativeSum(int arg1, int arg2);
+    static extern int P1(int arg1, int arg2);
+
+    [DllImport("NativeLib2", EntryPoint = "NativeSum")]
+    [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+    static extern int P2(int arg1, int arg2);
+
+    [DllImport("NativeLib3", EntryPoint = "NativeSum")]
+    [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+    static extern int P3(int arg1, int arg2);
+
+    [DllImport("NativeLib4", EntryPoint = "NativeSum")]
+    [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+    static extern int P4(int arg1, int arg2);
+
+    [DllImport("NativeLib5", EntryPoint = "NativeSum")]
+    [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+    static extern int P5(int arg1, int arg2);
+
+    [DllImport("NativeLib6", EntryPoint = "NativeSum")]
+    [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+    static extern int P6(int arg1, int arg2);
+
+    [DllImport("NativeLib7", EntryPoint = "NativeSum")]
+    [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+    static extern int P7(int arg1, int arg2);
+
+    [DllImport("NativeLib8", EntryPoint = "NativeSum")]
+    [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+    static extern int P8(int arg1, int arg2);
+
+    [DllImport("NativeLib9", EntryPoint = "NativeSum")]
+    [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+    static extern int P9(int arg1, int arg2);
+
+    [DllImport("NativeLib10", EntryPoint = "NativeSum")]
+    [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+    static extern int P10(int arg1, int arg2);
+
+    [DllImport("NativeLib11", EntryPoint = "NativeSum")]
+    [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+    static extern int P11(int arg1, int arg2);
+
+    [DllImport("NativeLib12", EntryPoint = "NativeSum")]
+    [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+    static extern int P12(int arg1, int arg2);
 }

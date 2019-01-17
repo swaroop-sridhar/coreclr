@@ -6792,6 +6792,8 @@ HINSTANCE NDirect::LoadLibraryModule(NDirectMethodDesc * pMD, LoadLibErrorTracke
     PREFIX_ASSUME( name != NULL );
     MAKE_WIDEPTR_FROMUTF8( wszLibName, name );
 
+    ModuleHandleHolder hmod = NULL;
+#if 0
     ModuleHandleHolder hmod = LoadLibraryModuleViaCallback(pMD, wszLibName);
     if (hmod != NULL)
     {
@@ -6800,7 +6802,7 @@ HINSTANCE NDirect::LoadLibraryModule(NDirectMethodDesc * pMD, LoadLibErrorTracke
 #endif // FEATURE_PAL
         return hmod.Extract();
     }
-
+#endif
     AppDomain* pDomain = GetAppDomain();
 
     // AssemblyLoadContext is not supported in AppX mode and thus,
