@@ -1,11 +1,9 @@
-# Dllmap design document
+# Dllmap Design 
 This document is intended to describe a design of a Dllmap feature for .NET Core.
 
 Author: Anna Aniol (@annaaniol)
 
-PR: https://github.com/dotnet/coreclr/pull/19826
-
-API proposal: https://github.com/dotnet/corefx/issues/32015
+​             [edited by @swaroop-sridhar]
 
 ## Background
 
@@ -21,45 +19,33 @@ public  static  extern  int  MessageBox(IntPtr  hWnd, String text, String captio
 This import works on Windows, but it doesn’t work on any other OS. If run e.g. on Linux, a DllNotFoundException will be thrown,
 which means that a DLL specified in a DLL import directive cannot be found.
 
-### Mono’s Dllmap
+### Dllmap
 
-Mono already provides a feature that addresses the problem of cross-platform p/invoke support. Mono’s [Dllmap](http://www.mono-project.com/docs/advanced/pinvoke/dllmap/) 
+Dllmap is a means to realize cross-platform p/invoke in .NET. Using Dllmap, a user can control interop methods by defining custom mapping between OS-specific dll names.
+
+### Mono Dllmap
+
+Mono provides a feature that addresses the problem of cross-platform p/invoke support. Mono’s [Dllmap](http://www.mono-project.com/docs/advanced/pinvoke/dllmap/) 
 enables to configure p/invoke signatures at runtime. By providing an XML configuration file, 
 user can define a custom mapping between OS-specific library names and method names.
-Thanks to that, even if a library defined in DllImport is incompatible with an OS that is currently running the application,
-a correct unmanaged method can be called (if it exists for this OS).
+Thanks to that, even if a library defined in DllImport is incompatible with an OS that is currently running the application, a correct unmanaged method can be called (if it exists for this OS).
 
-In Mono Dllmap feature custom mapping can be tightly specified based on the OS name, CPU name and a wordsize.
+In Mono Dllmap feature custom mapping can be tightly specified based on the OS name, CPU name and a wordsize. This simple Mono example maps references to the cygwin1.dll library to the libc.so.6 file:
 
-This simple Mono example maps references to the cygwin1.dll library to the libc.so.6 file:
 ```xml
 <configuration>
     <dllmap  dll="cygwin1.dll" target="libc.so.6"/>
 </configuration>
 ```
 
-Mono dllmap logic is implemented in [metadata/mono-config.c](https://github.com/mono/mono/blob/master/mono/metadata/mono-config.c) 
-and [metadata/loader.c](https://github.com/mono/mono/blob/master/mono/metadata/loader.c) files.
 
-## Expectations
 
-### .NET Core Dllmap
+## .NET Core Dllmap
 
-.NET Core Dllmap’s purpose is to deliver a cross-platform support for the p/invoke mechanism in .NET.
-With Dllmap user will be able to control interop methods by defining custom mapping between OS-specific dll names.
+### Mono compatibility
 
-Use of entrypoint mappings does not seem to be widespread in publicly searchable code.
-.NET Core Dllmap won't support entrypoint mappings as Mono does. We can come back to it if necessary.
+The Dllmap method is meant as a compatibility feature for Mono and provides users with a straightforward migration story from Mono to .NET Core applications.
 
-Target platforms for this feature are: Windows, Linux and OS X.
-
-There will be a diagnostic mechanism available to monitor dllmap related issues.
-
-### Interaction with Dllmap
-
-#### Mono users: Mono compatibility
-The Dllmap method is meant as a compatibility feature for Mono and provides users with a straightforward migration story from Mono to .NET Core applications having p/invokes
-for applications that *do not use entrypoint mappings*.
 The Mono-like dllmap behavior will consume a configuration file of [the same style](http://www.mono-project.com/docs/advanced/pinvoke/dllmap/) as Mono does.
 Users will be able to use their old Mono configuration files when specifying the mapping for .NET Core applications.
 Configuration files must be placed next to the assemblies that they describe.
@@ -209,6 +195,7 @@ public static int Main()
 **Runtime [unmanaged code]**
 -   Calls `LoadLibraryCallback` that executes a `callback` function to check for mappings and load a dll if there was a mapping strategy defined
     
+
 **System.Runtime.InteropServices.LoadLibrary**
 -   Is a public sealed class with `Name` and `Handle`
 -   Exposes a `Load` method for loading a native library
@@ -226,62 +213,22 @@ public static void RegisterNativeLibraryLoadCallback(Assembly assembly, Func<Loa
 
 ## Testing
 
-To verify if Dllmap’s behavior is correct, cross-platform tests will be run: [Mono tests](https://github.com/mono/mono/tree/0bcbe39b148bb498742fc68416f8293ccd350fb6/mcs/tools/mono-shlib-cop) and custom tests created on purpose of this feature.
-Custom tests must contain calls to native libraries. It doesn’t really matter what functions from which libraries get called, because the feature is about mapping things independently from method and library exact names. There are multiple dimensions that must be included in tests:
+**Tests**
 
-**OS**. When it comes to the OS, there are three main target platforms for this feature: Windows, Linux and OS X. All the Linux based systems are so architecturally similar, so they are named just “Linux” in this document. Ubuntu 16.04LTS will be used for testing.
-Test cases:
+* [Mono tests](https://github.com/mono/mono/tree/0bcbe39b148bb498742fc68416f8293ccd350fb6/mcs/tools/mono-shlib-cop) 
+* Custom unit tests, to include tests for:
+  * DLLs naming: using vatiants of relative/absolute paths, filename/extension  specification, etc.
+  * Fault tolerance, and error handling.
 
-|Develop (initial dll)  |Run (target dll)|
-|--|--|
-|Windows |Windows  |
-|Windows |Linux |
-|Windows |OS X |
-|Linux | Windows|
-|Linux |OS X |
-|Linux |OS X |
-|OS X |Windows|
-|OS X |Linux |
-|OS X |OS X
+**Operating Systems**. 
 
-**System's architecture** – test cases:
+Windows, Linux, Mac
 
-|Develop |Run |
-|--|--|
-|32-bit |32-bit|
-|32-bit|64-bit|
-|64-bit|32-bit |
-|64-bit| 32-bit|
+**Platforms ** 
 
-**Path mapping** – test cases:
-
-|Initial dll path |Target dll path|
-|--|--|
-|absolute |absolute|
-|absolute|relative|
-|relative|absolute |
-|relative| relative|
- 
-**Dll naming** – test cases:
-
-|Initial dll name |Target dll nanme|
-|--|--
-|with extension (foo.dll)|with extension|
-|with extension|no extension|
-|no extension (foo)|with extension|
-|no extension| no extension|
-
-**Resistance to errors in the config file** - test cases:
-- correct config file
-- config file that can't be parsed  &rightarrow; 
-log a warning, ignore the mapping for the corresponding assembly &rightarrow;  on some platforms (where mapping is not required) execute application, on some throw DllNotFoundException
-- config file pointing to a dll that can't be found &rightarrow; on the affected platforms throw a DllNotFoundException
-
-All the above test cases will be covered.
+X64, X86, ARM, ARM64
 
 ### Related discussions
 [Lightweight and dynamic driving of P/Invoke](https://github.com/dotnet/coreclr/issues/19112)
 
 [Handling p/invokes for different platforms and discussions about dllmap](https://github.com/dotnet/coreclr/issues/930)
-
-[Add NativeLibrary class PR](https://github.com/dotnet/coreclr/pull/16409/commits/7ece113b5f58111ee934d923e1ea213ba50f4224)
