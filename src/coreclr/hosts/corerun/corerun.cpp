@@ -15,6 +15,9 @@
 #include "sstring.h"
 #include "bundle.h"
 
+PVOID theApp = 0;
+DWORD theAppLen = 0;
+
 // Utility macro for testing whether or not a flag is set.
 #define HAS_FLAG(value, flag) (((value) & (flag)) == (flag))
 
@@ -648,7 +651,7 @@ bool TryRun(const wchar_t* exeName, const wchar_t* bundleDir, const int argc, co
     {
         ActivationContext cxt{ log, managedAssemblyFullName.GetUnicode() };
 
-        hr = host->ExecuteAssembly(domainId, managedAssemblyFullName, argc, argc ? argv : NULL, &exitCode);
+        hr = host->ExecuteAssembly(domainId, managedAssemblyFullName, argc, argc ? argv : NULL, &exitCode, theApp, theAppLen);
         if (FAILED(hr))
         {
             log << W("Failed call to ExecuteAssembly. ERRORCODE: ") << Logger::hresult << hr << Logger::endl;
@@ -753,6 +756,16 @@ private:
         }
 
         DWORD resourceSize = SizeofResource(bundle, resource);
+
+        if(::_wcsicmp(name, W("dn.dll")) == 0)
+        {
+            theApp = lockedResource;
+            theAppLen = resourceSize;
+            return true;
+        }
+
+        return true;
+
         PathString fileName(extract->UnbundleDir);
         fileName.Append(name);
  
@@ -836,9 +849,15 @@ private:
         UnbundleDir.Append(AppName);
         UnbundleDir.Append(W("\\"));
 
-		AppPath.Set(UnbundleDir);
+#if 0
+        AppPath.Set(UnbundleDir);
 		AppPath.Append(W("\\"));
 		AppPath.Append(AppName);
+#else
+        AppPath.Set(UnbundleDir);
+        AppPath.Append(W("\\"));
+        AppPath.Append(AppName);
+#endif
 
         WszCreateDirectory(UnbundleDir, NULL);
 
@@ -954,7 +973,7 @@ int __cdecl wmain(const int argc, const wchar_t* argv[])
     } else {
 
         DWORD exitCode;
-        auto success = TryRun(exeName, extractor.UnbundleDir, newArgc, newArgv, log, verbose, waitForDebugger, exitCode);
+        auto success = TryRun(exeName, nullptr, newArgc, newArgv, log, verbose, waitForDebugger, exitCode);
 
         log << W("Execution ") << (success ? W("succeeded") : W("failed")) << Logger::endl;
 

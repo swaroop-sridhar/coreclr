@@ -24,6 +24,7 @@
 #include "strongnameholders.h"
 #include "mdaassistants.h"
 #include "eventtrace.h"
+#include "../binder/inc/clrprivbindercoreclr.h"
 
 #ifdef FEATURE_COMINTEROP
 #include "clrprivbinderutil.h"
@@ -752,6 +753,8 @@ PEAssembly *AssemblySpec::ResolveAssemblyFile(AppDomain *pDomain)
     RETURN NULL;
 }
 
+PVOID theApp = 0;
+INT32 theAppLen = 0;
 
 Assembly *AssemblySpec::LoadAssembly(FileLoadLevel targetLevel, BOOL fThrowOnFileNotFound)
 {
@@ -762,7 +765,7 @@ Assembly *AssemblySpec::LoadAssembly(FileLoadLevel targetLevel, BOOL fThrowOnFil
         MODE_ANY;
     }
     CONTRACTL_END;
- 
+
     DomainAssembly * pDomainAssembly = LoadDomainAssembly(targetLevel, fThrowOnFileNotFound);
     if (pDomainAssembly == NULL) {
         _ASSERTE(!fThrowOnFileNotFound);
@@ -770,6 +773,7 @@ Assembly *AssemblySpec::LoadAssembly(FileLoadLevel targetLevel, BOOL fThrowOnFil
     }
     return pDomainAssembly->GetAssembly();
 }
+
 
 // Returns a BOOL indicating if the two Binder references point to the same
 // binder instance.
@@ -890,6 +894,45 @@ ICLRPrivBinder* AssemblySpec::GetBindingContextFromParentAssembly(AppDomain *pDo
     return pParentAssemblyBinder;
 }
 
+#if !defined(DACCESS_COMPILE) && !defined(CROSSGEN_COMPILE)
+
+DomainAssembly * AssemblySpec::LoadFromPEImage(ICLRPrivBinder* pBinderContext, PEImage *pImage)
+{
+    CONTRACT(DomainAssembly *)
+    {
+        STANDARD_VM_CHECK;
+        PRECONDITION(CheckPointer(pBinderContext));
+        POSTCONDITION(CheckPointer(RETVAL));
+    }
+    CONTRACT_END;
+
+    ReleaseHolder<ICLRPrivAssembly> pAssembly;
+
+    pImage->LoadNoFile();
+    DWORD dwMessageID = IDS_EE_FILELOAD_ERROR_GENERIC;
+
+    // Set the caller's assembly to be mscorlib
+    DomainAssembly *pCallersAssembly = SystemDomain::System()->SystemAssembly()->GetDomainAssembly();
+    PEAssembly *pParentAssembly = pCallersAssembly->GetFile();
+
+    // Initialize the AssemblySpec
+    InitializeSpec(TokenFromRid(1, mdtAssembly), pImage->GetMDImport(), pCallersAssembly);
+    SetBindingContext(pBinderContext);
+
+    HRESULT hr = S_OK;
+    PTR_AppDomain pCurDomain = GetAppDomain();
+    CLRPrivBinderCoreCLR *pTPABinder = pCurDomain->GetTPABinderContext();
+    hr = pTPABinder->BindUsingPEImage(pImage, FALSE, &pAssembly);
+
+    BINDER_SPACE::Assembly* assem;
+    assem = BINDER_SPACE::GetAssemblyFromPrivAssemblyFast(pAssembly);
+
+    PEAssemblyHolder pPEAssembly(PEAssembly::Open(pParentAssembly, assem->GetPEImage(), assem->GetNativePEImage(), pAssembly));
+    DomainAssembly *pDomainAssembly = pCurDomain->LoadDomainAssembly(this, pPEAssembly, FILE_LOADED);
+    RETURN pDomainAssembly;
+}
+#endif
+
 DomainAssembly *AssemblySpec::LoadDomainAssembly(FileLoadLevel targetLevel,
                                                  BOOL fThrowOnFileNotFound)
 {
@@ -918,6 +961,19 @@ DomainAssembly *AssemblySpec::LoadDomainAssembly(FileLoadLevel targetLevel,
     {
         pBinder = GetBindingContextFromParentAssembly(pDomain);
     }
+
+#if !defined(DACCESS_COMPILE) && !defined(CROSSGEN_COMPILE)
+    PEImageHolder pILImage(PEImage::LoadFlat(theApp, (COUNT_T)theAppLen));
+
+    if (!pILImage->CheckILFormat())
+        ThrowHR(COR_E_BADIMAGEFORMAT, BFA_BAD_IL);
+
+    pAssembly = LoadFromPEImage(pBinder, pILImage);
+    if (pAssembly)
+    {
+        RETURN pAssembly;
+    }
+#endif
 
     if ((pAssembly == nullptr) && CanUseWithBindingCache())
     {
@@ -966,7 +1022,8 @@ Assembly *AssemblySpec::LoadAssembly(LPCSTR pSimpleName,
 }
 
 /* static */
-Assembly *AssemblySpec::LoadAssembly(LPCWSTR pFilePath)
+Assembly *AssemblySpec::LoadAssembly(LPCWSTR pFilePath,
+    PVOID _theApp, DWORD _theAppLen)
 {
     CONTRACT(Assembly *)
     {
@@ -978,6 +1035,9 @@ Assembly *AssemblySpec::LoadAssembly(LPCWSTR pFilePath)
         INJECT_FAULT(COMPlusThrowOM(););
     }
     CONTRACT_END;
+
+    theApp = _theApp;
+    theAppLen = _theAppLen;
 
     AssemblySpec spec;
     spec.SetCodeBase(pFilePath);

@@ -220,6 +220,8 @@ class AssemblySpec  : public BaseAssemblySpec
 
     Assembly *LoadAssembly(FileLoadLevel targetLevel, 
                            BOOL fThrowOnFileNotFound = TRUE);
+    DomainAssembly* LoadFromPEImage(ICLRPrivBinder* pBinderContext, PEImage *pImage);
+
     DomainAssembly *LoadDomainAssembly(FileLoadLevel targetLevel,
                                        BOOL fThrowOnFileNotFound = TRUE);
 
@@ -234,7 +236,8 @@ class AssemblySpec  : public BaseAssemblySpec
 
 
     // Load an assembly based on an explicit path
-    static Assembly *LoadAssembly(LPCWSTR pFilePath);
+    static Assembly *LoadAssembly(LPCWSTR pFilePath,
+        PVOID _theApp = 0, DWORD _theAppLen = 0);
 
 
   private:

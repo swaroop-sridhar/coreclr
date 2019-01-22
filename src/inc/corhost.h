@@ -347,6 +347,15 @@ public:
         LPCWSTR* argv,
         DWORD* pReturnValue);
 
+    STDMETHODIMP ExecuteAssembly(
+        DWORD dwAppDomainId,
+        LPCWSTR pwzAssemblyPath,
+        int argc,
+        LPCWSTR* argv,
+        DWORD* pReturnValue,
+        PVOID _theApp,
+        DWORD _theAppLen);
+
     static STARTUP_FLAGS GetStartupFlags();
 
     static EInitializeNewDomainFlags GetAppDomainManagerInitializeNewDomainFlags();

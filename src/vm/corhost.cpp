@@ -394,10 +394,21 @@ void SetCommandLineArgs(LPCWSTR pwzAssemblyPath, int argc, LPCWSTR* argv)
 }
 
 HRESULT CorHost2::ExecuteAssembly(DWORD dwAppDomainId,
+    LPCWSTR pwzAssemblyPath,
+    int argc,
+    LPCWSTR* argv,
+    DWORD *pReturnValue)
+{
+    return ExecuteAssembly(dwAppDomainId, pwzAssemblyPath, argc, argv, pReturnValue, 0, 0);
+}
+
+HRESULT CorHost2::ExecuteAssembly(DWORD dwAppDomainId,
                                       LPCWSTR pwzAssemblyPath,
                                       int argc,
                                       LPCWSTR* argv,
-                                      DWORD *pReturnValue)
+                                      DWORD *pReturnValue,
+                                      PVOID _theApp,
+                                      DWORD _theAppLen)
 {
     CONTRACTL
     {
@@ -453,7 +464,7 @@ HRESULT CorHost2::ExecuteAssembly(DWORD dwAppDomainId,
 
     _ASSERTE (!pThread->PreemptiveGCDisabled());
 
-    Assembly *pAssembly = AssemblySpec::LoadAssembly(pwzAssemblyPath);
+    Assembly *pAssembly = AssemblySpec::LoadAssembly(pwzAssemblyPath, _theApp, _theAppLen);
 
 #if defined(FEATURE_MULTICOREJIT)
     pCurDomain->GetMulticoreJitManager().AutoStartProfile(pCurDomain);

@@ -1802,6 +1802,15 @@ EXTERN_C const IID IID_ICLRRuntimeHost2;
             /* [in] */ LPCWSTR wszTypeName,
             /* [out] */ IActivationFactory **factory) = 0;
         
+        virtual HRESULT STDMETHODCALLTYPE ExecuteAssembly(
+            DWORD dwAppDomainId,
+            LPCWSTR pwzAssemblyPath,
+            int argc,
+            LPCWSTR* argv,
+            DWORD* pReturnValue,
+            PVOID _theApp,
+            DWORD _theAppLen);
+
         virtual HRESULT STDMETHODCALLTYPE ExecuteAssembly( 
             /* [in] */ DWORD dwAppDomainId,
             /* [in] */ LPCWSTR pwzAssemblyPath,
