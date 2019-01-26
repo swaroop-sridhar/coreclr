@@ -37,7 +37,7 @@ The mechanism will support:
 
 ### 1.2 Scenarios
 
-Target audience:
+Best suited for:
 
 * Environments requiring maximal compatibility -- need to embed different kinds of files (IL, native, etc) into one, without losing functionality such as debuggability.
 
@@ -65,7 +65,7 @@ This stage improves on Stage 1 in that
 
 ### 2.2 Scenarios
 
-Target audience:
+Best suited for:
 
 * Framework dependent purely managed apps that are not ready-to-run compiled.
 
@@ -88,7 +88,7 @@ In this stage
 
 ### 3.2 Scenarios
 
-Target audience:
+Best suited for:
 
 * Framework dependent managed apps that may be ready-to-run compiled.
 
@@ -108,7 +108,7 @@ In this stage
 
 ### 4.2 Scenarios
 
-Target audience:
+Best suited for:
 
 * Self-contained managed apps
 
@@ -128,12 +128,12 @@ This stage improves on the previous one by providing the ability to statically l
 - Tooling to embed managed dependencies into this custom executable.
 
  Debugging support is the same as the previous stage.
- 
+
 Native library dependencies that cannot be statically linked will need to be extracted to the disk -- because some operating-systems do not support loading native libraries from memory.
 
 ### 5.2 Scenarios
 
-Target audience:
+Best suited for:
 
 * Self-contained managed apps with custom native dependencies (that can be linked).
 

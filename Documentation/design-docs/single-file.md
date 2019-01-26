@@ -1,15 +1,24 @@
-CoreCLR Single-file Publish
-Design for publishing apps as a single-file in CoreCLR 3.0
+# CoreCLR Single-file Publish
 
-## Solutions
+Design for publishing apps as a single-file in .Net-Core 3.0
 
-There are several strategies to implement Single-file publishing for CoreCLR apps, with varying cost and benefit. 
-The options range from bundling the published files into zip file, to native compiling and linking all the binaries together ([CoreRT](https://github.com/dotnet/corert)). 
+## Introduction
 
-The development of the single-file solution in CoreCLR has several stages, as described in this [document](single-file-staging.md)
-The rest of this document describes the design of the first stage of development -- the Self-Extractor.
+The goal of this effort is enable .Net-Core apps to be published and distributed as a single executable.
 
-#### Self-Extractor
+There are several strategies to implement this feature -- ranging from bundling the published files into zip file, to native compiling and linking all the binaries together ([CoreRT](https://github.com/dotnet/corert)). These stages 
+
+This document outlines the design for Single-file publishing, with varying cost and benefit. 
+
+### Development Staging
+
+In CoreCLR, we plan to implement a hybrid solution between the two ends of the spectrum.
+
+The single-file solution desirable for CoreCLR can be implemented in several stages, as described in this [document](single-file-staging.md).
+
+### CoreCLR 3.0
+
+For CoreCLR 3.0, we plan to implement stage 2The rest of this document describes the design of the first stage of development -- the Self-Extractor.
 
 There are two main aspects to publishing apps as a self-extracting single file:
 
@@ -181,6 +190,7 @@ To summarize, the overall the user Experience will be as follows:
 * `rm -r $HOME/dotnetApps/app/`
 	* Cleanup the installed dependencies.
 	
+
 Most applications are expected to work without any changes. However, apps with a strong expectation about absolute location of dependent or resource files may need to be made aware of bundling and extraction aspects of single-file publishing.
 
 No difference is expected with respect to debugging and analysis of apps.
