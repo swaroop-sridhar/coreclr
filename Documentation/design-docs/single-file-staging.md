@@ -1,9 +1,6 @@
 # CoreCLR Single-file Staging 
 
-Customers have asked for a single-file packaging solution for CoreCLR. This document describes the stages of developing this solution.
-
-## 0. Ideal Solution
-Ideally, we want a single-file solution that:
+Publishing apps as a single file is a popular feature-request in CoreCLR. Ideally, we want a single-file solution that:
 
 * Is compatible with all CoreCLR applications
 * Bundles MSIL, R2R, native code and custom (data) files
@@ -13,7 +10,7 @@ Ideally, we want a single-file solution that:
 * Improves startup cost
 * Works cohesively with debuggers, profilers, Watson dump etc. 
 
-With this feature-set, cost, and timeline tradeoffs in consideration, we propose the following steps to bring-up the feature.
+This document explores a few options to realize the single-file publish feature, with different feature-set vs development cost trade-offs. The document can also be considered a development staging plan, where each stage spills fewer items onto temporary files, while paying an incremental development cost.
 
 ## 1. Self-Extractor
 

@@ -6,24 +6,22 @@ Design for publishing apps as a single-file in .Net-Core 3.0
 
 The goal of this effort is enable .Net-Core apps to be published and distributed as a single executable.
 
-There are several strategies to implement this feature -- ranging from bundling the published files into zip file, to native compiling and linking all the binaries together ([CoreRT](https://github.com/dotnet/corert)). These stages 
+There are several strategies to implement this feature -- ranging from bundling the published files into zip file, to native compiling and linking all the binaries together ([CoreRT](https://github.com/dotnet/corert)). These options, along with their cost/benefit analysis is explored in this [staging document](single-file-staging.md).
 
-This document outlines the design for Single-file publishing, with varying cost and benefit. 
+In CoreCLR 3.0, we plan to implement a solution that 
 
-### Development Staging
+* Is widely compatible: Can bundle MSIL, ready-to-run assemblies, native binaries, configuration files, etc. into one executable
+* Run MSIL from bundle: Executes IL assemblies directly from the executable
+* Extracts others: Extracts ready-to-run and native binaries to disk before loading them.
 
-In CoreCLR, we plan to implement a hybrid solution between the two ends of the spectrum.
+This feature-set is described as Stage 2 in the [staging document](single-file-staging.md), and can be improvised in further releases.
 
-The single-file solution desirable for CoreCLR can be implemented in several stages, as described in this [document](single-file-staging.md).
-
-### CoreCLR 3.0
-
-For CoreCLR 3.0, we plan to implement stage 2The rest of this document describes the design of the first stage of development -- the Self-Extractor.
+In CoreCLR 3.0, framework dependent purely managed apps can be published as a single EXE, and run without requiring any extraction to intermediate files. 
 
 There are two main aspects to publishing apps as a self-extracting single file:
 
 * The Bundler: A tool that embeds the managed app, its dependencies, and the runtime into a single host executable.
-* The host: The "single-file" which extracts the embedded components into temporary files before continuing to execute the app.
+* The host: The "single-file" which facilitates the extraction or loading of embedded components.
 
 ## The Bundler
 
@@ -33,10 +31,25 @@ There are two main aspects to publishing apps as a self-extracting single file:
 
 The bundler tool must be:
 
-* Able to embed any resource required to run a CoreCLR app -- managed assemblies, native binaries, data files, etc.
-* Able to embed a directory hierarchy
+* Able to embed any resource required to run a CoreCLR app -- managed assemblies, native binaries, configuration files, data files, etc.
 * Able to generate cross-platform bundles (ex: publish a single-file for Windows from Unix)
 * Deterministic (generate the exact same single-file on multiple runs)
+
+#### Interface
+
+The bundler will be a standalone tool with the following command line:
+
+```CoreCLR Bundler version 0.1
+Usage:
+bundle.exe -a <App.exe>   The name of the Managed app
+           -h <Host.exe>  The path to CoreCLR native host
+           -r <resources> The directory containing all resources to embed
+          [-o <output>]   The path to output bundle -- defaults to .\bundle\App.exe
+          [-v]            Generate verbose output
+          [-?]            Display usage information
+```
+
+Most users are only expected to interact with the bundler via the dotnet CLI.
 
 #### Implementation
 
@@ -45,15 +58,14 @@ With the above requirements in mind, we plan to implement a tool similar to [MkB
 To any host (native binary) specified, the bundler tool will add:
 
 * A flag to identify that this is actually a bundle.
-* A manifest that declares the directory structure to create and files to extract/populate.
+* A manifest that declares the path (name/relative directory structure) and type (config/IL/native/other) of the embedded files.
 * The actual resources to be bundled.
 
 #### Repository
 
-The bundler tool will be implemented in the CoreCLR Repo within `coreclr/src/tools`
+The bundler should ideally be located close to the host, since their implementation is closely related. This also facilitates any sharing of headers between the two. Therefore, the bundler will be implemented in the core-setup repo.
 
-* The tool is best situated close to the core-host, which is slated to move into the CoreCLR  repository.
-* This also facilitates using CoreCLR test assets.
+The host-code is expected to move to the CoreCLR repo, at which point, the bundler should move with it. This will facilitate seamless use of CoreCLR test assets.
 
 ### dotnet CLI
 
