@@ -25,33 +25,6 @@ extern "C"
 {
 #endif // __cplusplus
 
-typedef BOOL (PALAPI_NOEXPORT *PDLLMAIN)(HINSTANCE, DWORD, LPVOID);   /* entry point of module */
-typedef HINSTANCE (PALAPI_NOEXPORT *PREGISTER_MODULE)(LPCSTR);           /* used to create the HINSTANCE for above DLLMain entry point */
-typedef VOID (PALAPI_NOEXPORT *PUNREGISTER_MODULE)(HINSTANCE);           /* used to cleanup the HINSTANCE for above DLLMain entry point */
-
-typedef struct _MODSTRUCT
-{
-    HMODULE self;                     /* circular reference to this module */
-    NATIVE_LIBRARY_HANDLE dl_handle;  /* handle returned by dlopen() */
-    HINSTANCE hinstance;              /* handle returned by PAL_RegisterLibrary */
-    LPWSTR lib_name;                  /* full path of module */
-    INT refcount;                     /* reference count */
-                                      /* -1 means infinite reference count - module is never released */
-    BOOL threadLibCalls;              /* TRUE for DLL_THREAD_ATTACH/DETACH notifications enabled, FALSE if they are disabled */
-
-#if RETURNS_NEW_HANDLES_ON_REPEAT_DLOPEN
-    ino_t inode;
-    dev_t device;
-#endif
-
-    PDLLMAIN pDllMain;    /* entry point of module */
-
-    /* reference to next and previous modules in list (in load order) */
-    struct _MODSTRUCT *next;
-    struct _MODSTRUCT *prev;
-} MODSTRUCT;
-
-
 /*++
 Function :
     LOADInitializeModules
@@ -74,7 +47,7 @@ Function :
     Set the exe name path
 
 Parameters :
-    LPWSTR man exe path and name
+    LPWSTR name exe path and name
 
 Return value :
     TRUE  if initialization succeedded
@@ -85,55 +58,28 @@ BOOL LOADSetExeName(LPWSTR name);
 
 /*++
 Function :
-    LOADCallDllMain
+    LOADGetExeName
 
-    Call DllMain for all modules (that have one) with the given "fwReason"
+    Get the exe name path
 
-Parameters :
-    DWORD dwReason : parameter to pass down to DllMain, one of DLL_PROCESS_ATTACH, DLL_PROCESS_DETACH, 
-        DLL_THREAD_ATTACH, DLL_THREAD_DETACH
+Return value :
+    LPWSTR exe path and name
 
-    LPVOID lpReserved : parameter to pass down to DllMain
-        If dwReason is DLL_PROCESS_ATTACH, lpvReserved is NULL for dynamic loads and non-NULL for static loads.
-        If dwReason is DLL_PROCESS_DETACH, lpvReserved is NULL if DllMain has been called by using FreeLibrary 
-            and non-NULL if DllMain has been called during process termination. 
-
-(no return value)
-
-Notes :
-    This is used to send DLL_THREAD_*TACH messages to modules
 --*/
-void LOADCallDllMain(DWORD dwReason, LPVOID lpReserved);
+LPCWSTR LOADGetExeName();
+
 
 /*++
-Function:
-  LockModuleList
+Function :
+    LOADGetExeHandle
 
-Abstract
-  Enter the critical section associated to the module list
+    Get the exe module handle
 
-Parameter
-  void
+Return value :
+    The Exe Module Handle
 
-Return
-  void
 --*/
-void LockModuleList();
-
-/*++
-Function:
-  UnlockModuleList
-
-Abstract
-  Leave the critical section associated to the module list
-
-Parameter
-  void
-
-Return
-  void
---*/
-void UnlockModuleList();
+HMODULE LOADGetExeHandle();
 
 /*++
 Function:
@@ -182,18 +128,35 @@ BOOL LOADInitializeCoreCLRModule();
 
 /*++
 Function :
-    LOADGetPalLibrary
+    LOADGetPalHandle
 
-    Load and initialize the PAL module.
+    Get the handle for the PAL module 
+    (after possibly Loading and initializing it)
 
 Parameters :
     None
 
 Return value :
-    handle to loaded module
+    The PAL Module handle
 
 --*/
-MODSTRUCT *LOADGetPalLibrary();
+HMODULE LOADGetPalHandle();
+
+/*++
+Function :
+    LOADGetPalPath
+
+    Get the full path for the PAL module 
+    (after possibly Loading and initializing it)
+
+Parameters :
+    None
+
+Return value :
+    The path for the PAL module
+
+--*/
+LPCWSTR LOADGetPalPath();
 
 #ifdef __cplusplus
 }

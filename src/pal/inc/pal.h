@@ -28,7 +28,7 @@ Abstract:
 
     If you want to add a PAL_ wrapper function to a native function in
     here, you also need to edit palinternal.h and win32pal.h.
-
+    
 
 
 --*/
@@ -68,11 +68,6 @@ extern "C" {
 #include <pal_char16.h>
 #include <pal_error.h>
 #include <pal_mstypes.h>
-
-// Native system libray handle.
-// On Unix systems, NATIVE_LIBRARY_HANDLE type represents a library handle not registered with the PAL.
-// To get a HMODULE on Unix, call PAL_RegisterLibraryDirect() on a NATIVE_LIBRARY_HANDLE.
-typedef PVOID NATIVE_LIBRARY_HANDLE;
 
 /******************* Processor-specific glue  *****************************/
 
@@ -143,13 +138,6 @@ typedef PVOID NATIVE_LIBRARY_HANDLE;
 #define LANG_THAI                        0x1e
 
 /******************* Compiler-specific glue *******************************/
-#ifndef THROW_DECL
-#if defined(_MSC_VER) || defined(__llvm__) || !defined(__cplusplus)
-#define THROW_DECL
-#else
-#define THROW_DECL throw()
-#endif // !_MSC_VER
-#endif // !THROW_DECL
 
 #ifndef _MSC_VER
 #if defined(CORECLR)
@@ -160,10 +148,10 @@ typedef PVOID NATIVE_LIBRARY_HANDLE;
 #endif // CORECLR
 #endif // !_MSC_VER
 
-#if defined(_MSC_VER)
+#if defined(_MSC_VER) || defined(__llvm__)
 #define DECLSPEC_ALIGN(x)   __declspec(align(x))
 #else
-#define DECLSPEC_ALIGN(x)   __attribute__ ((aligned(x)))
+#define DECLSPEC_ALIGN(x) 
 #endif
 
 #define DECLSPEC_NORETURN   PAL_NORETURN
@@ -183,14 +171,6 @@ typedef PVOID NATIVE_LIBRARY_HANDLE;
 #endif
 #endif
 
-#ifndef NOOPT_ATTRIBUTE
-#if defined(__llvm__)
-#define NOOPT_ATTRIBUTE optnone
-#else
-#define NOOPT_ATTRIBUTE optimize("O0")
-#endif
-#endif
-
 #ifndef PAL_STDCPP_COMPAT
 
 #if __GNUC__
@@ -207,6 +187,8 @@ typedef __builtin_va_list va_list;
 #define va_end      __builtin_va_end
 
 #define VOID void
+
+#define PUB __attribute__((visibility("default")))
 
 #else // __GNUC__
 
@@ -252,7 +234,7 @@ PALIMPORT
 BOOL
 PALAPI
 PAL_IsDebuggerPresent(VOID);
-
+ 
 #define MAXIMUM_SUSPEND_COUNT  MAXCHAR
 
 #define CHAR_BIT      8
@@ -301,7 +283,7 @@ PAL_IsDebuggerPresent(VOID);
 #if defined(__cplusplus)
 #define NULL    0
 #else
-#define NULL    ((PVOID)0)
+#define NULL    ((void *)0)
 #endif
 
 #if defined(PAL_STDCPP_COMPAT) && !defined(__cplusplus)
@@ -347,7 +329,7 @@ typedef long time_t;
                                         PAL_INITIALIZE_STD_HANDLES)
 
 // PAL_InitializeDLL() flags - don't start any of the helper threads or register any exceptions
-#define PAL_INITIALIZE_DLL              PAL_INITIALIZE_NONE
+#define PAL_INITIALIZE_DLL              PAL_INITIALIZE_NONE       
 
 // PAL_InitializeCoreCLR() flags
 #define PAL_INITIALIZE_CORECLR         (PAL_INITIALIZE | \
@@ -357,7 +339,7 @@ typedef long time_t;
                                         PAL_INITIALIZE_ENSURE_STACK_SIZE | \
                                         PAL_INITIALIZE_REGISTER_SIGNALS)
 
-typedef DWORD (PALAPI_NOEXPORT *PTHREAD_START_ROUTINE)(LPVOID lpThreadParameter);
+typedef DWORD (PALAPI *PTHREAD_START_ROUTINE)(LPVOID lpThreadParameter);
 typedef PTHREAD_START_ROUTINE LPTHREAD_START_ROUTINE;
 
 /******************* PAL-Specific Entrypoints *****************************/
@@ -367,7 +349,7 @@ int
 PALAPI
 PAL_Initialize(
     int argc,
-    char * const argv[]);
+    const char * const argv[]);
 
 PALIMPORT
 void
@@ -477,7 +459,7 @@ PALAPI
 PAL_GetTransportPipeName(
     OUT char *name,
     IN DWORD id,
-    IN const char *applicationGroupId,
+    IN const char *applicationGroupId, 
     IN const char *suffix);
 
 PALIMPORT
@@ -490,18 +472,6 @@ PALIMPORT
 void
 PALAPI
 PAL_IgnoreProfileSignal(int signalNum);
-
-PALIMPORT
-HINSTANCE
-PALAPI
-PAL_RegisterModule(
-    IN LPCSTR lpLibFileName);
-
-PALIMPORT
-VOID
-PALAPI
-PAL_UnregisterModule(
-    IN HINSTANCE hInstance);
 
 PALIMPORT
 BOOL
@@ -612,11 +582,11 @@ MessageBoxW(
 
 // From win32.h
 #ifndef _CRTIMP
-#ifdef __GNUC__
+#ifdef __llvm__
 #define _CRTIMP
-#else // __GNUC__
+#else // __llvm__
 #define _CRTIMP __declspec(dllimport)
-#endif // __GNUC__
+#endif // __llvm__
 #endif // _CRTIMP
 
 /******************* winbase.h Entrypoints and defines ************************/
@@ -777,7 +747,7 @@ RemoveDirectoryW(
 #define RemoveDirectory RemoveDirectoryA
 #endif
 
-typedef struct _BY_HANDLE_FILE_INFORMATION {
+typedef struct _BY_HANDLE_FILE_INFORMATION {  
     DWORD dwFileAttributes;
     FILETIME ftCreationTime;
     FILETIME ftLastAccessTime;
@@ -1575,7 +1545,7 @@ PALAPI
 ResumeThread(
          IN HANDLE hThread);
 
-typedef VOID (PALAPI_NOEXPORT *PAPCFUNC)(ULONG_PTR dwParam);
+typedef VOID (PALAPI *PAPCFUNC)(ULONG_PTR dwParam);
 
 PALIMPORT
 DWORD
@@ -2381,7 +2351,7 @@ GetThreadTimes(
         OUT LPFILETIME lpExitTime,
         OUT LPFILETIME lpKernelTime,
         OUT LPFILETIME lpUserTime);
-
+    
 #define TLS_OUT_OF_INDEXES ((DWORD)0xFFFFFFFF)
 
 PALIMPORT
@@ -2410,12 +2380,12 @@ TlsFree(
     IN DWORD dwTlsIndex);
 
 PALIMPORT
-PVOID
+void *
 PALAPI
 PAL_GetStackBase(VOID);
 
 PALIMPORT
-PVOID
+void *
 PALAPI
 PAL_GetStackLimit(VOID);
 
@@ -2476,12 +2446,12 @@ PALIMPORT BOOL PALAPI PAL_VirtualUnwindOutOfProc(CONTEXT *context, KNONVOLATILE_
 #define PAL_CS_NATIVE_DATA_SIZE 56
 #elif defined(__NetBSD__) && defined(__i386__)
 #define PAL_CS_NATIVE_DATA_SIZE 56
-#else
-#warning
+#else 
+#warning 
 #error  PAL_CS_NATIVE_DATA_SIZE is not defined for this architecture
 #endif
-
-//
+    
+// 
 typedef struct _CRITICAL_SECTION {
     PVOID DebugInfo;
     LONG LockCount;
@@ -2494,9 +2464,9 @@ typedef struct _CRITICAL_SECTION {
     volatile DWORD dwInitState;
     union CSNativeDataStorage
     {
-        BYTE rgNativeDataStorage[PAL_CS_NATIVE_DATA_SIZE];
-        PVOID pvAlign; // make sure the storage is machine-pointer-size aligned
-    } csnds;
+        BYTE rgNativeDataStorage[PAL_CS_NATIVE_DATA_SIZE]; 
+        VOID * pvAlign; // make sure the storage is machine-pointer-size aligned
+    } csnds;    
 } CRITICAL_SECTION, *PCRITICAL_SECTION, *LPCRITICAL_SECTION;
 
 PALIMPORT VOID PALAPI EnterCriticalSection(IN OUT LPCRITICAL_SECTION lpCriticalSection);
@@ -2576,7 +2546,7 @@ OpenFileMappingW(
 #define OpenFileMapping OpenFileMappingA
 #endif
 
-typedef INT_PTR (PALAPI_NOEXPORT *FARPROC)();
+typedef INT_PTR (PALAPI *FARPROC)();
 
 PALIMPORT
 LPVOID
@@ -2620,32 +2590,6 @@ LoadLibraryExW(
         IN /*Reserved*/ HANDLE hFile,
         IN DWORD dwFlags);
 
-PALIMPORT
-NATIVE_LIBRARY_HANDLE
-PALAPI
-PAL_LoadLibraryDirect(
-        IN LPCWSTR lpLibFileName);
-
-PALIMPORT
-HMODULE
-PALAPI
-PAL_RegisterLibraryDirect(
-        IN NATIVE_LIBRARY_HANDLE dl_handle,
-        IN LPCWSTR lpLibFileName);
-
-PALIMPORT
-BOOL
-PALAPI
-PAL_FreeLibraryDirect(
-        IN NATIVE_LIBRARY_HANDLE dl_handle);
-
-PALIMPORT
-FARPROC
-PALAPI
-PAL_GetProcAddressDirect(
-        IN NATIVE_LIBRARY_HANDLE dl_handle,
-        IN LPCSTR lpProcName);
-
 /*++
 Function:
   PAL_LOADLoadPEFile
@@ -2661,8 +2605,7 @@ Return value:
     A valid base address if successful.
     0 if failure
 --*/
-PALIMPORT
-PVOID
+void *
 PALAPI
 PAL_LOADLoadPEFile(HANDLE hFile);
 
@@ -2678,10 +2621,9 @@ Return value:
     TRUE - success
     FALSE - failure (incorrect ptr, etc.)
 --*/
-PALIMPORT
-BOOL
+BOOL 
 PALAPI
-PAL_LOADUnloadPEFile(PVOID ptr);
+PAL_LOADUnloadPEFile(void * ptr);
 
 #ifdef UNICODE
 #define LoadLibrary LoadLibraryW
@@ -2713,12 +2655,6 @@ FreeLibraryAndExitThread(
     IN DWORD dwExitCode);
 
 PALIMPORT
-BOOL
-PALAPI
-DisableThreadLibraryCalls(
-    IN HMODULE hLibModule);
-
-PALIMPORT
 DWORD
 PALAPI
 GetModuleFileNameW(
@@ -2746,11 +2682,10 @@ GetModuleFileNameExW(
 #define GetModuleFileNameEx GetModuleFileNameExW
 #endif
 
-// Get base address of the module containing a given symbol
-PALIMPORT
-LPCVOID
+// Get base address of the module containing a given symbol 
 PALAPI
-PAL_GetSymbolModuleBase(PVOID symbol);
+LPCVOID
+PAL_GetSymbolModuleBase(void *symbol);
 
 PALIMPORT
 LPCSTR
@@ -2803,7 +2738,7 @@ typedef struct _MEMORYSTATUSEX {
   DWORDLONG ullAvailExtendedVirtual;
 } MEMORYSTATUSEX, *LPMEMORYSTATUSEX;
 
-PALIMPORT
+PALIMPORT 
 BOOL
 PALAPI
 GlobalMemoryStatusEx(
@@ -2827,10 +2762,19 @@ VirtualQuery(
          OUT PMEMORY_BASIC_INFORMATION lpBuffer,
          IN SIZE_T dwLength);
 
+PALIMPORT
+VOID
+PALAPI
+RtlMoveMemory(
+          IN PVOID Destination,
+          IN CONST VOID *Source,
+          IN SIZE_T Length);
+
 #define MoveMemory memmove
 #define CopyMemory memcpy
 #define FillMemory(Destination,Length,Fill) memset((Destination),(Fill),(Length))
 #define ZeroMemory(Destination,Length) memset((Destination),0,(Length))
+
 
 PALIMPORT
 HANDLE
@@ -2961,7 +2905,7 @@ BOOL
 PALAPI
 IsValidCodePage(
         IN UINT CodePage);
-
+        
 
 #define MB_PRECOMPOSED            0x00000001
 #define MB_ERR_INVALID_CHARS      0x00000008
@@ -3079,7 +3023,7 @@ typedef struct _RUNTIME_FUNCTION {
 #define MAXIMUM_ALLOWED           (0x02000000L)
 
 #define EVENT_MODIFY_STATE        (0x0002)
-#define EVENT_ALL_ACCESS          (STANDARD_RIGHTS_REQUIRED | SYNCHRONIZE | 0x3)
+#define EVENT_ALL_ACCESS          (STANDARD_RIGHTS_REQUIRED | SYNCHRONIZE | 0x3) 
 
 #define MUTANT_QUERY_STATE        (0x0001)
 #define MUTANT_ALL_ACCESS         (STANDARD_RIGHTS_REQUIRED | SYNCHRONIZE | MUTANT_QUERY_STATE)
@@ -3088,18 +3032,18 @@ typedef struct _RUNTIME_FUNCTION {
 #define SEMAPHORE_MODIFY_STATE    (0x0002)
 #define SEMAPHORE_ALL_ACCESS      (STANDARD_RIGHTS_REQUIRED | SYNCHRONIZE | 0x3)
 
-#define PROCESS_TERMINATE         (0x0001)
-#define PROCESS_CREATE_THREAD     (0x0002)
-#define PROCESS_SET_SESSIONID     (0x0004)
-#define PROCESS_VM_OPERATION      (0x0008)
-#define PROCESS_VM_READ           (0x0010)
-#define PROCESS_VM_WRITE          (0x0020)
-#define PROCESS_DUP_HANDLE        (0x0040)
-#define PROCESS_CREATE_PROCESS    (0x0080)
-#define PROCESS_SET_QUOTA         (0x0100)
-#define PROCESS_SET_INFORMATION   (0x0200)
-#define PROCESS_QUERY_INFORMATION (0x0400)
-#define PROCESS_SUSPEND_RESUME    (0x0800)
+#define PROCESS_TERMINATE         (0x0001)  
+#define PROCESS_CREATE_THREAD     (0x0002)  
+#define PROCESS_SET_SESSIONID     (0x0004)  
+#define PROCESS_VM_OPERATION      (0x0008)  
+#define PROCESS_VM_READ           (0x0010)  
+#define PROCESS_VM_WRITE          (0x0020)  
+#define PROCESS_DUP_HANDLE        (0x0040)  
+#define PROCESS_CREATE_PROCESS    (0x0080)  
+#define PROCESS_SET_QUOTA         (0x0100)  
+#define PROCESS_SET_INFORMATION   (0x0200)  
+#define PROCESS_QUERY_INFORMATION (0x0400)  
+#define PROCESS_SUSPEND_RESUME    (0x0800)  
 #define PROCESS_ALL_ACCESS        (STANDARD_RIGHTS_REQUIRED | SYNCHRONIZE | \
                                    0xFFF)
 
@@ -3260,7 +3204,7 @@ PAL_nanosleep(
 
 #ifndef FEATURE_PAL_SXS
 
-typedef LONG (PALAPI_NOEXPORT *PTOP_LEVEL_EXCEPTION_FILTER)(
+typedef LONG (PALAPI *PTOP_LEVEL_EXCEPTION_FILTER)(
                            struct _EXCEPTION_POINTERS *ExceptionInfo);
 typedef PTOP_LEVEL_EXCEPTION_FILTER LPTOP_LEVEL_EXCEPTION_FILTER;
 
@@ -3272,7 +3216,7 @@ SetUnhandledExceptionFilter(
 
 #else // FEATURE_PAL_SXS
 
-typedef EXCEPTION_DISPOSITION (PALAPI_NOEXPORT *PVECTORED_EXCEPTION_HANDLER)(
+typedef EXCEPTION_DISPOSITION (PALAPI *PVECTORED_EXCEPTION_HANDLER)(
                            struct _EXCEPTION_POINTERS *ExceptionPointers);
 
 #endif // FEATURE_PAL_SXS
@@ -3398,12 +3342,12 @@ simultaneously.
 
 Parameters
 
-lpAddend
-[in/out] Pointer to the variable to increment.
+lpAddend 
+[in/out] Pointer to the variable to increment. 
 
 Return Values
 
-The return value is the resulting incremented value.
+The return value is the resulting incremented value. 
 
 --*/
 EXTERN_C
@@ -3443,8 +3387,8 @@ simultaneously.
 
 Parameters
 
-lpAddend
-[in/out] Pointer to the variable to decrement.
+lpAddend 
+[in/out] Pointer to the variable to decrement. 
 
 Return Values
 
@@ -3490,15 +3434,15 @@ variable simultaneously.
 
 Parameters
 
-Target
+Target 
 [in/out] Pointer to the value to exchange. The function sets
 this variable to Value, and returns its prior value.
-Value
-[in] Specifies a new value for the variable pointed to by Target.
+Value 
+[in] Specifies a new value for the variable pointed to by Target. 
 
 Return Values
 
-The function returns the initial value pointed to by Target.
+The function returns the initial value pointed to by Target. 
 
 --*/
 EXTERN_C
@@ -3510,7 +3454,7 @@ InterlockedExchange(
     IN OUT LONG volatile *Target,
     IN LONG Value)
 {
-    LONG result = __atomic_exchange_n(Target, Value, __ATOMIC_ACQ_REL);
+    LONG result = __sync_swap(Target, Value);
     PAL_ArmInterlockedOperationBarrier();
     return result;
 }
@@ -3524,7 +3468,7 @@ InterlockedExchange64(
     IN OUT LONGLONG volatile *Target,
     IN LONGLONG Value)
 {
-    LONGLONG result = __atomic_exchange_n(Target, Value, __ATOMIC_ACQ_REL);
+    LONGLONG result = __sync_swap(Target, Value);
     PAL_ArmInterlockedOperationBarrier();
     return result;
 }
@@ -3758,7 +3702,7 @@ PALIMPORT
 BOOL
 PALAPI
 PAL_HasGetCurrentProcessorNumber(VOID);
-
+    
 #define FORMAT_MESSAGE_ALLOCATE_BUFFER 0x00000100
 #define FORMAT_MESSAGE_IGNORE_INSERTS  0x00000200
 #define FORMAT_MESSAGE_FROM_STRING     0x00000400
@@ -3806,23 +3750,23 @@ GetCommandLineW(
 #endif
 
 PALIMPORT
-VOID
-PALAPI
+VOID 
+PALAPI 
 RtlRestoreContext(
   IN PCONTEXT ContextRecord,
   IN PEXCEPTION_RECORD ExceptionRecord
 );
 
 PALIMPORT
-VOID
-PALAPI
+VOID 
+PALAPI 
 RtlCaptureContext(
   OUT PCONTEXT ContextRecord
 );
 
 PALIMPORT
-UINT
-PALAPI
+UINT 
+PALAPI 
 GetWriteWatch(
   IN DWORD dwFlags,
   IN PVOID lpBaseAddress,
@@ -3833,16 +3777,16 @@ GetWriteWatch(
 );
 
 PALIMPORT
-UINT
-PALAPI
+UINT 
+PALAPI 
 ResetWriteWatch(
   IN LPVOID lpBaseAddress,
   IN SIZE_T dwRegionSize
 );
 
 PALIMPORT
-VOID
-PALAPI
+VOID 
+PALAPI 
 FlushProcessWriteBuffers(VOID);
 
 typedef void (*PAL_ActivationFunction)(CONTEXT *context);
@@ -3970,7 +3914,7 @@ CreatePipe(
 // NUMA related APIs
 //
 
-typedef enum _PROCESSOR_CACHE_TYPE {
+typedef enum _PROCESSOR_CACHE_TYPE { 
   CacheUnified,
   CacheInstruction,
   CacheData,
@@ -3983,7 +3927,7 @@ typedef struct _PROCESSOR_NUMBER {
   BYTE Reserved;
 } PROCESSOR_NUMBER, *PPROCESSOR_NUMBER;
 
-typedef enum _LOGICAL_PROCESSOR_RELATIONSHIP {
+typedef enum _LOGICAL_PROCESSOR_RELATIONSHIP { 
   RelationProcessorCore,
   RelationNumaNode,
   RelationCache,
@@ -4265,7 +4209,7 @@ SetThreadIdealProcessorEx(
 #define strnlen       PAL_strnlen
 #define wcsnlen       PAL_wcsnlen
 
-#ifdef _AMD64_
+#ifdef _AMD64_ 
 #define _mm_getcsr    PAL__mm_getcsr
 #define _mm_setcsr    PAL__mm_setcsr
 #endif // _AMD64_
@@ -4308,10 +4252,9 @@ See MSDN doc for memcpy
 --*/
 EXTERN_C
 PALIMPORT
-DLLEXPORT
-void *PAL_memcpy (void *dest, const void * src, size_t count);
+void *PAL_memcpy (void *dest, const void *src, size_t count);
 
-PALIMPORT void * __cdecl memcpy(void *, const void *, size_t) THROW_DECL;
+PALIMPORT void * __cdecl memcpy(void *, const void *, size_t);
 
 #define memcpy PAL_memcpy
 #define IS_PAL_memcpy 1
@@ -4324,7 +4267,7 @@ PALIMPORT int    __cdecl memcmp(const void *, const void *, size_t);
 PALIMPORT void * __cdecl memset(void *, int, size_t);
 PALIMPORT void * __cdecl memmove(void *, const void *, size_t);
 PALIMPORT void * __cdecl memchr(const void *, int, size_t);
-PALIMPORT long long int __cdecl atoll(const char *) THROW_DECL;
+PALIMPORT long long int __cdecl atoll(const char *);
 PALIMPORT size_t __cdecl strlen(const char *);
 PALIMPORT int __cdecl strcmp(const char*, const char *);
 PALIMPORT int __cdecl strncmp(const char*, const char *, size_t);
@@ -4363,62 +4306,62 @@ PALIMPORT int __cdecl toupper(int);
 #define _TRUNCATE ((size_t)-1)
 #endif
 
-PALIMPORT DLLEXPORT errno_t __cdecl memcpy_s(void *, size_t, const void *, size_t) THROW_DECL;
+PALIMPORT errno_t __cdecl memcpy_s(void *, size_t, const void *, size_t);
 PALIMPORT errno_t __cdecl memmove_s(void *, size_t, const void *, size_t);
 PALIMPORT char * __cdecl _strlwr(char *);
-PALIMPORT DLLEXPORT int __cdecl _stricmp(const char *, const char *);
-PALIMPORT DLLEXPORT int __cdecl vsprintf_s(char *, size_t, const char *, va_list);
+PALIMPORT int __cdecl _stricmp(const char *, const char *);
+PALIMPORT int __cdecl vsprintf_s(char *, size_t, const char *, va_list);
 PALIMPORT char * __cdecl _gcvt_s(char *, int, double, int);
 PALIMPORT int __cdecl __iscsym(int);
 PALIMPORT unsigned char * __cdecl _mbsinc(const unsigned char *);
 PALIMPORT unsigned char * __cdecl _mbsninc(const unsigned char *, size_t);
 PALIMPORT unsigned char * __cdecl _mbsdec(const unsigned char *, const unsigned char *);
-PALIMPORT DLLEXPORT int __cdecl _wcsicmp(const WCHAR *, const WCHAR*);
+PALIMPORT int __cdecl _wcsicmp(const WCHAR *, const WCHAR*);
 PALIMPORT int __cdecl _wcsnicmp(const WCHAR *, const WCHAR *, size_t);
 PALIMPORT int __cdecl _vsnprintf(char *, size_t, const char *, va_list);
-PALIMPORT DLLEXPORT int __cdecl _vsnprintf_s(char *, size_t, size_t, const char *, va_list);
-PALIMPORT DLLEXPORT int __cdecl _vsnwprintf_s(WCHAR *, size_t, size_t, const WCHAR *, va_list);
-PALIMPORT DLLEXPORT int __cdecl _snwprintf_s(WCHAR *, size_t, size_t, const WCHAR *, ...);
-PALIMPORT DLLEXPORT int __cdecl _snprintf_s(char *, size_t, size_t, const char *, ...);
-PALIMPORT DLLEXPORT int __cdecl sprintf_s(char *, size_t, const char *, ... );
-PALIMPORT DLLEXPORT int __cdecl swprintf_s(WCHAR *, size_t, const WCHAR *, ... );
+PALIMPORT int __cdecl _vsnprintf_s(char *, size_t, size_t, const char *, va_list);
+PALIMPORT int __cdecl _vsnwprintf_s(WCHAR *, size_t, size_t, const WCHAR *, va_list);
+PALIMPORT int __cdecl _snwprintf_s(WCHAR *, size_t, size_t, const WCHAR *, ...);
+PALIMPORT int __cdecl _snprintf_s(char *, size_t, size_t, const char *, ...);
+PALIMPORT int __cdecl sprintf_s(char *, size_t, const char *, ... );
+PALIMPORT int __cdecl swprintf_s(WCHAR *, size_t, const WCHAR *, ... );
 PALIMPORT int __cdecl _snwprintf_s(WCHAR *, size_t, size_t, const WCHAR *, ...);
 PALIMPORT int __cdecl vswprintf_s( WCHAR *, size_t, const WCHAR *, va_list);
-PALIMPORT DLLEXPORT int __cdecl sscanf_s(const char *, const char *, ...);
-PALIMPORT DLLEXPORT errno_t __cdecl _itow_s(int, WCHAR *, size_t, int);
+PALIMPORT int __cdecl sscanf_s(const char *, const char *, ...);
+PALIMPORT errno_t __cdecl _itow_s(int, WCHAR *, size_t, int);
 
-PALIMPORT DLLEXPORT size_t __cdecl PAL_wcslen(const WCHAR *);
-PALIMPORT DLLEXPORT int __cdecl PAL_wcscmp(const WCHAR*, const WCHAR*);
-PALIMPORT DLLEXPORT int __cdecl PAL_wcsncmp(const WCHAR *, const WCHAR *, size_t);
-PALIMPORT DLLEXPORT WCHAR * __cdecl PAL_wcscat(WCHAR *, const WCHAR *);
+PALIMPORT size_t __cdecl PAL_wcslen(const WCHAR *);
+PALIMPORT int __cdecl PAL_wcscmp(const WCHAR*, const WCHAR*);
+PALIMPORT int __cdecl PAL_wcsncmp(const WCHAR *, const WCHAR *, size_t);
+PALIMPORT WCHAR * __cdecl PAL_wcscat(WCHAR *, const WCHAR *);
 PALIMPORT WCHAR * __cdecl PAL_wcsncat(WCHAR *, const WCHAR *, size_t);
 PALIMPORT WCHAR * __cdecl PAL_wcscpy(WCHAR *, const WCHAR *);
 PALIMPORT WCHAR * __cdecl PAL_wcsncpy(WCHAR *, const WCHAR *, size_t);
-PALIMPORT DLLEXPORT const WCHAR * __cdecl PAL_wcschr(const WCHAR *, WCHAR);
-PALIMPORT DLLEXPORT const WCHAR * __cdecl PAL_wcsrchr(const WCHAR *, WCHAR);
+PALIMPORT const WCHAR * __cdecl PAL_wcschr(const WCHAR *, WCHAR);
+PALIMPORT const WCHAR * __cdecl PAL_wcsrchr(const WCHAR *, WCHAR);
 PALIMPORT WCHAR _WConst_return * __cdecl PAL_wcspbrk(const WCHAR *, const WCHAR *);
-PALIMPORT DLLEXPORT WCHAR _WConst_return * __cdecl PAL_wcsstr(const WCHAR *, const WCHAR *);
+PALIMPORT WCHAR _WConst_return * __cdecl PAL_wcsstr(const WCHAR *, const WCHAR *);
 PALIMPORT WCHAR * __cdecl PAL_wcstok(WCHAR *, const WCHAR *);
-PALIMPORT DLLEXPORT size_t __cdecl PAL_wcscspn(const WCHAR *, const WCHAR *);
+PALIMPORT size_t __cdecl PAL_wcscspn(const WCHAR *, const WCHAR *);
 PALIMPORT int __cdecl PAL_swprintf(WCHAR *, const WCHAR *, ...);
 PALIMPORT int __cdecl PAL_vswprintf(WCHAR *, const WCHAR *, va_list);
 PALIMPORT int __cdecl PAL_swscanf(const WCHAR *, const WCHAR *, ...);
 PALIMPORT LONG __cdecl PAL_wcstol(const WCHAR *, WCHAR **, int);
-PALIMPORT DLLEXPORT ULONG __cdecl PAL_wcstoul(const WCHAR *, WCHAR **, int);
+PALIMPORT ULONG __cdecl PAL_wcstoul(const WCHAR *, WCHAR **, int);
 PALIMPORT size_t __cdecl PAL_wcsspn (const WCHAR *, const WCHAR *);
 PALIMPORT double __cdecl PAL_wcstod(const WCHAR *, WCHAR **);
 PALIMPORT int __cdecl PAL_iswalpha(WCHAR);
-PALIMPORT DLLEXPORT int __cdecl PAL_iswprint(WCHAR);
+PALIMPORT int __cdecl PAL_iswprint(WCHAR);
 PALIMPORT int __cdecl PAL_iswupper(WCHAR);
-PALIMPORT DLLEXPORT int __cdecl PAL_iswspace(WCHAR);
+PALIMPORT int __cdecl PAL_iswspace(WCHAR);
 PALIMPORT int __cdecl PAL_iswdigit(WCHAR);
 PALIMPORT int __cdecl PAL_iswxdigit(WCHAR);
 PALIMPORT WCHAR __cdecl PAL_towlower(WCHAR);
 PALIMPORT WCHAR __cdecl PAL_towupper(WCHAR);
 
 PALIMPORT WCHAR * __cdecl _wcslwr(WCHAR *);
-PALIMPORT DLLEXPORT ULONGLONG _wcstoui64(const WCHAR *, WCHAR **, int);
-PALIMPORT DLLEXPORT errno_t __cdecl _i64tow_s(long long, WCHAR *, size_t, int);
+PALIMPORT ULONGLONG _wcstoui64(const WCHAR *, WCHAR **, int);
+PALIMPORT errno_t __cdecl _i64tow_s(long long, WCHAR *, size_t, int);
 PALIMPORT int __cdecl _wtoi(const WCHAR *);
 
 #ifdef __cplusplus
@@ -4434,15 +4377,7 @@ inline WCHAR *PAL_wcsstr(WCHAR *_S, const WCHAR *_P)
 }
 #endif
 
-#if defined(__llvm__)
-#define HAS_ROTL __has_builtin(_rotl)
-#define HAS_ROTR __has_builtin(_rotr)
-#else
-#define HAS_ROTL 0
-#define HAS_ROTR 0
-#endif
-
-#if !HAS_ROTL
+#if !__has_builtin(_rotl)
 /*++
 Function:
 _rotl
@@ -4460,14 +4395,14 @@ unsigned int __cdecl _rotl(unsigned int value, int shift)
     retval = (value << shift) | (value >> (sizeof(int) * CHAR_BIT - shift));
     return retval;
 }
-#endif // !HAS_ROTL
+#endif // !__has_builtin(_rotl)
 
 // On 64 bit unix, make the long an int.
 #ifdef BIT64
 #define _lrotl _rotl
 #endif // BIT64
 
-#if !HAS_ROTR
+#if !__has_builtin(_rotr)
 
 /*++
 Function:
@@ -4487,7 +4422,7 @@ unsigned int __cdecl _rotr(unsigned int value, int shift)
     return retval;
 }
 
-#endif // !HAS_ROTR
+#endif // !__has_builtin(_rotr)
 
 PALIMPORT int __cdecl abs(int);
 // clang complains if this is declared with __int64
@@ -4503,17 +4438,17 @@ PALIMPORT double __cdecl acos(double);
 PALIMPORT double __cdecl acosh(double);
 PALIMPORT double __cdecl asin(double);
 PALIMPORT double __cdecl asinh(double);
-PALIMPORT double __cdecl atan(double) THROW_DECL;
-PALIMPORT double __cdecl atanh(double) THROW_DECL;
+PALIMPORT double __cdecl atan(double);
+PALIMPORT double __cdecl atanh(double);
 PALIMPORT double __cdecl atan2(double, double);
-PALIMPORT double __cdecl cbrt(double) THROW_DECL;
+PALIMPORT double __cdecl cbrt(double);
 PALIMPORT double __cdecl ceil(double);
 PALIMPORT double __cdecl cos(double);
 PALIMPORT double __cdecl cosh(double);
 PALIMPORT double __cdecl exp(double);
 PALIMPORT double __cdecl fabs(double);
 PALIMPORT double __cdecl floor(double);
-PALIMPORT double __cdecl fmod(double, double);
+PALIMPORT double __cdecl fmod(double, double); 
 PALIMPORT double __cdecl fma(double, double, double);
 PALIMPORT int __cdecl ilogb(double);
 PALIMPORT double __cdecl log(double);
@@ -4536,10 +4471,10 @@ PALIMPORT float __cdecl acosf(float);
 PALIMPORT float __cdecl acoshf(float);
 PALIMPORT float __cdecl asinf(float);
 PALIMPORT float __cdecl asinhf(float);
-PALIMPORT float __cdecl atanf(float) THROW_DECL;
-PALIMPORT float __cdecl atanhf(float) THROW_DECL;
+PALIMPORT float __cdecl atanf(float);
+PALIMPORT float __cdecl atanhf(float);
 PALIMPORT float __cdecl atan2f(float, float);
-PALIMPORT float __cdecl cbrtf(float) THROW_DECL;
+PALIMPORT float __cdecl cbrtf(float);
 PALIMPORT float __cdecl ceilf(float);
 PALIMPORT float __cdecl cosf(float);
 PALIMPORT float __cdecl coshf(float);
@@ -4574,9 +4509,9 @@ inline __int64 abs(__int64 _X) {
 }
 #endif
 
-PALIMPORT DLLEXPORT void * __cdecl malloc(size_t);
-PALIMPORT DLLEXPORT void   __cdecl free(void *);
-PALIMPORT DLLEXPORT void * __cdecl realloc(void *, size_t);
+PALIMPORT void * __cdecl malloc(size_t);
+PALIMPORT void   __cdecl free(void *);
+PALIMPORT void * __cdecl realloc(void *, size_t);
 PALIMPORT char * __cdecl _strdup(const char *);
 
 #if defined(_MSC_VER)
@@ -4595,14 +4530,13 @@ PALIMPORT char * __cdecl _strdup(const char *);
 PALIMPORT PAL_NORETURN void __cdecl exit(int);
 int __cdecl atexit(void (__cdecl *function)(void));
 
+PALIMPORT void __cdecl qsort(void *, size_t, size_t, int (__cdecl *)(const void *, const void *));
+PALIMPORT void * __cdecl bsearch(const void *, const void *, size_t, size_t,
+int (__cdecl *)(const void *, const void *));
+
 PALIMPORT char * __cdecl _fullpath(char *, const char *, size_t);
 
 #ifndef PAL_STDCPP_COMPAT
-
-PALIMPORT DLLEXPORT void __cdecl qsort(void *, size_t, size_t, int(__cdecl *)(const void *, const void *));
-PALIMPORT DLLEXPORT void * __cdecl bsearch(const void *, const void *, size_t, size_t,
-    int(__cdecl *)(const void *, const void *));
-
 PALIMPORT time_t __cdecl time(time_t *);
 
 struct tm {
@@ -4624,7 +4558,7 @@ PALIMPORT char * __cdecl ctime(const time_t *);
 
 PALIMPORT int __cdecl _open_osfhandle(INT_PTR, int);
 PALIMPORT int __cdecl _close(int);
-PALIMPORT DLLEXPORT int __cdecl _flushall();
+PALIMPORT int __cdecl _flushall();
 
 #ifdef PAL_STDCPP_COMPAT
 
@@ -4657,14 +4591,14 @@ typedef struct _FILE PAL_FILE;
 
 PALIMPORT int __cdecl PAL_fclose(PAL_FILE *);
 PALIMPORT void __cdecl PAL_setbuf(PAL_FILE *, char*);
-PALIMPORT DLLEXPORT int __cdecl PAL_fflush(PAL_FILE *);
+PALIMPORT int __cdecl PAL_fflush(PAL_FILE *);
 PALIMPORT size_t __cdecl PAL_fwrite(const void *, size_t, size_t, PAL_FILE *);
 PALIMPORT size_t __cdecl PAL_fread(void *, size_t, size_t, PAL_FILE *);
 PALIMPORT char * __cdecl PAL_fgets(char *, int, PAL_FILE *);
 PALIMPORT int __cdecl PAL_fputs(const char *, PAL_FILE *);
 PALIMPORT int __cdecl PAL_fputc(int c, PAL_FILE *stream);
 PALIMPORT int __cdecl PAL_putchar(int c);
-PALIMPORT DLLEXPORT int __cdecl PAL_fprintf(PAL_FILE *, const char *, ...);
+PALIMPORT int __cdecl PAL_fprintf(PAL_FILE *, const char *, ...);
 PALIMPORT int __cdecl PAL_vfprintf(PAL_FILE *, const char *, va_list);
 PALIMPORT int __cdecl PAL_fseek(PAL_FILE *, LONG, int);
 PALIMPORT LONG __cdecl PAL_ftell(PAL_FILE *);
@@ -4676,7 +4610,7 @@ PALIMPORT int __cdecl PAL_fgetc(PAL_FILE *stream);
 PALIMPORT int __cdecl PAL_ungetc(int c, PAL_FILE *stream);
 PALIMPORT int __cdecl PAL_setvbuf(PAL_FILE *stream, char *, int, size_t);
 PALIMPORT WCHAR * __cdecl PAL_fgetws(WCHAR *, int, PAL_FILE *);
-PALIMPORT DLLEXPORT int __cdecl PAL_fwprintf(PAL_FILE *, const WCHAR *, ...);
+PALIMPORT int __cdecl PAL_fwprintf(PAL_FILE *, const WCHAR *, ...);
 PALIMPORT int __cdecl PAL_vfwprintf(PAL_FILE *, const WCHAR *, va_list);
 PALIMPORT int __cdecl PAL_wprintf(const WCHAR*, ...);
 
@@ -4695,7 +4629,7 @@ PALIMPORT PAL_FILE * __cdecl _wfsopen(const WCHAR *, const WCHAR *, int);
 PALIMPORT int __cdecl rand(void);
 PALIMPORT void __cdecl srand(unsigned int);
 
-PALIMPORT DLLEXPORT int __cdecl printf(const char *, ...);
+PALIMPORT int __cdecl printf(const char *, ...);
 PALIMPORT int __cdecl vprintf(const char *, va_list);
 
 #ifdef _MSC_VER
@@ -4704,10 +4638,10 @@ PALIMPORT int __cdecl vprintf(const char *, va_list);
 #define PAL_get_caller 0
 #endif
 
-PALIMPORT DLLEXPORT PAL_FILE * __cdecl PAL_get_stdout(int caller);
+PALIMPORT PAL_FILE * __cdecl PAL_get_stdout(int caller);
 PALIMPORT PAL_FILE * __cdecl PAL_get_stdin(int caller);
-PALIMPORT DLLEXPORT PAL_FILE * __cdecl PAL_get_stderr(int caller);
-PALIMPORT DLLEXPORT int * __cdecl PAL_errno(int caller);
+PALIMPORT PAL_FILE * __cdecl PAL_get_stderr(int caller);
+PALIMPORT int * __cdecl PAL_errno(int caller);
 
 #ifdef PAL_STDCPP_COMPAT
 #define PAL_stdout (PAL_get_stdout(PAL_get_caller))
@@ -4721,8 +4655,8 @@ PALIMPORT DLLEXPORT int * __cdecl PAL_errno(int caller);
 #define errno  (*PAL_errno(PAL_get_caller))
 #endif // PAL_STDCPP_COMPAT
 
-PALIMPORT DLLEXPORT char * __cdecl getenv(const char *);
-PALIMPORT DLLEXPORT int __cdecl _putenv(const char *);
+PALIMPORT char * __cdecl getenv(const char *);
+PALIMPORT int __cdecl _putenv(const char *);
 
 #define ERANGE          34
 
@@ -4807,7 +4741,7 @@ typedef enum _PAL_Boundary {
     PAL_BoundaryTop,            // closer to main()
     PAL_BoundaryBottom,         // closer to execution
     PAL_BoundaryEH,             // out-of-band during EH
-
+    
     PAL_BoundaryMax = PAL_BoundaryEH
 } PAL_Boundary;
 
@@ -4916,10 +4850,10 @@ public:
     {
         return m_palError;
     }
-
+    
     void SuppressRelease()
     {
-        // Used to avoid calling PAL_Leave() when
+        // Used to avoid calling PAL_Leave() when 
         // another code path will explicitly do so.
         m_fEntered = FALSE;
     }
@@ -4969,7 +4903,7 @@ PALIMPORT
 VOID
 PALAPI
 PAL_FreeExceptionRecords(
-  IN EXCEPTION_RECORD *exceptionRecord,
+  IN EXCEPTION_RECORD *exceptionRecord, 
   IN CONTEXT *contextRecord);
 
 #define EXCEPTION_CONTINUE_SEARCH   0
@@ -4979,7 +4913,7 @@ PAL_FreeExceptionRecords(
 struct PAL_SEHException
 {
 private:
-    static const SIZE_T NoTargetFrameSp = (SIZE_T)SIZE_MAX;
+    static const SIZE_T NoTargetFrameSp = SIZE_MAX;
 
     void Move(PAL_SEHException& ex)
     {
@@ -5018,7 +4952,7 @@ public:
     PAL_SEHException()
     {
         Clear();
-    }
+    }    
 
     // The copy constructor and copy assignment operators are deleted so that the PAL_SEHException
     // can never be copied, only moved. This enables simple lifetime management of the exception and
@@ -5029,7 +4963,7 @@ public:
     PAL_SEHException(PAL_SEHException&& ex)
     {
         Move(ex);
-    }
+    }    
 
     PAL_SEHException& operator=(PAL_SEHException&& ex)
     {
@@ -5148,21 +5082,21 @@ public:
 class NativeExceptionHolderBase;
 
 PALIMPORT
-PALAPI
 NativeExceptionHolderBase **
+PALAPI
 PAL_GetNativeExceptionHolderHead();
 
 extern "C++" {
 
 //
-// This is the base class of native exception holder used to provide
+// This is the base class of native exception holder used to provide 
 // the filter function to the exception dispatcher. This allows the
 // filter to be called during the first pass to better emulate SEH
 // the xplat platforms that only have C++ exception support.
 //
 class NativeExceptionHolderBase
 {
-    // Save the address of the holder head so the destructor
+    // Save the address of the holder head so the destructor 
     // doesn't have access the slow (on Linux) TLS value again.
     NativeExceptionHolderBase **m_head;
 
@@ -5204,13 +5138,13 @@ public:
 
     // Given the currentHolder and locals stack range find the next holder starting with this one
     // To find the first holder, pass nullptr as the currentHolder.
-    static NativeExceptionHolderBase *FindNextHolder(NativeExceptionHolderBase *currentHolder, PVOID frameLowAddress, PVOID frameHighAddress);
+    static NativeExceptionHolderBase *FindNextHolder(NativeExceptionHolderBase *currentHolder, void *frameLowAddress, void *frameHighAddress);
 };
 
 //
 // This is the second part of the native exception filter holder. It is
 // templated because the lambda used to wrap the exception filter is a
-// unknown type.
+// unknown type. 
 //
 template<class FilterType>
 class NativeExceptionHolder : public NativeExceptionHolderBase
@@ -5287,8 +5221,8 @@ public:
     auto tryBlock = [](__ParamType __paramDef)                                  \
     {
 
-// Start of an exception handler. If an exception raised by the RaiseException
-// occurs in the try block and the disposition is EXCEPTION_EXECUTE_HANDLER,
+// Start of an exception handler. If an exception raised by the RaiseException 
+// occurs in the try block and the disposition is EXCEPTION_EXECUTE_HANDLER, 
 // the handler code is executed. If the disposition is EXCEPTION_CONTINUE_SEARCH,
 // the exception is rethrown. The EXCEPTION_CONTINUE_EXECUTION disposition is
 // not supported.
@@ -5333,7 +5267,7 @@ public:
     };                                  \
     const bool isFinally = true;        \
     auto finallyBlock = [&]()           \
-    {
+    {                       
 
 // End of an except or a finally block.
 #define PAL_ENDTRY                      \
@@ -5404,7 +5338,7 @@ public:
 #endif // __cplusplus
 
 // Platform-specific library naming
-//
+// 
 #ifdef __APPLE__
 #define MAKEDLLNAME_W(name) u"lib" name u".dylib"
 #define MAKEDLLNAME_A(name)  "lib" name  ".dylib"
@@ -5430,16 +5364,16 @@ public:
 #define PAL_SHLIB_SUFFIX_W  u".so"
 #endif
 
-#define DBG_EXCEPTION_HANDLED            ((DWORD   )0x00010001L)
-#define DBG_CONTINUE                     ((DWORD   )0x00010002L)
-#define DBG_EXCEPTION_NOT_HANDLED        ((DWORD   )0x80010001L)
+#define DBG_EXCEPTION_HANDLED            ((DWORD   )0x00010001L)    
+#define DBG_CONTINUE                     ((DWORD   )0x00010002L)    
+#define DBG_EXCEPTION_NOT_HANDLED        ((DWORD   )0x80010001L)    
 
-#define DBG_TERMINATE_THREAD             ((DWORD   )0x40010003L)
-#define DBG_TERMINATE_PROCESS            ((DWORD   )0x40010004L)
-#define DBG_CONTROL_C                    ((DWORD   )0x40010005L)
-#define DBG_RIPEXCEPTION                 ((DWORD   )0x40010007L)
-#define DBG_CONTROL_BREAK                ((DWORD   )0x40010008L)
-#define DBG_COMMAND_EXCEPTION            ((DWORD   )0x40010009L)
+#define DBG_TERMINATE_THREAD             ((DWORD   )0x40010003L)    
+#define DBG_TERMINATE_PROCESS            ((DWORD   )0x40010004L)    
+#define DBG_CONTROL_C                    ((DWORD   )0x40010005L)    
+#define DBG_RIPEXCEPTION                 ((DWORD   )0x40010007L)    
+#define DBG_CONTROL_BREAK                ((DWORD   )0x40010008L)    
+#define DBG_COMMAND_EXCEPTION            ((DWORD   )0x40010009L)    
 
 #define STATUS_USER_APC                  ((DWORD   )0x000000C0L)
 #define STATUS_GUARD_PAGE_VIOLATION      ((DWORD   )0x80000001L)

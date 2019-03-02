@@ -5,11 +5,6 @@
 DacDbiInterfaceInstance
 CLRDataCreateInstance
 
-; PAL module registration
-DllMain
-PAL_RegisterModule
-PAL_UnregisterModule
-
 ; Data exports (not prefixed)
 IID_IUnknown
 IID_IClassFactory

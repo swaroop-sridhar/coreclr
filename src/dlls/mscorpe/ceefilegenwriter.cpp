@@ -1995,7 +1995,9 @@ BOOL WINAPI DllMain(HANDLE hInstance, DWORD dwReason, LPVOID lpReserved)
     case DLL_PROCESS_ATTACH:
         {   // Save the module handle.
             g_hThisInst = (HINSTANCE)hInstance;
+#ifndef FEATURE_PAL            
             DisableThreadLibraryCalls((HMODULE)hInstance);
+#endif // !FEATURE_PAL
         }
         break;
     case DLL_PROCESS_DETACH:
