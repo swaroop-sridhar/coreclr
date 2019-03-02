@@ -390,7 +390,6 @@ FreeLibraryAndExitThread(
     PERF_EXIT(FreeLibraryAndExitThread);
 }
 
-<<<<<<< 203a26092cc9d9d471f694a1cc0274cf78d97e04
 /*++
 Function:
   GetModuleFileNameA
@@ -398,11 +397,8 @@ Function:
 See MSDN doc.
 
 Notes :
-    because of limitations in the dlopen() mechanism, this will only return the
-    full path name if a relative or absolute path was given to LoadLibrary, or
-    if the module was used in a GetProcAddress call. otherwise, this will return
-    the short name as given to LoadLibrary. The exception is if hModule is
-    NULL : in this case, the full path of the executable is always returned.
+    If hModule is NULL, the full path of the executable is always returned.
+    Otherwise, because of limitations in the dlopen() mechanism, this will only return null.
 --*/
 DWORD
 PALAPI
@@ -430,8 +426,7 @@ GetModuleFileNameA(
 
     if (!wide_name)
     {
-        ASSERT("Can't find name for valid module handle %p\n", hModule);
-        SetLastError(ERROR_INTERNAL_ERROR);
+        TRACE("File name of module %p is Unknown\n", hModule);
         goto done;
     }
 
@@ -831,6 +826,37 @@ static bool LOADConvertLibraryPathWideStringToMultibyteString(
 
 /*++
 Function :
+/*++
+Function :
+    LOADGetModuleFileName [internal]
+
+    Retrieve the module's full path if it is known, the short name given to
+    LoadLibrary otherwise.
+
+Parameters :
+    MODSTRUCT *module : module to check
+
+Return value :
+    pointer to internal buffer with name of module (Unicode)
+
+Notes :
+    this function assumes that the module critical section is held, and that
+    the module has already been validated.
+--*/
+static LPWSTR LOADGetModuleFileName(MODSTRUCT *module)
+{
+    LPWSTR module_name;
+    /* special case : if module is NULL, we want the name of the executable */
+    if (!module)
+    {
+        TRACE("Returning name of main executable\n");
+        return exe_name;
+    }
+
+    /* Otherwise, there's no API to find the name of the module, so we return null */
+    TRACE("Returning null\n");
+    return null;
+}
     LOADLoadLibrary [internal]
 
     implementation of LoadLibrary (for use by the A/W variants)

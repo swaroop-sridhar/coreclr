@@ -142,10 +142,5 @@
 #define WIN_PAL_ENDTRY_NAKED_DBG                                                          
 #endif // defined(ENABLE_CONTRACTS_IMPL) && !defined(JIT64_BUILD)
 
-#if !defined (FEATURE_PAL)
-// Native system libray handle.
-// In Windows, HMODULE is the same as HMODULE.
-typedef HMODULE HMODULE;
-#endif // !FEATURE_PAL
 
 #endif	// __PALCLR_WIN_H__
