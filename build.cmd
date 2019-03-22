@@ -35,9 +35,9 @@ set ghprbCommentBody=
 ::      __ProjectDir        -- default: directory of the Directory.Build.Props file
 ::      __SourceDir         -- default: %__ProjectDir%\src\
 ::      __PackagesDir       -- default: %__ProjectDir%\packages\
-::      __RootBinDir        -- default: %__ProjectDir%\bin\
-::      __BinDir            -- default: %__RootBinDir%\%__BuildOS%.%__BuildArch.%__BuildType%\
-::      __IntermediatesDir
+::      __RootBinDir        -- default: %__ProjectDir%\artifacts\
+::      __BinDir            -- default: %__RootBinDir%\bin\%__BuildOS%.%__BuildArch.%__BuildType%\
+::      __IntermediatesDir  -- default: %__RootBinDir%\obj\%__BuildOS%.%__BuildArch.%__BuildType%\
 ::      __PackagesBinDir    -- default: %__BinDir%\.nuget
 ::      __TestWorkingDir    -- default: %__RootBinDir%\tests\%__BuildOS%.%__BuildArch.%__BuildType%\
 ::
@@ -50,13 +50,14 @@ set __BuildOS=Windows_NT
 
 :: Set the various build properties here so that CMake and MSBuild can pick them up
 set "__ProjectDir=%~dp0"
+set ArcadeBuild=true
 :: remove trailing slash
 if %__ProjectDir:~-1%==\ set "__ProjectDir=%__ProjectDir:~0,-1%"
 set "__ProjectFilesDir=%__ProjectDir%"
 set "__SourceDir=%__ProjectDir%\src"
 set "__PackagesDir=%DotNetRestorePackagesPath%"
 if [%__PackagesDir%]==[] set "__PackagesDir=%__ProjectDir%\packages"
-set "__RootBinDir=%__ProjectDir%\bin"
+set "__RootBinDir=%__ProjectDir%/artifacts"
 set "__LogsDir=%__RootBinDir%\Logs"
 set "__MsbuildDebugLogsDir=%__LogsDir%\MsbuildDebugLogs"
 
@@ -271,7 +272,7 @@ if %__BuildTypeDebug%==1    set __BuildType=Debug
 if %__BuildTypeChecked%==1  set __BuildType=Checked
 if %__BuildTypeRelease%==1  set __BuildType=Release
 
-set __CommonMSBuildArgs=/p:__BuildOS=%__BuildOS% /p:__BuildType=%__BuildType% /p:__BuildArch=%__BuildArch% !__SkipRestoreArg! !__OfficialBuildIdArg!
+set __CommonMSBuildArgs=/p:__BuildOS=%__BuildOS% /p:__BuildType=%__BuildType% /p:__BuildArch=%__BuildArch% !__SkipRestoreArg! !__OfficialBuildIdArg! /p:ArcadeBuild=true /p:Platform=%__BuildArch%
 
 if %__EnforcePgo%==1 (
     if %__BuildArchArm%==1 (
@@ -303,7 +304,7 @@ if /i %__BuildType% NEQ Release set __RestoreOptData=0
 REM REVIEW: why no System.Private.CoreLib NuGet package build for ARM64?
 if /i "%__BuildArch%"=="arm64" set __SkipNugetPackage=0
 
-set "__BinDir=%__RootBinDir%\Product\%__BuildOS%.%__BuildArch%.%__BuildType%"
+set "__BinDir=%__RootBinDir%\bin\%__BuildOS%.%__BuildArch%.%__BuildType%"
 set "__IntermediatesDir=%__RootBinDir%\obj\%__BuildOS%.%__BuildArch%.%__BuildType%"
 if "%__NMakeMakefiles%"=="1" (set "__IntermediatesDir=%__RootBinDir%\nmakeobj\%__BuildOS%.%__BuildArch%.%__BuildType%")
 set "__PackagesBinDir=%__BinDir%\.nuget"
@@ -367,7 +368,6 @@ REM ============================================================================
 @if defined _echo @echo on
 
 call %__ProjectDir%\dotnet.cmd msbuild /nologo /verbosity:minimal /clp:Summary /nodeReuse:false^
-  /l:BinClashLogger,Tools/Microsoft.DotNet.Build.Tasks.dll;LogFile=binclash.log^
   /p:RestoreDefaultOptimizationDataPackage=false /p:PortableBuild=true^
   /p:UsePartialNGENOptimization=false /maxcpucount^
   %__ProjectDir%\build.proj /t:GenerateVersionHeader /p:GenerateVersionHeader=true /p:NativeVersionHeaderFile="%__RootBinDir%\obj\_version.h"^
@@ -523,7 +523,6 @@ if %__BuildNative% EQU 1 (
     set __Logging=!__MsbuildLog! !__MsbuildWrn! !__MsbuildErr!
 
     call %__ProjectDir%\cmake_msbuild.cmd /nologo /verbosity:minimal /clp:Summary /nodeReuse:false^
-      /l:BinClashLogger,Tools/net46/Microsoft.DotNet.Build.Tasks.dll;LogFile=binclash.log^
       /p:RestoreDefaultOptimizationDataPackage=false /p:PortableBuild=true^
       /p:UsePartialNGENOptimization=false /maxcpucount %__IntermediatesDir%\install.vcxproj^
       !__Logging! /p:Configuration=%__BuildType% /p:Platform=%__BuildArch% %__CommonMSBuildArgs% /m:2 %__UnprocessedBuildArgs%
@@ -590,7 +589,6 @@ if %__BuildCrossArchNative% EQU 1 (
     set __Logging=!_MsbuildLog! !__MsbuildWrn! !__MsbuildErr!
 
     call %__ProjectDir%\cmake_msbuild.cmd /nologo /verbosity:minimal /clp:Summary /nodeReuse:false^
-      /l:BinClashLogger,Tools/net46/Microsoft.DotNet.Build.Tasks.dll;LogFile=binclash.log^
       /p:RestoreDefaultOptimizationDataPackage=false /p:PortableBuild=true^
       /p:UsePartialNGENOptimization=false /maxcpucount^
       %__CrossCompIntermediatesDir%\install.vcxproj^
@@ -650,7 +648,6 @@ if %__BuildCoreLib% EQU 1 (
         set __Logging=!__MsbuildLog! !__MsbuildWrn! !__MsbuildErr!
 
         call %__ProjectDir%\dotnet.cmd msbuild /nologo /verbosity:minimal /clp:Summary /nodeReuse:false^
-          /l:BinClashLogger,Tools/Microsoft.DotNet.Build.Tasks.dll;LogFile=binclash.log^
           /p:RestoreDefaultOptimizationDataPackage=false /p:PortableBuild=true^
           /p:UsePartialNGENOptimization=false /maxcpucount^
           %__ProjectDir%\build.proj^
@@ -849,7 +846,6 @@ if %__BuildPackages% EQU 1 (
 
     REM The conditions as to what to build are captured in the builds file.
     call %__ProjectDir%\dotnet.cmd msbuild /nologo /verbosity:minimal /clp:Summary /nodeReuse:false^
-      /l:BinClashLogger,Tools/Microsoft.DotNet.Build.Tasks.dll;LogFile=binclash.log^
       /p:RestoreDefaultOptimizationDataPackage=false /p:PortableBuild=true^
       /p:UsePartialNGENOptimization=false /maxcpucount^
       %__SourceDir%\.nuget\packages.builds^
