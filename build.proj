@@ -10,8 +10,6 @@
 
   <Import Project="$(ToolsDir)clean.targets" Condition="'$(ArcadeBuild)' != 'true' " />
 
-  <Import Project="generateversionsourcefile.targets" />
-
   <!-- The following properties are in place to keep the behavior of build.cmd while we work on the dev workflow steps. -->
   <PropertyGroup>
     <!-- To disable the restoration of packages, set RestoreDuringBuild=false or pass /p:RestoreDuringBuild=false.-->
