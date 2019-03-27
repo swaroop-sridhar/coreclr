@@ -35,11 +35,11 @@ set ghprbCommentBody=
 ::      __ProjectDir        -- default: directory of the Directory.Build.Props file
 ::      __SourceDir         -- default: %__ProjectDir%\src\
 ::      __PackagesDir       -- default: %__ProjectDir%\packages\
-::      __RootBinDir        -- default: %__ProjectDir%\artifacts\
-::      __BinDir            -- default: %__RootBinDir%\bin\%__BuildOS%.%__BuildArch.%__BuildType%\
-::      __IntermediatesDir  -- default: %__RootBinDir%\obj\%__BuildOS%.%__BuildArch.%__BuildType%\
+::      __RootArtifactsDir        -- default: %__ProjectDir%\artifacts\
+::      __BinDir            -- default: %__RootArtifactsDir%\bin\%__BuildOS%.%__BuildArch.%__BuildType%\
+::      __IntermediatesDir  -- default: %__RootArtifactsDir%\obj\%__BuildOS%.%__BuildArch.%__BuildType%\
 ::      __PackagesBinDir    -- default: %__BinDir%\.nuget
-::      __TestWorkingDir    -- default: %__RootBinDir%\tests\%__BuildOS%.%__BuildArch.%__BuildType%\
+::      __TestWorkingDir    -- default: %__RootArtifactsDir%\tests\%__BuildOS%.%__BuildArch.%__BuildType%\
 ::
 :: Thus, these variables are not simply internal to this script!
 
@@ -57,8 +57,8 @@ set "__ProjectFilesDir=%__ProjectDir%"
 set "__SourceDir=%__ProjectDir%\src"
 set "__PackagesDir=%DotNetRestorePackagesPath%"
 if [%__PackagesDir%]==[] set "__PackagesDir=%__ProjectDir%\packages"
-set "__RootBinDir=%__ProjectDir%/artifacts"
-set "__LogsDir=%__RootBinDir%\Logs"
+set "__RootArtifactsDir=%__ProjectDir%/artifacts"
+set "__LogsDir=%__RootArtifactsDir%\Logs"
 set "__MsbuildDebugLogsDir=%__LogsDir%\MsbuildDebugLogs"
 
 set __BuildAll=
@@ -304,9 +304,9 @@ if /i %__BuildType% NEQ Release set __RestoreOptData=0
 REM REVIEW: why no System.Private.CoreLib NuGet package build for ARM64?
 if /i "%__BuildArch%"=="arm64" set __SkipNugetPackage=0
 
-set "__BinDir=%__RootBinDir%\bin\%__BuildOS%.%__BuildArch%.%__BuildType%"
-set "__IntermediatesDir=%__RootBinDir%\obj\%__BuildOS%.%__BuildArch%.%__BuildType%"
-if "%__NMakeMakefiles%"=="1" (set "__IntermediatesDir=%__RootBinDir%\nmakeobj\%__BuildOS%.%__BuildArch%.%__BuildType%")
+set "__BinDir=%__RootArtifactsDir%\bin\%__BuildOS%.%__BuildArch%.%__BuildType%"
+set "__IntermediatesDir=%__RootArtifactsDir%\obj\%__BuildOS%.%__BuildArch%.%__BuildType%"
+if "%__NMakeMakefiles%"=="1" (set "__IntermediatesDir=%__RootArtifactsDir%\nmakeobj\%__BuildOS%.%__BuildArch%.%__BuildType%")
 set "__PackagesBinDir=%__BinDir%\.nuget"
 set "__CrossComponentBinDir=%__BinDir%"
 set "__CrossCompIntermediatesDir=%__IntermediatesDir%\crossgen"
@@ -370,7 +370,7 @@ REM ============================================================================
 call %__ProjectDir%\dotnet.cmd msbuild /nologo /verbosity:minimal /clp:Summary /nodeReuse:false^
   /p:RestoreDefaultOptimizationDataPackage=false /p:PortableBuild=true^
   /p:UsePartialNGENOptimization=false /maxcpucount^
-  %__ProjectDir%\build.proj /t:GenerateVersionHeader /p:GenerateVersionHeader=true /p:NativeVersionHeaderFile="%__RootBinDir%\obj\_version.h"^
+  %__ProjectDir%\build.proj /t:GenerateVersionHeader /p:GenerateVersionHeader=true /p:NativeVersionHeaderFile="%__RootArtifactsDir%\obj\_version.h"^
   %__CommonMSBuildArgs% %__UnprocessedBuildArgs%
 
 REM =========================================================================================
