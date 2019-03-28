@@ -35,7 +35,7 @@ set ghprbCommentBody=
 ::      __ProjectDir        -- default: directory of the Directory.Build.Props file
 ::      __SourceDir         -- default: %__ProjectDir%\src\
 ::      __PackagesDir       -- default: %__ProjectDir%\packages\
-::      __RootArtifactsDir        -- default: %__ProjectDir%\artifacts\
+::      __RootArtifactsDir  -- default: %__ProjectDir%\artifacts\
 ::      __BinDir            -- default: %__RootArtifactsDir%\bin\%__BuildOS%.%__BuildArch.%__BuildType%\
 ::      __IntermediatesDir  -- default: %__RootArtifactsDir%\obj\%__BuildOS%.%__BuildArch.%__BuildType%\
 ::      __PackagesBinDir    -- default: %__BinDir%\.nuget
@@ -272,7 +272,7 @@ if %__BuildTypeDebug%==1    set __BuildType=Debug
 if %__BuildTypeChecked%==1  set __BuildType=Checked
 if %__BuildTypeRelease%==1  set __BuildType=Release
 
-set __CommonMSBuildArgs=/p:__BuildOS=%__BuildOS% /p:__BuildType=%__BuildType% /p:__BuildArch=%__BuildArch% !__SkipRestoreArg! !__OfficialBuildIdArg! /p:ArcadeBuild=true /p:Platform=%__BuildArch%
+set __CommonMSBuildArgs=/p:__BuildOS=%__BuildOS% /p:__BuildType=%__BuildType% /p:__BuildArch=%__BuildArch% !__SkipRestoreArg! !__OfficialBuildIdArg! /p:ArcadeBuild=true /p:Platform=%__BuildArch% /bl
 
 if %__EnforcePgo%==1 (
     if %__BuildArchArm%==1 (
@@ -358,7 +358,6 @@ if not defined NumberOfCores (
     set NumberOfCores=!TotalNumberOfCores!
 )
 echo %__MsgPrefix%Number of processor cores %NumberOfCores%
-
 REM =========================================================================================
 REM ===
 REM === Start the build steps
@@ -370,7 +369,7 @@ REM ============================================================================
 call %__ProjectDir%\dotnet.cmd msbuild /nologo /verbosity:minimal /clp:Summary /nodeReuse:false^
   /p:RestoreDefaultOptimizationDataPackage=false /p:PortableBuild=true^
   /p:UsePartialNGENOptimization=false /maxcpucount^
-  %__ProjectDir%\build.proj /t:GenerateVersionHeader /p:GenerateVersionHeader=true /p:NativeVersionHeaderFile="%__RootArtifactsDir%\obj\_version.h"^
+  %__ProjectDir%\build.proj /t:GenerateNativeVersionFile ^
   %__CommonMSBuildArgs% %__UnprocessedBuildArgs%
 
 REM =========================================================================================
@@ -381,7 +380,7 @@ REM ============================================================================
 
 if %__RestoreOptData% EQU 1 (
     echo %__MsgPrefix%Restoring the OptimizationData Package
-    call %__ProjectDir%\dotnet.cmd msbuild /nologo /verbosity:minimal /clp:Summary /nodeReuse:false^
+    call %__ProjectDir%\dotnet.cmd msbuild /nologo /verbosity:diag /clp:Summary /nodeReuse:false^
       /p:RestoreDefaultOptimizationDataPackage=false /p:PortableBuild=true^
       /p:UsePartialNGENOptimization=false /maxcpucount^
       ./build.proj /t:RestoreOptData^
@@ -522,7 +521,7 @@ if %__BuildNative% EQU 1 (
     set __MsbuildErr=/flp2:ErrorsOnly;LogFile=!__BuildErr!
     set __Logging=!__MsbuildLog! !__MsbuildWrn! !__MsbuildErr!
 
-    call %__ProjectDir%\cmake_msbuild.cmd /nologo /verbosity:minimal /clp:Summary /nodeReuse:false^
+    call %__ProjectDir%\cmake_msbuild.cmd /nologo /verbosity:diag /clp:Summary /nodeReuse:false^
       /p:RestoreDefaultOptimizationDataPackage=false /p:PortableBuild=true^
       /p:UsePartialNGENOptimization=false /maxcpucount %__IntermediatesDir%\install.vcxproj^
       !__Logging! /p:Configuration=%__BuildType% /p:Platform=%__BuildArch% %__CommonMSBuildArgs% /m:2 %__UnprocessedBuildArgs%
@@ -588,7 +587,7 @@ if %__BuildCrossArchNative% EQU 1 (
     set __MsbuildErr=/flp2:ErrorsOnly;LogFile=!__BuildErr!
     set __Logging=!_MsbuildLog! !__MsbuildWrn! !__MsbuildErr!
 
-    call %__ProjectDir%\cmake_msbuild.cmd /nologo /verbosity:minimal /clp:Summary /nodeReuse:false^
+    call %__ProjectDir%\cmake_msbuild.cmd /nologo /verbosity:diag /clp:Summary /nodeReuse:false^
       /p:RestoreDefaultOptimizationDataPackage=false /p:PortableBuild=true^
       /p:UsePartialNGENOptimization=false /maxcpucount^
       %__CrossCompIntermediatesDir%\install.vcxproj^
@@ -647,7 +646,7 @@ if %__BuildCoreLib% EQU 1 (
         set __MsbuildErr=/flp2:ErrorsOnly;LogFile=!__BuildErr!
         set __Logging=!__MsbuildLog! !__MsbuildWrn! !__MsbuildErr!
 
-        call %__ProjectDir%\dotnet.cmd msbuild /nologo /verbosity:minimal /clp:Summary /nodeReuse:false^
+        call %__ProjectDir%\dotnet.cmd msbuild /nologo /verbosity:diag /clp:Summary /nodeReuse:false^
           /p:RestoreDefaultOptimizationDataPackage=false /p:PortableBuild=true^
           /p:UsePartialNGENOptimization=false /maxcpucount^
           %__ProjectDir%\build.proj^
@@ -845,7 +844,7 @@ if %__BuildPackages% EQU 1 (
     set __Logging=!__MsbuildLog! !__MsbuildWrn! !__MsbuildErr!
 
     REM The conditions as to what to build are captured in the builds file.
-    call %__ProjectDir%\dotnet.cmd msbuild /nologo /verbosity:minimal /clp:Summary /nodeReuse:false^
+    call %__ProjectDir%\dotnet.cmd msbuild /nologo /verbosity:diag /clp:Summary /nodeReuse:false^
       /p:RestoreDefaultOptimizationDataPackage=false /p:PortableBuild=true^
       /p:UsePartialNGENOptimization=false /maxcpucount^
       %__SourceDir%\.nuget\packages.builds^
