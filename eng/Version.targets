@@ -93,6 +93,26 @@
     </PropertyGroup>
   </Target>
 
+  <Target Name="CreateVersionInfoFile"
+          DependsOnTargets="CreateVersionFileDuringBuild"
+          BeforeTargets="BuildAllProjects"
+          Inputs="$(LatestCommit)"
+          Outputs="$(SyncInfoFile)">
+    <MakeDir Directories="$(SyncInfoDirectory)" />
+    <WriteLinesToFile
+      Condition="'$(LatestCommit)' != ''"
+      File="$(SyncInfoFile)"
+      Lines="$(LatestCommit)"
+      Overwrite="true" />
+  </Target>
+
+  <Target Name="CreateVersionFileDuringBuild" Condition="'$(SkipVersionGeneration)'!='true' AND '$(ShouldCreateVersionFileDuringBuild)'=='true'" DependsOnTargets="CreateOrUpdateCurrentVersionFile">
+    <PropertyGroup Condition="'$(SkipVersionGeneration)'!='true'">
+      <VersionSuffix Condition="'$(PreReleaseLabel)' != ''">-$(PreReleaseLabel)</VersionSuffix>
+      <VersionSuffix Condition="'$(IncludeBuildNumberInPackageVersion)' == 'true'">$(VersionSuffix)-$(BuildNumberMajor)-$(BuildNumberMinor)</VersionSuffix>
+    </PropertyGroup>
+  </Target>
+
 
   <Target Name="InitializeSourceControlInformationFromSourceControlManager"
           DependsOnTargets="GenerateSourceRevisionId"/>
