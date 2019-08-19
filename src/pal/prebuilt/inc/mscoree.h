@@ -19,6 +19,7 @@
 
 #include "rpc.h"
 #include "rpcndr.h"
+#include "corbundle.h"
 
 #ifndef __RPCNDR_H_VERSION__
 #error this stub requires an updated version of <rpcndr.h>
@@ -252,7 +253,7 @@ EXTERN_C const IID IID_ICLRRuntimeHost;
     ICLRRuntimeHost : public IUnknown
     {
     public:
-        virtual HRESULT STDMETHODCALLTYPE Start( void) = 0;
+        virtual HRESULT STDMETHODCALLTYPE Start(const BundleInfo *bundleInfo) = 0;
         
         virtual HRESULT STDMETHODCALLTYPE Stop( void) = 0;
         
