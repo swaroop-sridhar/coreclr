@@ -54,7 +54,7 @@ public:
     static PEImageLayout* LoadFromFlat(PEImageLayout* pflatimage);
     static PEImageLayout* Load(PEImage* pOwner, BOOL bNTSafeLoad, BOOL bThrowOnError = TRUE);
     static PEImageLayout* LoadFlat(PEImage* pOwner);
-    static PEImageLayout* Map(PEImage* pOwner);
+    static PEImageLayout* Map (PEImage* pOwner);
 #endif    
     PEImageLayout();
     virtual ~PEImageLayout();
@@ -161,6 +161,7 @@ class FlatImageLayout: public PEImageLayout
 protected:
     HandleHolder m_FileMap;
     CLRMapViewHolder m_FileView;
+
 public:
 #ifndef DACCESS_COMPILE    
     FlatImageLayout(PEImage* pOwner);   
