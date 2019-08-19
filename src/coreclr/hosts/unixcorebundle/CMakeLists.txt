@@ -11,8 +11,6 @@ add_definitions(-DCOREBUNDLE_BUILD)
 
 set(COREBUNDLE_SOURCES
     corebundle.cpp
-    ./bundle/dir_utils.cpp
-    ./bundle/extractor.cpp
     ./bundle/file_entry.cpp
     ./bundle/header.cpp
     ./bundle/manifest.cpp
@@ -40,6 +38,20 @@ set(HEADERS
     ./bundle/trace.h
     ./bundle/utils.h
     ../unixcoreruncommon/coreruncommon.h
+)
+
+set(HEADERS
+    ./bundle/error_codes.h
+    ./bundle/file_entry.h
+    ./bundle/file_type.h
+    ./bundle/header.h
+    ./bundle/manifest.h
+    ./bundle/marker.h
+    ./bundle/pal.h
+    ./bundle/reader.h
+    ./bundle/runner.h
+    ./bundle/trace.h
+    ./bundle/utils.h
 )
 
 _add_executable(corebundle

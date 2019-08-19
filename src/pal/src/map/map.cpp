@@ -1090,6 +1090,8 @@ CorUnix::InternalMapViewOfFile(
     CFileMappingImmutableData *pImmutableData = NULL;
     CFileMappingProcessLocalData *pProcessLocalData = NULL;
     IDataLock *pProcessLocalDataLock = NULL;
+    INT64 offset = (INT64)dwFileOffsetHigh | (INT64)dwFileOffsetLow;
+
 #if ONE_SHARED_MAPPING_PER_FILEREGION_PER_PROCESS
     PMAPPED_VIEW_LIST pReusedMapping = NULL;
 #endif
@@ -1104,9 +1106,9 @@ CorUnix::InternalMapViewOfFile(
         goto InternalMapViewOfFileExit;
     }
 
-    if ( 0 != dwFileOffsetHigh || 0 != dwFileOffsetLow )
+    if ( offset < 0 )
     {
-        ASSERT( "dwFileOffsetHigh and dwFileOffsetLow are always 0.\n" );
+        ASSERT( "dwFileOffsetHigh | dwFileOffsetLow should be non-negative.\n" );
         palError = ERROR_INVALID_PARAMETER;
         goto InternalMapViewOfFileExit;
     }
@@ -1185,7 +1187,7 @@ CorUnix::InternalMapViewOfFile(
             PROT_READ|PROT_WRITE,
             flags,
             pProcessLocalData->UnixFd,
-            0
+            offset
             );
     }
     else
@@ -1208,7 +1210,7 @@ CorUnix::InternalMapViewOfFile(
                 prot,
                 flags,
                 pProcessLocalData->UnixFd,
-                0
+                offset
                 );
 
 #if ONE_SHARED_MAPPING_PER_FILEREGION_PER_PROCESS
@@ -2194,13 +2196,14 @@ MAPmmapAndRecord(
 
 Parameters:
     IN hFile - file to map
+    IN offset - offset within hFile where the PE "file" is located
 
 Return value:
     non-NULL - the base address of the mapped image
     NULL - error, with last error set.
 --*/
 
-void * MAPMapPEFile(HANDLE hFile)
+void * MAPMapPEFile(HANDLE hFile, off_t offset)
 {
     PAL_ERROR palError = 0;
     IPalObject *pFileObject = NULL;
@@ -2215,7 +2218,7 @@ void * MAPMapPEFile(HANDLE hFile)
     char* envVar;
 #endif
 
-    ENTRY("MAPMapPEFile (hFile=%p)\n", hFile);
+    ENTRY("MAPMapPEFile (hFile=%p offset=%x)\n", hFile, offset);
 
     //Step 0: Verify values, find internal pal data structures.
     if (INVALID_HANDLE_VALUE == hFile)
@@ -2255,13 +2258,13 @@ void * MAPMapPEFile(HANDLE hFile)
     //Step 1: Read the PE headers and reserve enough space for the whole image somewhere.
     IMAGE_DOS_HEADER dosHeader;
     IMAGE_NT_HEADERS ntHeader;
-    if (sizeof(dosHeader) != pread(fd, &dosHeader, sizeof(dosHeader), 0))
+    if (sizeof(dosHeader) != pread(fd, &dosHeader, sizeof(dosHeader), offset))
     {
         palError = FILEGetLastErrorFromErrno();
         ERROR_(LOADER)( "reading dos header failed\n" );
         goto done;
     }
-    if (sizeof(ntHeader) != pread(fd, &ntHeader, sizeof(ntHeader), dosHeader.e_lfanew))
+    if (sizeof(ntHeader) != pread(fd, &ntHeader, sizeof(ntHeader), offset + dosHeader.e_lfanew))
     {
         palError = FILEGetLastErrorFromErrno();
         goto done;
@@ -2396,7 +2399,7 @@ void * MAPMapPEFile(HANDLE hFile)
 
     //first, map the PE header to the first page in the image.  Get pointers to the section headers
     palError = MAPmmapAndRecord(pFileObject, loadedBase,
-                    loadedBase, headerSize, PROT_READ, MAP_FILE|MAP_PRIVATE|MAP_FIXED, fd, 0,
+                    loadedBase, headerSize, PROT_READ, MAP_FILE|MAP_PRIVATE|MAP_FIXED, fd, offset,
                     (void**)&loadedHeader);
     if (NO_ERROR != palError)
     {
@@ -2489,7 +2492,7 @@ void * MAPMapPEFile(HANDLE hFile)
                         prot,
                         MAP_FILE|MAP_PRIVATE|MAP_FIXED,
                         fd,
-                        currentHeader.PointerToRawData,
+                        offset + currentHeader.PointerToRawData,
                         &sectionData);
         if (NO_ERROR != palError)
         {
@@ -2519,7 +2522,7 @@ void * MAPMapPEFile(HANDLE hFile)
         palError = MAPRecordMapping(pFileObject,
                         loadedBase,
                         prevSectionEnd,
-                        (char*)imageEnd - (char*)prevSectionEnd,
+                        offset + (char*)imageEnd - (char*)prevSectionEnd,
                         PROT_NONE);
         if (NO_ERROR != palError)
         {
