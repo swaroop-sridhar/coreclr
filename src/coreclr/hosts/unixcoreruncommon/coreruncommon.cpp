@@ -102,8 +102,7 @@ bool GetEntrypointExecutableAbsolutePath(std::string& entrypointExecutable)
     len = sizeof(path);
     if (sysctl(name, __arraycount(name), path, &len, NULL, 0) != -1)
     {
-        entrypointExecutable.assign(path);
-        result = true;
+        result = GetAbsolutePath(execfn, entrypointExecutable);
     }
     else
     {
@@ -351,6 +350,7 @@ int ExecuteManagedAssembly(
             const char* currentExeAbsolutePath,
             const char* clrFilesAbsolutePath,
             const char* managedAssemblyAbsolutePath,
+            bool bundleProbe(const char*, int64_t*, int64_t*),
             int managedAssemblyArgc,
             const char** managedAssemblyArgv)
 {
@@ -481,6 +481,7 @@ int ExecuteManagedAssembly(
                 sizeof(propertyKeys) / sizeof(propertyKeys[0]), 
                 propertyKeys, 
                 propertyValues, 
+                bundleProbe,
                 &hostHandle, 
                 &domainId);
 

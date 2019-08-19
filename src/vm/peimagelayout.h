@@ -54,8 +54,8 @@ public:
     static PEImageLayout* CreateFromHMODULE(HMODULE mappedbase,PEImage* pOwner, BOOL bTakeOwnership);
     static PEImageLayout* LoadFromFlat(PEImageLayout* pflatimage);
     static PEImageLayout* Load(PEImage* pOwner, BOOL bNTSafeLoad, BOOL bThrowOnError = TRUE);
-    static PEImageLayout* LoadFlat(HANDLE hFile, PEImage* pOwner);
-    static PEImageLayout* Map (HANDLE hFile, PEImage* pOwner);
+    static PEImageLayout* LoadFlat(PEImage* pOwner);
+    static PEImageLayout* Map (PEImage* pOwner);
 #endif    
     PEImageLayout();
     virtual ~PEImageLayout();
@@ -126,7 +126,7 @@ protected:
 #endif
 public:
 #ifndef DACCESS_COMPILE    
-    MappedImageLayout(HANDLE hFile, PEImage* pOwner);    
+    MappedImageLayout(PEImage* pOwner);    
 #endif
 };
 
@@ -162,9 +162,10 @@ class FlatImageLayout: public PEImageLayout
 protected:
     HandleHolder m_FileMap;
     CLRMapViewHolder m_FileView;
+
 public:
 #ifndef DACCESS_COMPILE    
-    FlatImageLayout(HANDLE hFile, PEImage* pOwner);   
+    FlatImageLayout(PEImage* pOwner);   
 #endif
 
 };

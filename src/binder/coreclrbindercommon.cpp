@@ -126,7 +126,8 @@ HRESULT CCoreCLRBinderHelper::BindToSystemSatellite(SString            &systemPa
                                                     ICLRPrivAssembly **ppSystemAssembly)
 {
     HRESULT hr = S_OK;
-    VALIDATE_ARG_RET(ppSystemAssembly != NULL && !systemPath.IsEmpty());
+    VALIDATE_ARG_RET(ppSystemAssembly != NULL && 
+        (SystemDomain::System()->DefaultDomain()->HasBundle() || !systemPath.IsEmpty()));
     
     EX_TRY
     {
@@ -161,7 +162,7 @@ HRESULT CCoreCLRBinderHelper::GetAssemblyFromImage(PEImage           *pPEImage,
         }
     }
     EX_CATCH_HRESULT(hr);
-
+     
     return hr;
 }
 

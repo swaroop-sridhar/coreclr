@@ -1077,7 +1077,7 @@ PTR_PEImageLayout PEImage::CreateLayoutMapped()
     }
     else if (IsFile())
     {
-        PEImageLayoutHolder pLayout(PEImageLayout::Map(GetFileHandle(),this));
+        PEImageLayoutHolder pLayout(PEImageLayout::Map(this));
 
         bool fMarkAnyCpuImageAsLoaded = false;
         // Avoid mapping another image if we can. We can only do this for IL-ONLY images
@@ -1131,7 +1131,7 @@ PTR_PEImageLayout PEImage::CreateLayoutFlat(BOOL bPermitWriteableSections)
 
     _ASSERTE(m_pLayouts[IMAGE_FLAT] == NULL);
 
-    PTR_PEImageLayout pFlatLayout = PEImageLayout::LoadFlat(GetFileHandle(),this);
+    PTR_PEImageLayout pFlatLayout = PEImageLayout::LoadFlat(this);
 
     if (!bPermitWriteableSections
         && pFlatLayout->CheckNTHeaders()
@@ -1321,10 +1321,9 @@ void PEImage::LoadNoMetaData()
     else
     {
         _ASSERTE(!m_path.IsEmpty());
-        SetLayout(IMAGE_LOADED,PEImageLayout::LoadFlat(GetFileHandle(),this));
+        SetLayout(IMAGE_LOADED,PEImageLayout::LoadFlat(this));
     }
 }
-
 
 #endif //DACCESS_COMPILE
 
@@ -1364,19 +1363,20 @@ HANDLE PEImage::GetFileHandle()
 
     {
         ErrorModeHolder mode(SEM_NOOPENFILEERRORBOX|SEM_FAILCRITICALERRORS);
-        m_hFile=WszCreateFile((LPCWSTR) m_path,
-                                            GENERIC_READ,
-                                            FILE_SHARE_READ|FILE_SHARE_DELETE,
-                                            NULL,
-                                            OPEN_EXISTING,
-                                            FILE_ATTRIBUTE_NORMAL,
-                                            NULL);
+
+        m_hFile=WszCreateFile((LPCWSTR) GetPathToLoad(),
+                               GENERIC_READ,
+                               FILE_SHARE_READ|FILE_SHARE_DELETE,
+                               NULL,
+                               OPEN_EXISTING,
+                               FILE_ATTRIBUTE_NORMAL,
+                               NULL);
     }
 
     if (m_hFile == INVALID_HANDLE_VALUE)
     {
 #if !defined(DACCESS_COMPILE)
-        EEFileLoadException::Throw(m_path, HRESULT_FROM_WIN32(GetLastError()));
+        EEFileLoadException::Throw(GetPathToLoad(), HRESULT_FROM_WIN32(GetLastError()));
 #else // defined(DACCESS_COMPILE)
         ThrowLastError();
 #endif // !defined(DACCESS_COMPILE)
@@ -1401,6 +1401,19 @@ void PEImage::SetFileHandle(HANDLE hFile)
     }
 }
 
+INT64 PEImage::GetOffset() const
+{
+    LIMITED_METHOD_CONTRACT; 
+    return m_bundleOffset;
+}
+
+INT64 PEImage::GetSize() const
+{
+    LIMITED_METHOD_CONTRACT;
+    return m_fileSize;
+}
+
+
 HRESULT PEImage::TryOpenFile()
 {
     STANDARD_VM_CONTRACT;
@@ -1411,13 +1424,13 @@ HRESULT PEImage::TryOpenFile()
         return S_OK;
     {
         ErrorModeHolder mode(SEM_NOOPENFILEERRORBOX|SEM_FAILCRITICALERRORS);
-        m_hFile=WszCreateFile((LPCWSTR) m_path,
-                                            GENERIC_READ,
-                                            FILE_SHARE_READ|FILE_SHARE_DELETE,
-                                            NULL,
-                                            OPEN_EXISTING,
-                                            FILE_ATTRIBUTE_NORMAL,
-                                            NULL);
+        m_hFile=WszCreateFile((LPCWSTR)GetPathToLoad(),
+                               GENERIC_READ,
+                               FILE_SHARE_READ|FILE_SHARE_DELETE,
+                               NULL,
+                               OPEN_EXISTING,
+                               FILE_ATTRIBUTE_NORMAL,
+                               NULL);
     }
     if (m_hFile != INVALID_HANDLE_VALUE)
             return S_OK;
@@ -1450,7 +1463,6 @@ BOOL PEImage::IsPtrInImage(PTR_CVOID data)
 
     return FALSE;
 }
-
 
 #if !defined(DACCESS_COMPILE)
 PEImage * PEImage::OpenImage(

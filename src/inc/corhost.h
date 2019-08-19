@@ -34,6 +34,8 @@
 #include "activation.h" // WinRT activation.
 #endif
 
+#include "corbundle.h"
+
 class DangerousNonHostedSpinLock;
 
 #define INVALID_STACK_BASE_MARKER_FOR_CHECK_STATE 2
@@ -53,7 +55,7 @@ protected:
     STDMETHODIMP_(ULONG) AddRef(void);
 
     // Starts the runtime. This is equivalent to CoInitializeCor()
-    STDMETHODIMP Start();
+    STDMETHODIMP Start(const BundleInfo *bundleInfo);
 
     STDMETHODIMP MapFile(                       // Return code.
         HANDLE     hFile,                       // [in]  Handle for file
@@ -132,7 +134,7 @@ public:
 #endif // FEATURE_PAL    
 
     // Starts the runtime. This is equivalent to CoInitializeCor().
-    STDMETHODIMP Start();
+    STDMETHODIMP Start(const BundleInfo *bundleInfo);
     STDMETHODIMP Stop();
 
     STDMETHODIMP ExecuteInAppDomain(DWORD dwAppDomainId,
