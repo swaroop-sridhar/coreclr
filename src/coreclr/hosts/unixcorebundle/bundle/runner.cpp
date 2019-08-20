@@ -32,6 +32,17 @@ void runner_t::unmap_host()
     }
 }
 
+void* locate(const pal::string& relative_path)
+{
+    const file_entry* entry = m_manifest.find(relative_path);
+    if (entry == nullptr)
+    {
+        return nullptr;
+    }
+
+    return m_bundle_map + entry->offset;
+}
+
 // Current support for executing single-file bundles involves 
 // extraction of embedded files to actual files on disk. 
 // This method implements the file extraction functionality at startup.
@@ -55,11 +66,7 @@ StatusCode runner_t::extract()
             return StatusCode::Success;
         }
 
-        manifest_t manifest = manifest_t::read(reader, header.num_embedded_files());
-
-        extractor.extract(manifest, reader);
-
-        unmap_host();
+        m_manifest = manifest_t::read(reader, header.num_embedded_files());
 
         return StatusCode::Success;
     }

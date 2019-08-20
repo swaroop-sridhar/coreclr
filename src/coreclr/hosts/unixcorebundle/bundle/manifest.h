@@ -19,6 +19,8 @@ namespace bundle
         std::vector<file_entry_t> files;
 
         static manifest_t read(reader_t &reader, int32_t num_files);
+
+        static const file_entry_t* find(const pal::string &relative_path);
     };
 }
 #endif // __MANIFEST_H__

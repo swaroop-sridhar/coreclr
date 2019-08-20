@@ -42,10 +42,9 @@ int main(const int argc, const char* argv[])
         return bundle_status;
     }
 
-    std::string root_dir = bundle_runner.extraction_dir();
+    std::string root_dir = get_directory(exe_path)
     std::string app_path(root_dir);
     app_path.push_back(DIR_SEPARATOR);
-
     app_path.append(get_filename(exe_path.c_str()));
     app_path.append(".dll");
 

@@ -7,8 +7,6 @@ add_compile_options(-fPIE)
 
 set(COREBUNDLE_SOURCES
     corebundle.cpp
-    ./bundle/dir_utils.cpp
-    ./bundle/extractor.cpp
     ./bundle/file_entry.cpp
     ./bundle/header.cpp
     ./bundle/manifest.cpp
@@ -21,9 +19,7 @@ set(COREBUNDLE_SOURCES
 )
 
 set(HEADERS
-    ./bundle/dir_utils.h
     ./bundle/error_codes.h
-    ./bundle/extractor.h
     ./bundle/file_entry.h
     ./bundle/file_type.h
     ./bundle/header.h

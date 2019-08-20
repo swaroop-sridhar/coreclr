@@ -27,10 +27,13 @@ namespace bundle
             return m_extraction_dir;
         }
 
+        void* locate(const pal::string& relative_path);
+
     private:
         void map_host();
         void unmap_host();
 
+        manifest_t m_manifest;
         pal::string_t m_bundle_path;
         pal::string_t m_extraction_dir;
         int8_t* m_bundle_map;
