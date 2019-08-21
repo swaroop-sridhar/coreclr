@@ -7,6 +7,7 @@
 
 #include "error_codes.h"
 #include "pal.h"
+#include "manifest.h"
 
 namespace bundle
 {
@@ -20,14 +21,14 @@ namespace bundle
         {
         }
 
-        StatusCode extract();
+        StatusCode process();
 
         pal::string_t extraction_dir()
         {
             return m_extraction_dir;
         }
 
-        void* locate(const pal::string& relative_path);
+        size_t get_offset(const pal::string_t &relative_path);
 
     private:
         void map_host();

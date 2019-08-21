@@ -43,6 +43,7 @@ int ExecuteManagedAssembly(
             const char* currentExeAbsolutePath,
             const char* clrFilesAbsolutePath,
             const char* managedAssemblyAbsolutePath,
+            size_t(*get_bundle_offset)(const char* path),
             int managedAssemblyArgc,
             const char** managedAssemblyArgv);
 

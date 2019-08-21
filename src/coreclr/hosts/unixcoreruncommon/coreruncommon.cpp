@@ -295,6 +295,7 @@ int ExecuteManagedAssembly(
             const char* currentExeAbsolutePath,
             const char* clrFilesAbsolutePath,
             const char* managedAssemblyAbsolutePath,
+            size_t (*get_bundle_offset)(const char* path),
             int managedAssemblyArgc,
             const char** managedAssemblyArgv)
 {
@@ -419,6 +420,7 @@ int ExecuteManagedAssembly(
                 "NATIVE_DLL_SEARCH_DIRECTORIES",
                 "System.GC.Server",
                 "System.Globalization.Invariant",
+                "BUNDLE_OFFSET_CALLBACK"
             };
             const char *propertyValues[] = {
                 // TRUSTED_PLATFORM_ASSEMBLIES
@@ -433,6 +435,8 @@ int ExecuteManagedAssembly(
                 useServerGc,
                 // System.Globalization.Invariant
                 globalizationInvariant,
+                // BUNDLE_OFFSET_CALLBACK
+                (const char*)get_bundle_offset
             };
 
             void* hostHandle;

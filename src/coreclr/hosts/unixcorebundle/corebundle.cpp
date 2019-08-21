@@ -31,10 +31,8 @@ int main(const int argc, const char* argv[])
         return -1;
     }
 
-    fprintf(stdout, "Running bundle: %s\n", exe_path.c_str());
-
-    bundle::runner_t bundle_runner(exe_path);
-    StatusCode bundle_status = bundle_runner.extract();	        
+    static bundle::runner_t bundle_runner(exe_path);
+    StatusCode bundle_status = bundle_runner.process();	        
 
     if (bundle_status != StatusCode::Success)
     {
@@ -42,7 +40,7 @@ int main(const int argc, const char* argv[])
         return bundle_status;
     }
 
-    std::string root_dir = get_directory(exe_path)
+    std::string root_dir = get_directory(exe_path);
     std::string app_path(root_dir);
     app_path.push_back(DIR_SEPARATOR);
     app_path.append(get_filename(exe_path.c_str()));
@@ -55,11 +53,16 @@ int main(const int argc, const char* argv[])
         app_argv = &argv[1];
     }
 
-    std::fflush(stdout);
+    auto get_offset = [&](const char* path) {
+        pal::string_t relative_path = path;
+        return bundle_runner.get_offset(relative_path);
+    };
+
     int exitCode = ExecuteManagedAssembly(
                         exe_path.c_str(),
                         root_dir.c_str(),
                         app_path.c_str(),
+                        get_offset,
                         app_argc,
                         app_argv);
 

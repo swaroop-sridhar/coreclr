@@ -17,15 +17,3 @@ manifest_t manifest_t::read(reader_t& reader, int32_t num_files)
 
     return manifest;
 }
-
-const file_entry_t* find(const pal::string& relative_path)
-{
-    for (file_entry_t &entry : files)
-    {
-        if (strcmp(entry.relative_path(), relative_path) == 0)
-        {
-            return &entry;
-        }
-    }
-    return nullptr;
-}
