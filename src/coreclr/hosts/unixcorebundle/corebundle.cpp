@@ -15,6 +15,13 @@
 #include <runner.h>
 #include <utils.h>
 
+static bundle::runner_t bundle_runner;
+
+size_t get_offset(const char* path)
+{
+    return bundle_runner.get_offset(path);
+}
+
 int main(const int argc, const char* argv[])
 {
     // Make sure we have a full path for argv[0].
@@ -31,7 +38,7 @@ int main(const int argc, const char* argv[])
         return -1;
     }
 
-    static bundle::runner_t bundle_runner(exe_path);
+    bundle_runner = bundle::runner_t(exe_path);
     StatusCode bundle_status = bundle_runner.process();	        
 
     if (bundle_status != StatusCode::Success)
@@ -52,11 +59,6 @@ int main(const int argc, const char* argv[])
     {
         app_argv = &argv[1];
     }
-
-    auto get_offset = [&](const char* path) {
-        pal::string_t relative_path = path;
-        return bundle_runner.get_offset(relative_path);
-    };
 
     int exitCode = ExecuteManagedAssembly(
                         exe_path.c_str(),

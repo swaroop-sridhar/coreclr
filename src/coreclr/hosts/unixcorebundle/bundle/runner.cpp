@@ -31,13 +31,13 @@ void runner_t::unmap_host()
     }
 }
 
-int64_t runner_t::get_offset(const pal::string_t &relative_path)
+int64_t runner_t::get_offset(const char *relative_path)
 {
     for (file_entry_t& entry : m_manifest.files)
     {
-        if (strcmp(entry.relative_path(), relative_path) == 0)
+        if (strcmp(entry.relative_path().c_str(), relative_path) == 0)
         {
-            return entry.offset;
+            return entry.offset();
         }
     }
     return 0;

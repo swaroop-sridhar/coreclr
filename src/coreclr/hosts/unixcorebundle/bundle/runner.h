@@ -14,7 +14,7 @@ namespace bundle
     class runner_t
     {
     public:
-        runner_t(const pal::string_t& bundle_path)
+        runner_t(const pal::string_t& bundle_path="")
             : m_bundle_path(bundle_path)
             , m_bundle_map(nullptr)
             , m_bundle_length(0)
@@ -28,7 +28,7 @@ namespace bundle
             return m_extraction_dir;
         }
 
-        size_t get_offset(const pal::string_t &relative_path);
+        int64_t get_offset(const char *relative_path);
 
     private:
         void map_host();

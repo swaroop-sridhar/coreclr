@@ -420,6 +420,7 @@ int ExecuteManagedAssembly(
                 "NATIVE_DLL_SEARCH_DIRECTORIES",
                 "System.GC.Server",
                 "System.Globalization.Invariant",
+                "BUNDLE_PATH",
                 "BUNDLE_OFFSET_CALLBACK"
             };
             const char *propertyValues[] = {
@@ -435,6 +436,8 @@ int ExecuteManagedAssembly(
                 useServerGc,
                 // System.Globalization.Invariant
                 globalizationInvariant,
+                // BUNDLE_PATH
+                currentExeAbsolutePath,
                 // BUNDLE_OFFSET_CALLBACK
                 (const char*)get_bundle_offset
             };
