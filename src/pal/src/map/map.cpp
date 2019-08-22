@@ -2194,13 +2194,14 @@ MAPmmapAndRecord(
 
 Parameters:
     IN hFile - file to map
+    IN offset - offset within hFile where the PE "file" is located
 
 Return value:
     non-NULL - the base address of the mapped image
     NULL - error, with last error set.
 --*/
 
-void * MAPMapPEFile(HANDLE hFile)
+void * MAPMapPEFile(HANDLE hFile, off_t offset)
 {
     PAL_ERROR palError = 0;
     IPalObject *pFileObject = NULL;
@@ -2215,7 +2216,7 @@ void * MAPMapPEFile(HANDLE hFile)
     char* envVar;
 #endif
 
-    ENTRY("MAPMapPEFile (hFile=%p)\n", hFile);
+    ENTRY("MAPMapPEFile (hFile=%p offset=%x)\n", hFile, offset);
 
     //Step 0: Verify values, find internal pal data structures.
     if (INVALID_HANDLE_VALUE == hFile)

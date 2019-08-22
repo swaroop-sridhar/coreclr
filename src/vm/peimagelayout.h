@@ -55,7 +55,7 @@ public:
     static PEImageLayout* LoadFromFlat(PEImageLayout* pflatimage);
     static PEImageLayout* Load(PEImage* pOwner, BOOL bNTSafeLoad, BOOL bThrowOnError = TRUE);
     static PEImageLayout* LoadFlat(HANDLE hFile, PEImage* pOwner);
-    static PEImageLayout* Map (HANDLE hFile, PEImage* pOwner);
+    static PEImageLayout* Map (HANDLE hFile, off_t offset, PEImage* pOwner);
 #endif    
     PEImageLayout();
     virtual ~PEImageLayout();
@@ -126,7 +126,7 @@ protected:
 #endif
 public:
 #ifndef DACCESS_COMPILE    
-    MappedImageLayout(HANDLE hFile, PEImage* pOwner);    
+    MappedImageLayout(HANDLE hFile, off_t offset, PEImage* pOwner);    
 #endif
 };
 

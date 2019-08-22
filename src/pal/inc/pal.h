@@ -2663,6 +2663,7 @@ Abstract
 
 Parameters:
     IN hFile    - The file to load
+    IN offset - offset within hFile where the PE "file" is located
 
 Return value:
     A valid base address if successful.
@@ -2671,7 +2672,7 @@ Return value:
 PALIMPORT
 PVOID
 PALAPI
-PAL_LOADLoadPEFile(HANDLE hFile);
+PAL_LOADLoadPEFile(HANDLE hFile, off_t offset);
 
 /*++
     PAL_LOADUnloadPEFile

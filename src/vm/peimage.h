@@ -274,6 +274,8 @@ private:
     SString     m_path;
     LONG        m_refCount;
 
+    off_t m_offset; // offset within hFile where the PE "file" is located
+
     // This variable will have the data of module name. 
     // It is only used by DAC to remap fusion loaded modules back to 
     // disk IL. This really is a workaround. The real fix is for fusion loader
