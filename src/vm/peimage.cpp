@@ -251,7 +251,7 @@ ULONG PEImage::Release()
         result=FastInterlockDecrement(&m_refCount);
         if (result == 0 )
         {
-            LOG((LF_LOADER, LL_INFO100, "PEImage: Closing Image %S\n", (LPCWSTR) m_path));
+            LOG((LF_LOADER, LL_INFO100, "PEImage: Closing Image %S\n", (LPCWSTR) m_debug_path));
             if(m_bInHashMap)
             {
                 PEImageLocator locator(this);
@@ -1077,7 +1077,7 @@ PTR_PEImageLayout PEImage::CreateLayoutMapped()
     }
     else if (IsFile())
     {
-        PEImageLayoutHolder pLayout(PEImageLayout::Map(GetFileHandle(),this));
+        PEImageLayoutHolder pLayout(PEImageLayout::Map(GetFileHandle(), GetOffset(), this));
 
         bool fMarkAnyCpuImageAsLoaded = false;
         // Avoid mapping another image if we can. We can only do this for IL-ONLY images
@@ -1325,7 +1325,6 @@ void PEImage::LoadNoMetaData()
     }
 }
 
-
 #endif //DACCESS_COMPILE
 
 //-------------------------------------------------------------------------------
@@ -1364,7 +1363,7 @@ HANDLE PEImage::GetFileHandle()
 
     {
         ErrorModeHolder mode(SEM_NOOPENFILEERRORBOX|SEM_FAILCRITICALERRORS);
-        m_hFile=WszCreateFile((LPCWSTR) m_path,
+        m_hFile=WszCreateFile((LPCWSTR)  m_path,
                                             GENERIC_READ,
                                             FILE_SHARE_READ|FILE_SHARE_DELETE,
                                             NULL,
@@ -1450,7 +1449,6 @@ BOOL PEImage::IsPtrInImage(PTR_CVOID data)
 
     return FALSE;
 }
-
 
 #if !defined(DACCESS_COMPILE)
 PEImage * PEImage::OpenImage(

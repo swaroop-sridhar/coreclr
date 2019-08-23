@@ -22,6 +22,8 @@
     extern "C" int CORECLR_CALLING_CONVENTION function(__VA_ARGS__); \
     typedef int (CORECLR_CALLING_CONVENTION *function##_ptr)(__VA_ARGS__)
     
+typedef bool BundleProbe(const char* filePath, const char** bundlePath, off_t* offset);
+
 //
 // Initialize the CoreCLR. Creates and starts CoreCLR host and creates an app domain
 //
@@ -43,6 +45,7 @@ CORECLR_HOSTING_API(coreclr_initialize,
             int propertyCount,
             const char** propertyKeys,
             const char** propertyValues,
+            const BundleProbe *bundleProbe,
             void** hostHandle,
             unsigned int* domainId);
 

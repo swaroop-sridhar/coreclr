@@ -23,12 +23,9 @@ namespace bundle
 
         StatusCode process();
 
-        pal::string_t extraction_dir()
-        {
-            return m_extraction_dir;
-        }
-
         int64_t get_offset(const char *relative_path);
+
+        const pal::char_t* get_bundle_path() { return m_bundle_path.c_str(); }
 
     private:
         void map_host();
@@ -36,7 +33,6 @@ namespace bundle
 
         manifest_t m_manifest;
         pal::string_t m_bundle_path;
-        pal::string_t m_extraction_dir;
         int8_t* m_bundle_map;
         size_t m_bundle_length;
     };

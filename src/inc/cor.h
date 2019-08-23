@@ -127,7 +127,7 @@ interface ICeeGen;
 
 
 typedef UNALIGNED void const *UVCP_CONSTANT;
-
+typedef bool BundleProbe(const char* filePath, const char** bundlePath, off_t* offset);
 
 // Constant for connection id and task id
 #define INVALID_CONNECTION_ID   0x0

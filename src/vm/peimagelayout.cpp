@@ -45,7 +45,7 @@ PEImageLayout* PEImageLayout::Load(PEImage* pOwner, BOOL bNTSafeLoad, BOOL bThro
     STANDARD_VM_CONTRACT;
 
 #if defined(CROSSGEN_COMPILE) || defined(FEATURE_PAL)
-    return PEImageLayout::Map(pOwner->GetFileHandle(), pOwner->Offset(), pOwner);
+    return PEImageLayout::Map(pOwner->GetFileHandle(), pOwner->GetOffset(), pOwner);
 #else
     PEImageLayoutHolder pAlloc(new LoadedImageLayout(pOwner,bNTSafeLoad,bThrowOnError));
     if (pAlloc->GetBase()==NULL)

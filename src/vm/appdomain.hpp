@@ -1986,6 +1986,12 @@ public:
 
     PathIterator IterateNativeDllSearchDirectories();
     void SetNativeDllSearchDirectories(LPCWSTR paths);
+
+    static bool ProbeBundle(const char* filePath, const char** bundlePath, off_t* offset)
+    {
+        return 
+    }
+    void SetBundleProbe(BundleProbe *probe) { m_bundleProbe}
     BOOL HasNativeDllSearchDirectories();
 
 public:
@@ -2722,6 +2728,8 @@ public:
     size_t                    m_MemoryPressure;
 
     ArrayList m_NativeDllSearchDirectories;
+    BundleProbe* m_bundleProbe;
+
     bool m_ForceTrivialWaitOperations;
 
 public:

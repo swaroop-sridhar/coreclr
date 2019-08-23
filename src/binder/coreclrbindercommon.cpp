@@ -161,7 +161,7 @@ HRESULT CCoreCLRBinderHelper::GetAssemblyFromImage(PEImage           *pPEImage,
         }
     }
     EX_CATCH_HRESULT(hr);
-
+     
     return hr;
 }
 

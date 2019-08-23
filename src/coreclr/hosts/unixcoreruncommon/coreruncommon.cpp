@@ -295,7 +295,7 @@ int ExecuteManagedAssembly(
             const char* currentExeAbsolutePath,
             const char* clrFilesAbsolutePath,
             const char* managedAssemblyAbsolutePath,
-            size_t (*get_bundle_offset)(const char* path),
+            const BundleProbe* bundleProbe,
             int managedAssemblyArgc,
             const char** managedAssemblyArgv)
 {
@@ -421,7 +421,6 @@ int ExecuteManagedAssembly(
                 "System.GC.Server",
                 "System.Globalization.Invariant",
                 "BUNDLE_PATH",
-                "BUNDLE_OFFSET_CALLBACK"
             };
             const char *propertyValues[] = {
                 // TRUSTED_PLATFORM_ASSEMBLIES
@@ -438,8 +437,6 @@ int ExecuteManagedAssembly(
                 globalizationInvariant,
                 // BUNDLE_PATH
                 currentExeAbsolutePath,
-                // BUNDLE_OFFSET_CALLBACK
-                (const char*)get_bundle_offset
             };
 
             void* hostHandle;
@@ -451,6 +448,7 @@ int ExecuteManagedAssembly(
                         sizeof(propertyKeys) / sizeof(propertyKeys[0]), 
                         propertyKeys, 
                         propertyValues, 
+                        bundleProbe,
                         &hostHandle, 
                         &domainId);
 

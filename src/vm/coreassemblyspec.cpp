@@ -211,6 +211,12 @@ STDAPI BinderAcquirePEImage(LPCWSTR   wszAssemblyPath,
         PEImageHolder pImage = NULL;
         PEImageHolder pNativeImage = NULL;
 
+        AppDomain* pDomain = ::GetAppDomain();
+        LPCWSTR wszBundlePath;
+        off_t bundleOffset;
+
+        pDomain->FindInBundle(wszAssemblyPath, &wszBundlePath, bundleOffset);
+
 #ifdef FEATURE_PREJIT
         // fExplicitBindToNativeImage is set on Phone when we bind to a list of native images and have no IL on device for an assembly
         if (fExplicitBindToNativeImage)

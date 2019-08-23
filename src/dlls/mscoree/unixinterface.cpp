@@ -160,6 +160,7 @@ extern "C" int coreclr_create_delegate(void*, unsigned int, const char*, const c
 // Returns:
 //  HRESULT indicating status of the operation. S_OK if the assembly was successfully executed
 //
+typedef bool BundleProbe(const char* filePath, const char** bundlePath, off_t* offset);
 extern "C"
 DLLEXPORT
 int coreclr_initialize(
@@ -168,6 +169,7 @@ int coreclr_initialize(
             int propertyCount,
             const char** propertyKeys,
             const char** propertyValues,
+            const BundleProbe *bundleProbe,
             void** hostHandle,
             unsigned int* domainId)
 {

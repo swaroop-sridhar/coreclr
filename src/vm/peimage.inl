@@ -421,7 +421,7 @@ inline CHECK PEImage::CheckFormat()
     CHECK_OK;
 }
 
-inline void  PEImage::Init(LPCWSTR pPath)
+inline void  PEImage::Init(LPCWSTR pPath, LPCWSTR pDebugPath, off_t offset)
 {
     CONTRACTL
     {
@@ -431,6 +431,8 @@ inline void  PEImage::Init(LPCWSTR pPath)
     }
     CONTRACTL_END;
     m_path = pPath;
+    m_debug_path = pDebugPath;
+    m_offset = offset;
     m_path.Normalize();
     SetModuleFileNameHintForDAC();
 }
@@ -463,14 +465,14 @@ inline PTR_PEImage PEImage::FindByPath(LPCWSTR pPath)
 }
 
 /* static */
-inline PTR_PEImage PEImage::OpenImage(LPCWSTR pPath, MDInternalImportFlags flags /* = MDInternalImport_Default */)
+inline PTR_PEImage PEImage::OpenImage(LPCWSTR pPath, MDInternalImportFlags flags /* = MDInternalImport_Default */, LPCWSTR pDebugPath, off_t offset)
 {
     BOOL fUseCache = !((flags & MDInternalImport_NoCache) == MDInternalImport_NoCache);
 
     if (!fUseCache)
     {
         PEImageHolder pImage(new PEImage);
-        pImage->Init(pPath);
+        pImage->Init(pPath, pDebugPath, offset);
         return dac_cast<PTR_PEImage>(pImage.Extract());
     }
 
@@ -492,7 +494,7 @@ inline PTR_PEImage PEImage::OpenImage(LPCWSTR pPath, MDInternalImportFlags flags
         if (flags &  MDInternalImport_TrustedNativeImage)
             pImage->SetIsTrustedNativeImage();
 #endif        
-        pImage->Init(pPath);
+        pImage->Init(pPath, pDebugPath, offset);
 
         pImage->AddToHashMap();
         return dac_cast<PTR_PEImage>(pImage.Extract());

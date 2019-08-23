@@ -17,8 +17,15 @@
 
 static bundle::runner_t bundle_runner;
 
-size_t get_offset(const char* path)
+bool probe_bundle(const char* file_path, const char** bundle_path, off_t *offset)
 {
+    off_t file_offset = bundle_runner.get_offset(path);
+    if (file_offset != 0)
+    {
+        *bundle_path = bundle_runner.get_bundle_path();
+        *offset = file_offset;
+        return true;
+    }
     return bundle_runner.get_offset(path);
 }
 
@@ -64,7 +71,7 @@ int main(const int argc, const char* argv[])
                         exe_path.c_str(),
                         root_dir.c_str(),
                         app_path.c_str(),
-                        get_offset,
+                        probe_bundle,
                         app_argc,
                         app_argv);
 
