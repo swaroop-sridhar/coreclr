@@ -4,8 +4,6 @@ project(COREPAL)
 
 include(../../clrfeatures.cmake)
 
-set(CMAKE_INCLUDE_CURRENT_DIR ON)
-
 include_directories(${COREPAL_SOURCE_DIR}/inc)
 include_directories(${COREPAL_SOURCE_DIR}/src)
 include_directories(${COREPAL_SOURCE_DIR}/../inc)

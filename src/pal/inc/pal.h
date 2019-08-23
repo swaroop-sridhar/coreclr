@@ -46,7 +46,9 @@ Abstract:
 #include <string.h>
 #include <errno.h>
 #include <ctype.h>
+#include <sys/stat.h>
 #include <sys/types.h>
+#include <unistd.h>
 #endif
 
 #ifdef  __cplusplus
