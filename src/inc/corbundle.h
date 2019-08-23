@@ -20,7 +20,7 @@ struct BundleInfo
     LPCWSTR BundlePath;
     BundleProbe* Probe;
 
-    bool IsBundle() { return BundlePath != nullptr; }
+    bool IsBundle() const { return BundlePath != nullptr; }
 };
 
 #endif // _COR_BUNDLE_H_

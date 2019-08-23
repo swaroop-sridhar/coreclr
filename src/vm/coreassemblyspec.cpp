@@ -212,16 +212,15 @@ STDAPI BinderAcquirePEImage(LPCWSTR   wszAssemblyPath,
         PEImageHolder pNativeImage = NULL;
 
         AppDomain* pDomain = ::GetAppDomain();
-        LPCWSTR wszDebugPath = nullptr;
+        LPCWSTR realPath = wszAssemblyPath;
         off_t bundleOffset = 0;
 
         if (pDomain->BundleInfo->IsBundle())
         {
-            bundleOffset = pDomain->BundleInfo->Probe(wszDebugPath);
+            bundleOffset = pDomain->BundleInfo->Probe(wszAssemblyPath);
             if (bundleOffset != 0)
             {
-                wszDebugPath = wszAssemblyPath;
-                wszAssemblyPath = pDomain->BundleInfo->BundlePath;
+                realPath = pDomain->BundleInfo->BundlePath;
             }
         }
 
@@ -229,7 +228,7 @@ STDAPI BinderAcquirePEImage(LPCWSTR   wszAssemblyPath,
         // fExplicitBindToNativeImage is set on Phone when we bind to a list of native images and have no IL on device for an assembly
         if (fExplicitBindToNativeImage)
         {
-            pNativeImage = PEImage::OpenImage(wszAssemblyPath, MDInternalImport_TrustedNativeImage, wszDebugPath, bundleOffset);
+            pNativeImage = PEImage::OpenImage(realPath, MDInternalImport_TrustedNativeImage, wszAssemblyPath, bundleOffset);
 
             // Make sure that the IL image can be opened if the native image is not available.
             hr=pNativeImage->TryOpenFile();
@@ -241,7 +240,7 @@ STDAPI BinderAcquirePEImage(LPCWSTR   wszAssemblyPath,
         else
 #endif
         {
-            pImage = PEImage::OpenImage(wszAssemblyPath, MDInternalImport_Default);
+            pImage = PEImage::OpenImage(realPath, MDInternalImport_Default, wszAssemblyPath, bundleOffset);
 
             // Make sure that the IL image can be opened if the native image is not available.
             hr=pImage->TryOpenFile();
