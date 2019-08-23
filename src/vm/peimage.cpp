@@ -1345,7 +1345,7 @@ LPCWSTR PEImage::GetPathForErrorMessages()
     }
     CONTRACTL_END
 
-    return m_path;
+    return m_debug_path;
 }
 
 

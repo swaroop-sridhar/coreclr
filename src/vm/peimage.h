@@ -152,7 +152,7 @@ public:
     const SString &GetPath();
     BOOL IsFile();
     HANDLE GetFileHandle();
-    off_t GetOffset() { LIMITED_METHOD_CONTRACT; return m_offset; }
+    off_t GetOffset() { LIMITED_METHOD_CONTRACT; return m_bundle_offset; }
     void SetFileHandle(HANDLE hFile);
     HRESULT TryOpenFile();    
 

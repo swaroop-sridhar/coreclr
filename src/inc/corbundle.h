@@ -11,6 +11,8 @@
 #ifndef _COR_BUNDLE_H_
 #define _COR_BUNDLE_H_
 
+#include <sys/types.h>
+
 typedef off_t BundleProbe(LPCWSTR filePath);
 
 struct BundleInfo
