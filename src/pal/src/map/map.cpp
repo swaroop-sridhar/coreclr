@@ -2256,13 +2256,13 @@ void * MAPMapPEFile(HANDLE hFile, off_t offset)
     //Step 1: Read the PE headers and reserve enough space for the whole image somewhere.
     IMAGE_DOS_HEADER dosHeader;
     IMAGE_NT_HEADERS ntHeader;
-    if (sizeof(dosHeader) != pread(fd, &dosHeader, sizeof(dosHeader), 0))
+    if (sizeof(dosHeader) != pread(fd, &dosHeader, sizeof(dosHeader), offset))
     {
         palError = FILEGetLastErrorFromErrno();
         ERROR_(LOADER)( "reading dos header failed\n" );
         goto done;
     }
-    if (sizeof(ntHeader) != pread(fd, &ntHeader, sizeof(ntHeader), dosHeader.e_lfanew))
+    if (sizeof(ntHeader) != pread(fd, &ntHeader, sizeof(ntHeader), offset + dosHeader.e_lfanew))
     {
         palError = FILEGetLastErrorFromErrno();
         goto done;
@@ -2397,7 +2397,7 @@ void * MAPMapPEFile(HANDLE hFile, off_t offset)
 
     //first, map the PE header to the first page in the image.  Get pointers to the section headers
     palError = MAPmmapAndRecord(pFileObject, loadedBase,
-                    loadedBase, headerSize, PROT_READ, MAP_FILE|MAP_PRIVATE|MAP_FIXED, fd, 0,
+                    loadedBase, headerSize, PROT_READ, MAP_FILE|MAP_PRIVATE|MAP_FIXED, fd, offset,
                     (void**)&loadedHeader);
     if (NO_ERROR != palError)
     {
@@ -2490,7 +2490,7 @@ void * MAPMapPEFile(HANDLE hFile, off_t offset)
                         prot,
                         MAP_FILE|MAP_PRIVATE|MAP_FIXED,
                         fd,
-                        currentHeader.PointerToRawData,
+                        offset + currentHeader.PointerToRawData,
                         &sectionData);
         if (NO_ERROR != palError)
         {
@@ -2520,7 +2520,7 @@ void * MAPMapPEFile(HANDLE hFile, off_t offset)
         palError = MAPRecordMapping(pFileObject,
                         loadedBase,
                         prevSectionEnd,
-                        (char*)imageEnd - (char*)prevSectionEnd,
+                        offset + (char*)imageEnd - (char*)prevSectionEnd,
                         PROT_NONE);
         if (NO_ERROR != palError)
         {
