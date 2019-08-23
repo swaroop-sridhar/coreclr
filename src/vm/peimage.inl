@@ -432,7 +432,7 @@ inline void  PEImage::Init(LPCWSTR pPath, LPCWSTR pDebugPath, off_t offset)
     CONTRACTL_END;
     m_path = pPath;
     m_debug_path = pDebugPath;
-    m_offset = offset;
+    m_bundle_offset = offset;
     m_path.Normalize();
     SetModuleFileNameHintForDAC();
 }

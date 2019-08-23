@@ -221,7 +221,7 @@ typedef enum
 interface ICLRRuntimeHost : IUnknown
 {
     // Starts the runtime. This is equivalent to CoInitializeCor().
-    HRESULT Start(const BundleInfo *bundleInfo);
+    HRESULT Start(/*const BundleInfo *bundleInfo*/);
 
     // Terminates the runtime, This is equivalent CoUninitializeCor();
     HRESULT Stop();
