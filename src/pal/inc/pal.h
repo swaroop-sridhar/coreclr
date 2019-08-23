@@ -46,6 +46,7 @@ Abstract:
 #include <string.h>
 #include <errno.h>
 #include <ctype.h>
+#include <sys/types.h>
 #endif
 
 #ifdef  __cplusplus

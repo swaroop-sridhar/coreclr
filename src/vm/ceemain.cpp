@@ -270,7 +270,7 @@ static CLREvent * g_pEEShutDownEvent;
 
 static DangerousNonHostedSpinLock g_EEStartupLock;
 
-HRESULT InitializeEE(COINITIEE flags, BundleInfo* bundleInfo)
+HRESULT InitializeEE(COINITIEE flags, const BundleInfo* bundleInfo)
 {
     WRAPPER_NO_CONTRACT;
 #ifdef FEATURE_EVENT_TRACE

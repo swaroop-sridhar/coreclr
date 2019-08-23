@@ -21,7 +21,7 @@
 class EEDbgInterfaceImpl;
 
 // Ensure the EE is started up.
-HRESULT EnsureEEStarted(COINITIEE flags, BundleInfo* bundleInfo);
+HRESULT EnsureEEStarted(COINITIEE flags, const BundleInfo* bundleInfo);
 
 // Wrapper around EnsureEEStarted which also sets startup mode.
 HRESULT InitializeEE(COINITIEE flags, const BundleInfo *bundleInfo);
