@@ -17,7 +17,7 @@ typedef off_t BundleProbe(LPCWSTR filePath);
 
 struct BundleInfo
 {
-    const char* BundlePath;
+    LPCWSTR BundlePath;
     BundleProbe* Probe;
 
     bool IsBundle() { return BundlePath != nullptr; }

@@ -232,7 +232,7 @@ static int GetThreadUICultureId(__out LocaleIDValue* pLocale);  // TODO: This sh
 static HRESULT GetThreadUICultureNames(__inout StringArrayList* pCultureNames);
 #endif // !CROSSGEN_COMPILE
 
-HRESULT EEStartup(COINITIEE fFlags);
+HRESULT EEStartup(COINITIEE fFlags, const BundleInfo *bundleInfo);
 
 
 #ifndef CROSSGEN_COMPILE
@@ -621,7 +621,7 @@ void EESocketCleanupHelper()
 #endif // FEATURE_PAL
 #endif // CROSSGEN_COMPILE
 
-void EEStartupHelper(COINITIEE fFlags, BundleInfo* bundleInfo)
+void EEStartupHelper(COINITIEE fFlags, const BundleInfo* bundleInfo)
 {
     CONTRACTL
     {
@@ -1125,14 +1125,21 @@ LONG FilterStartupException(PEXCEPTION_POINTERS p, PVOID pv)
 // see code:EEStartup#TableOfContents for more on the runtime in general. 
 // see code:#EEShutdown for a analagous routine run during shutdown. 
 // 
-HRESULT EEStartup(COINITIEE fFlags, BundleInfo* bundleInfo)
+
+HRESULT EEStartup(COINITIEE fFlags, const BundleInfo* bundleInfo)
 {
     // Cannot use normal contracts here because of the PAL_TRY.
     STATIC_CONTRACT_NOTHROW;
 
     _ASSERTE(!g_fEEStarted && !g_fEEInit && SUCCEEDED (g_EEStartupStatus));
 
-    PAL_TRY(COINITIEE *, pfFlags, &fFlags)
+    struct EEStartupParams
+    {
+        COINITIEE Flags;
+        const BundleInfo* Info;
+    } eeParams = { fFlags, bundleInfo };
+
+    PAL_TRY(EEStartupParams*, params, &eeParams)
     {
 #ifndef CROSSGEN_COMPILE
         InitializeClrNotifications();
@@ -1142,7 +1149,7 @@ HRESULT EEStartup(COINITIEE fFlags, BundleInfo* bundleInfo)
 #endif
 #endif // CROSSGEN_COMPILE
 
-        EEStartupHelper(*pfFlags, bundleInfo);
+        EEStartupHelper(params->Flags, params->Info);
     }
     PAL_EXCEPT_FILTER (FilterStartupException)
     {

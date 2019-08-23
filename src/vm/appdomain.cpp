@@ -1800,7 +1800,7 @@ void SystemDomain::CreatePreallocatedExceptions()
 }
 #endif // CROSSGEN_COMPILE
 
-void SystemDomain::Init(BundleInfo* bundleInfo)
+void SystemDomain::Init()
 {
     STANDARD_VM_CONTRACT;
 
@@ -1834,7 +1834,6 @@ void SystemDomain::Init(BundleInfo* bundleInfo)
 
     m_pSystemFile = NULL;
     m_pSystemAssembly = NULL;
-    this->BundleInfo = bundleInfo;
 
     DWORD size = 0;
 
@@ -1851,7 +1850,6 @@ void SystemDomain::Init(BundleInfo* bundleInfo)
     m_SystemDirectory.Normalize();
 
     // At this point m_SystemDirectory should already be canonicalized
-
 
     m_BaseLibrary.Append(m_SystemDirectory);
     if (!m_BaseLibrary.EndsWith(DIRECTORY_SEPARATOR_CHAR_W))

@@ -2724,7 +2724,7 @@ public:
     size_t                    m_MemoryPressure;
 
     ArrayList m_NativeDllSearchDirectories;
-    BundleInfo *BundleInfo;
+    const BundleInfo *BundleInfo;
 
     bool m_ForceTrivialWaitOperations;
 
