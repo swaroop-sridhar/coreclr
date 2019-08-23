@@ -270,14 +270,14 @@ static CLREvent * g_pEEShutDownEvent;
 
 static DangerousNonHostedSpinLock g_EEStartupLock;
 
-HRESULT InitializeEE(COINITIEE flags)
+HRESULT InitializeEE(COINITIEE flags, BundleInfo* bundleInfo)
 {
     WRAPPER_NO_CONTRACT;
 #ifdef FEATURE_EVENT_TRACE
     if(!g_fEEComActivatedStartup)
         g_fEEOtherStartup = TRUE;
 #endif // FEATURE_EVENT_TRACE
-    return EnsureEEStarted(flags);
+    return EnsureEEStarted(flags, bundleInfo);
 }
 
 // ---------------------------------------------------------------------------
@@ -285,7 +285,7 @@ HRESULT InitializeEE(COINITIEE flags)
 //
 // Description: Ensure the CLR is started.
 // ---------------------------------------------------------------------------
-HRESULT EnsureEEStarted(COINITIEE flags)
+HRESULT EnsureEEStarted(COINITIEE flags, const BundleInfo *bundleInfo)
 {
     CONTRACTL
     {
@@ -339,7 +339,7 @@ HRESULT EnsureEEStarted(COINITIEE flags)
             {
                 g_dwStartupThreadId = GetCurrentThreadId();
 
-                EEStartup(flags);
+                EEStartup(flags, bundleInfo);
                 bStarted=g_fEEStarted;
                 hr = g_EEStartupStatus;
 
@@ -621,7 +621,7 @@ void EESocketCleanupHelper()
 #endif // FEATURE_PAL
 #endif // CROSSGEN_COMPILE
 
-void EEStartupHelper(COINITIEE fFlags)
+void EEStartupHelper(COINITIEE fFlags, BundleInfo* bundleInfo)
 {
     CONTRACTL
     {
@@ -858,6 +858,11 @@ void EEStartupHelper(COINITIEE fFlags)
         PEAssembly::Attach();
         BaseDomain::Attach();
         SystemDomain::Attach();
+
+        // Fill in the Bundle Info, if any. This step must be done before
+        // SystemDomain::Init() -- so that the location of corelib is available.
+
+        SystemDomain::System()->DefaultDomain()->BundleInfo = bundleInfo;
 
         // Start up the EE intializing all the global variables
         ECall::Init();
@@ -1120,7 +1125,7 @@ LONG FilterStartupException(PEXCEPTION_POINTERS p, PVOID pv)
 // see code:EEStartup#TableOfContents for more on the runtime in general. 
 // see code:#EEShutdown for a analagous routine run during shutdown. 
 // 
-HRESULT EEStartup(COINITIEE fFlags)
+HRESULT EEStartup(COINITIEE fFlags, BundleInfo* bundleInfo)
 {
     // Cannot use normal contracts here because of the PAL_TRY.
     STATIC_CONTRACT_NOTHROW;
@@ -1137,7 +1142,7 @@ HRESULT EEStartup(COINITIEE fFlags)
 #endif
 #endif // CROSSGEN_COMPILE
 
-        EEStartupHelper(*pfFlags);
+        EEStartupHelper(*pfFlags, bundleInfo);
     }
     PAL_EXCEPT_FILTER (FilterStartupException)
     {

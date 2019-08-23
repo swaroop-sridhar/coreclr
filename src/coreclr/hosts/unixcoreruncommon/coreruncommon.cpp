@@ -295,7 +295,7 @@ int ExecuteManagedAssembly(
             const char* currentExeAbsolutePath,
             const char* clrFilesAbsolutePath,
             const char* managedAssemblyAbsolutePath,
-            const BundleProbe* bundleProbe,
+            const BundleInfo* bundleInfo,
             int managedAssemblyArgc,
             const char** managedAssemblyArgv)
 {
@@ -448,7 +448,7 @@ int ExecuteManagedAssembly(
                         sizeof(propertyKeys) / sizeof(propertyKeys[0]), 
                         propertyKeys, 
                         propertyValues, 
-                        bundleProbe,
+                        bundleInfo,
                         &hostHandle, 
                         &domainId);
 

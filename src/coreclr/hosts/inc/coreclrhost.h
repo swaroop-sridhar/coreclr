@@ -9,6 +9,8 @@
 #ifndef __CORECLR_HOST_H__
 #define __CORECLR_HOST_H__
 
+#include <corbundle.h>
+
 #if defined(_WIN32) && defined(_M_IX86)
 #define CORECLR_CALLING_CONVENTION __stdcall
 #else
@@ -22,8 +24,6 @@
     extern "C" int CORECLR_CALLING_CONVENTION function(__VA_ARGS__); \
     typedef int (CORECLR_CALLING_CONVENTION *function##_ptr)(__VA_ARGS__)
     
-typedef bool BundleProbe(const char* filePath, const char** bundlePath, off_t* offset);
-
 //
 // Initialize the CoreCLR. Creates and starts CoreCLR host and creates an app domain
 //
@@ -45,7 +45,7 @@ CORECLR_HOSTING_API(coreclr_initialize,
             int propertyCount,
             const char** propertyKeys,
             const char** propertyValues,
-            const BundleProbe *bundleProbe,
+            const BundleInfo *bundleInfo,
             void** hostHandle,
             unsigned int* domainId);
 

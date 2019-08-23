@@ -1800,7 +1800,7 @@ void SystemDomain::CreatePreallocatedExceptions()
 }
 #endif // CROSSGEN_COMPILE
 
-void SystemDomain::Init()
+void SystemDomain::Init(BundleInfo* bundleInfo)
 {
     STANDARD_VM_CONTRACT;
 
@@ -1834,6 +1834,7 @@ void SystemDomain::Init()
 
     m_pSystemFile = NULL;
     m_pSystemAssembly = NULL;
+    this->BundleInfo = bundleInfo;
 
     DWORD size = 0;
 

@@ -14,6 +14,7 @@
 #include "stdafx.h"
 #include <utilcode.h>
 #include <corhost.h>
+#include <corbundle.h>
 #include <configuration.h>
 #ifdef FEATURE_GDBJIT
 #include "../../vm/gdbjithelpers.h"
@@ -160,7 +161,7 @@ extern "C" int coreclr_create_delegate(void*, unsigned int, const char*, const c
 // Returns:
 //  HRESULT indicating status of the operation. S_OK if the assembly was successfully executed
 //
-typedef bool BundleProbe(const char* filePath, const char** bundlePath, off_t* offset);
+
 extern "C"
 DLLEXPORT
 int coreclr_initialize(
@@ -169,7 +170,7 @@ int coreclr_initialize(
             int propertyCount,
             const char** propertyKeys,
             const char** propertyValues,
-            const BundleProbe *bundleProbe,
+            const BundleInfo *bundleInfo,
             void** hostHandle,
             unsigned int* domainId)
 {
@@ -216,7 +217,7 @@ int coreclr_initialize(
     hr = host->SetStartupFlags(startupFlags);
     IfFailRet(hr);
 
-    hr = host->Start();
+    hr = host->Start(bundleInfo);
     IfFailRet(hr);
 
     hr = host->CreateAppDomainWithManager(
