@@ -25,7 +25,7 @@ public:
 
     INT64 Probe(LPCWSTR path) const
     {
-        return m_probe(m_unicodeToUtf8(path));
+        return (m_probe != nullptr) ? m_probe(m_unicodeToUtf8(path)) : 0;
     }
 
     LPCWSTR Path() const
