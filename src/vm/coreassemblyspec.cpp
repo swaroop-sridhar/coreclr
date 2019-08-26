@@ -213,11 +213,15 @@ STDAPI BinderAcquirePEImage(LPCWSTR   wszAssemblyPath,
 
         AppDomain* pDomain = ::GetAppDomain();
         LPCWSTR realPath = wszAssemblyPath;
-        INT64 bundleOffset = pDomain->BundleInfo->Probe(wszAssemblyPath);
+        INT64 bundleOffset = 0;
 
-        if (bundleOffset != 0)
+        if (pDomain->BundleInfo != nullptr)
         {
-            realPath = pDomain->BundleInfo->Path();
+            bundleOffset = pDomain->BundleInfo->Probe(wszAssemblyPath);
+            if (bundleOffset != 0)
+            {
+                realPath = pDomain->BundleInfo->Path();
+            }
         }
 
 #ifdef FEATURE_PREJIT

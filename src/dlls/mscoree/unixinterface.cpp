@@ -233,7 +233,7 @@ int coreclr_initialize(
 
     BundleInfo bundleInfo(StringToUnicode(exePath), bundleProbe, UnicodeToString);
 
-    hr = host->Start(&bundleInfo);
+    hr = host->Start((bundleProbe != nullptr) ? &bundleInfo : nullptr);
     IfFailRet(hr);
 
     hr = host->CreateAppDomainWithManager(
