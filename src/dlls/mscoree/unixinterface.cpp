@@ -14,7 +14,6 @@
 #include "stdafx.h"
 #include <utilcode.h>
 #include <corhost.h>
-#include <corbundle.h>
 #include <configuration.h>
 #ifdef FEATURE_GDBJIT
 #include "../../vm/gdbjithelpers.h"
@@ -170,7 +169,7 @@ int coreclr_initialize(
             int propertyCount,
             const char** propertyKeys,
             const char** propertyValues,
-            const BundleInfo *bundleInfo,
+            int64_t bundleProbe(const char* filePath),
             void** hostHandle,
             unsigned int* domainId)
 {
@@ -217,7 +216,9 @@ int coreclr_initialize(
     hr = host->SetStartupFlags(startupFlags);
     IfFailRet(hr);
 
-    hr = host->Start(bundleInfo);
+    BundleInfo bundleInfo(exePath, bundleProbe);
+
+    hr = host->Start(&bundleInfo);
     IfFailRet(hr);
 
     hr = host->CreateAppDomainWithManager(

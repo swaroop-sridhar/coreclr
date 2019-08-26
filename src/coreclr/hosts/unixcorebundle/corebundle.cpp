@@ -14,11 +14,10 @@
 #include <marker.h>
 #include <runner.h>
 #include <utils.h>
-#include <corbundle>
 
 static bundle::runner_t bundle_runner;
 
-off_t probe_bundle(const pal::char* file_path)
+int64_t probe_bundle(const pal::char_t* path)
 {
     return bundle_runner.get_offset(path);
 }
@@ -61,13 +60,11 @@ int main(const int argc, const char* argv[])
         app_argv = &argv[1];
     }
 
-    BundleInfo bundleInfo = { exe_path.c_str(), probe_bundle };
-
     int exitCode = ExecuteManagedAssembly(
                         exe_path.c_str(),
                         root_dir.c_str(),
                         app_path.c_str(),
-                        bundleInfo,
+                        probe_bundle,
                         app_argc,
                         app_argv);
 

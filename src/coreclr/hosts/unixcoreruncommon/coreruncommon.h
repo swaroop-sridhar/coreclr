@@ -3,7 +3,6 @@
 // See the LICENSE file in the project root for more information.
 
 #include <string>
-#include <corbundle.h>
 
 // Get the path to entrypoint executable
 bool GetEntrypointExecutableAbsolutePath(std::string& entrypointExecutable);
@@ -44,8 +43,8 @@ int ExecuteManagedAssembly(
             const char* currentExeAbsolutePath,
             const char* clrFilesAbsolutePath,
             const char* managedAssemblyAbsolutePath,
+            int64_t bundleProbe(const char* filePath),
             const BundleInfo *bundleInfo,
-            size_t(*get_bundle_offset)(const char* path),
             int managedAssemblyArgc,
             const char** managedAssemblyArgv);
 

@@ -407,7 +407,6 @@ inline BOOL PEImage::HasContents()
     }
 }
 
-
 inline CHECK PEImage::CheckFormat()
 {
     WRAPPER_NO_CONTRACT;
@@ -421,7 +420,7 @@ inline CHECK PEImage::CheckFormat()
     CHECK_OK;
 }
 
-inline void  PEImage::Init(LPCWSTR pPath, LPCWSTR pDebugPath, off_t offset)
+inline void  PEImage::Init(LPCWSTR pPath, LPCSTR pDebugPath, INT64 offset)
 {
     CONTRACTL
     {
@@ -431,8 +430,8 @@ inline void  PEImage::Init(LPCWSTR pPath, LPCWSTR pDebugPath, off_t offset)
     }
     CONTRACTL_END;
     m_path = pPath;
-    m_debug_path = (pDebugPath != nullptr) ? pDebugPath : pPath;
-    m_bundle_offset = offset;
+    m_debugPath = pDebugPath;
+    m_bundleOffset = offset;
     m_path.Normalize();
     SetModuleFileNameHintForDAC();
 }
@@ -465,7 +464,7 @@ inline PTR_PEImage PEImage::FindByPath(LPCWSTR pPath)
 }
 
 /* static */
-inline PTR_PEImage PEImage::OpenImage(LPCWSTR pPath, MDInternalImportFlags flags /* = MDInternalImport_Default */, LPCWSTR pDebugPath, off_t offset)
+inline PTR_PEImage PEImage::OpenImage(LPCWSTR pPath, MDInternalImportFlags flags /* = MDInternalImport_Default */, LPCWSTR pDebugPath, INT64 offset)
 {
     BOOL fUseCache = !((flags & MDInternalImport_NoCache) == MDInternalImport_NoCache);
 

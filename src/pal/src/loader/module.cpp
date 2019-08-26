@@ -764,7 +764,7 @@ Return value:
 --*/
 PVOID
 PALAPI
-PAL_LOADLoadPEFile(HANDLE hFile, off_t offset)
+PAL_LOADLoadPEFile(HANDLE hFile, size_t offset)
 {
     ENTRY("PAL_LOADLoadPEFile (hFile=%p, offset=%x)\n", hFile, offset);
 

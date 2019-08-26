@@ -60,7 +60,7 @@ PEImageLayout* PEImageLayout::LoadFlat(HANDLE hFile,PEImage* pOwner)
     return new FlatImageLayout(hFile,pOwner);
 }
 
-PEImageLayout* PEImageLayout::Map(HANDLE hFile, off_t offset, PEImage* pOwner)
+PEImageLayout* PEImageLayout::Map(HANDLE hFile, INT64 offset, PEImage* pOwner)
 {
     CONTRACT(PEImageLayout*)
     {
@@ -407,7 +407,7 @@ ConvertedImageLayout::ConvertedImageLayout(PEImageLayout* source)
 #endif
 }
 
-MappedImageLayout::MappedImageLayout(HANDLE hFile, off_t offset, PEImage* pOwner)
+MappedImageLayout::MappedImageLayout(HANDLE hFile, INT64 offset, PEImage* pOwner)
 {
     CONTRACTL
     {

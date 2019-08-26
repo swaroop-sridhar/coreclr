@@ -2672,10 +2672,11 @@ Return value:
     A valid base address if successful.
     0 if failure
 --*/
+
 PALIMPORT
 PVOID
 PALAPI
-PAL_LOADLoadPEFile(HANDLE hFile, off_t offset);
+PAL_LOADLoadPEFile(HANDLE hFile, size_t offset);
 
 /*++
     PAL_LOADUnloadPEFile

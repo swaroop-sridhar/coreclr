@@ -213,7 +213,7 @@ STDAPI BinderAcquirePEImage(LPCWSTR   wszAssemblyPath,
 
         AppDomain* pDomain = ::GetAppDomain();
         LPCWSTR realPath = wszAssemblyPath;
-        off_t bundleOffset = 0;
+        INT64 bundleOffset = 0;
 
         if (pDomain->BundleInfo != nullptr)
         {

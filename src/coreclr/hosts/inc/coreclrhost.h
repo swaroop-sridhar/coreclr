@@ -9,8 +9,6 @@
 #ifndef __CORECLR_HOST_H__
 #define __CORECLR_HOST_H__
 
-#include <corbundle.h>
-
 #if defined(_WIN32) && defined(_M_IX86)
 #define CORECLR_CALLING_CONVENTION __stdcall
 #else
@@ -45,6 +43,7 @@ CORECLR_HOSTING_API(coreclr_initialize,
             int propertyCount,
             const char** propertyKeys,
             const char** propertyValues,
+            int64_t BundleProbe(const char*filePath),
             const BundleInfo *bundleInfo,
             void** hostHandle,
             unsigned int* domainId);
