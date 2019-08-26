@@ -420,7 +420,7 @@ inline CHECK PEImage::CheckFormat()
     CHECK_OK;
 }
 
-inline void  PEImage::Init(LPCWSTR pPath, LPCSTR pDebugPath, INT64 offset)
+inline void  PEImage::Init(LPCWSTR pPath, LPCWSTR pDebugPath, INT64 offset)
 {
     CONTRACTL
     {

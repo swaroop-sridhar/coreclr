@@ -44,7 +44,6 @@ CORECLR_HOSTING_API(coreclr_initialize,
             const char** propertyKeys,
             const char** propertyValues,
             int64_t BundleProbe(const char*filePath),
-            const BundleInfo *bundleInfo,
             void** hostHandle,
             unsigned int* domainId);
 

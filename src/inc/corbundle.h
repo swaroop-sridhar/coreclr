@@ -16,42 +16,28 @@ typedef INT64 BundleProbe(LPCWSTR filePath);
 class BundleInfo
 {
 public:
-    BundleInfo(LPCSTR bundlePath, INT64(*probe)(LPCSTR))
+    BundleInfo(LPCWSTR bundlePath, INT64(*probe)(LPCSTR), LPCSTR (*unicodeToUtf8)(LPCWSTR))
     {
-        m_path = StringToUnicode(bundlePath);
+        m_path = bundlePath;
         m_probe = probe;
+        m_unicodeToUtf8 = unicodeToUtf8;
     }
 
-    INT64 Probe(LPCWSTR path)
+    INT64 Probe(LPCWSTR path) const
     {
-        return m_probe(UnicodeToUtf8(path));
+        return m_probe(m_unicodeToUtf8(path));
     }
 
-    LPCWSTR Path()
+    LPCWSTR Path() const
     {
         return m_path;
     }
 
 private:
-    static LPCSTR UnicodeToUtf8(LPCWSTR str)
-    {
-        int length = WideCharToMultiByte(CP_UTF8, 0, str, -1, NULL, 0, 0, 0);
-        LPSTR result = new (nothrow) CHAR[length];
-        WideCharToMultiByte(CP_UTF8, 0, str, -1, result, length, 0, 0);
-        return result;
-    }
-
-    static LPCWSTR Utf8ToUnicode(LPCSTR str)
-    {
-        int length = MultiByteToWideChar(CP_UTF8, 0, str, -1, NULL, 0);
-        LPWSTR result = new (nothrow) WCHAR[length];
-        MultiByteToWideChar(CP_UTF8, 0, str, -1, result, length);
-
-        return result;
-    }
 
     LPCWSTR  m_path;
     INT64(*m_probe)(LPCSTR);
+    LPCSTR (*m_unicodeToUtf8)(LPCWSTR str);
 };
 
 #endif // _COR_BUNDLE_H_

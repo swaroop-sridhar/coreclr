@@ -220,7 +220,7 @@ STDAPI BinderAcquirePEImage(LPCWSTR   wszAssemblyPath,
             bundleOffset = pDomain->BundleInfo->Probe(wszAssemblyPath);
             if (bundleOffset != 0)
             {
-                realPath = pDomain->BundleInfo->BundlePath;
+                realPath = pDomain->BundleInfo->Path();
             }
         }
 

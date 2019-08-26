@@ -241,7 +241,7 @@ private:
     // Private routines
     // ------------------------------------------------------------
 
-    void  Init(LPCWSTR pPath, LPCSTR pDebugPath, INT64 bundleOffset);
+    void  Init(LPCWSTR pPath, LPCWSTR pDebugPath, INT64 bundleOffset);
     void  Init(IStream* pStream, UINT64 uStreamAsmId,
                DWORD dwModuleId, BOOL resourceFile);
 
@@ -281,7 +281,7 @@ private:
     // The following two fields are only meaningful if this PE Image is 
     // embedded within a single-file bundle
     SString     m_debugPath;    // Original path to the PE file
-    off_t       m_bundleOffset;  // Offset within the bundle where this PE file is found
+    INT64       m_bundleOffset;  // Offset within the bundle where this PE file is found
 
     // This variable will have the data of module name. 
     // It is only used by DAC to remap fusion loaded modules back to 
