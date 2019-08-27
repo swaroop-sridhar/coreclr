@@ -14,6 +14,8 @@
 #include <marker.h>
 #include <runner.h>
 #include <utils.h>
+#include <limits.h>
+#include <stdlib.h>
 
 static bundle::runner_t bundle_runner;
 
@@ -47,7 +49,8 @@ int main(const int argc, const char* argv[])
         return bundle_status;
     }
 
-    std::string root_dir = get_directory(exe_path);
+    pal::char root_dir[PATH_MAX];
+    ::realpath(get_directory(exe_path), root_dir);
     std::string app_path(root_dir);
     app_path.push_back(DIR_SEPARATOR);
     app_path.append(get_filename(exe_path.c_str()));
@@ -62,7 +65,7 @@ int main(const int argc, const char* argv[])
 
     int exitCode = ExecuteManagedAssembly(
                         exe_path.c_str(),
-                        root_dir.c_str(),
+                        root_dir,
                         app_path.c_str(),
                         probe_bundle,
                         app_argc,
