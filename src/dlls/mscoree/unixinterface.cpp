@@ -231,7 +231,7 @@ int coreclr_initialize(
     hr = host->SetStartupFlags(startupFlags);
     IfFailRet(hr);
 
-    BundleInfo bundleInfo(StringToUnicode(exePath), bundleProbe, UnicodeToString);
+    static BundleInfo bundleInfo(StringToUnicode(exePath), bundleProbe, UnicodeToString);
 
     hr = host->Start((bundleProbe != nullptr) ? &bundleInfo : nullptr);
     IfFailRet(hr);
