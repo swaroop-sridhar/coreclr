@@ -1838,7 +1838,7 @@ void SystemDomain::Init()
     DWORD size = 0;
     AppDomain* pAppDomain = ::GetAppDomain();
 
-    if (pAppDomain->BundleInfo == nullptr)
+    if (!pAppDomain->HasBundle())
     {
         // Get the install directory so we can find mscorlib
         hr = GetInternalSystemDirectory(NULL, &size);

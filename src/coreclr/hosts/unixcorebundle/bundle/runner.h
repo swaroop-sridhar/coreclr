@@ -23,7 +23,7 @@ namespace bundle
 
         StatusCode process();
 
-        int64_t get_offset(const char *relative_path);
+        bool probe (const char *relative_path, int64_t *size, int64_t *offset);
 
         const pal::char_t* get_bundle_path() { return m_bundle_path.c_str(); }
 

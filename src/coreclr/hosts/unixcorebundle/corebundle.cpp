@@ -17,9 +17,9 @@
 
 static bundle::runner_t bundle_runner;
 
-int64_t probe_bundle(const pal::char_t* path)
+bool probe_bundle(const pal::char_t* path, int64_t *size, int64_t *offset)
 {
-    return bundle_runner.get_offset(path);
+    return bundle_runner.get_offset(path, size, offset);
 }
 
 int main(const int argc, const char* argv[])

@@ -11,21 +11,19 @@
 #ifndef _COR_BUNDLE_H_
 #define _COR_BUNDLE_H_
 
-typedef INT64 BundleProbe(LPCWSTR filePath);
-
 class BundleInfo
 {
 public:
-    BundleInfo(LPCWSTR bundlePath, INT64(*probe)(LPCSTR), LPCSTR (*unicodeToUtf8)(LPCWSTR))
+    BundleInfo(LPCWSTR bundlePath, bool(*probe)(LPCSTR, INT64*, INT64*), LPCSTR (*unicodeToUtf8)(LPCWSTR))
     {
         m_path = bundlePath;
         m_probe = probe;
         m_unicodeToUtf8 = unicodeToUtf8;
     }
 
-    INT64 Probe(LPCWSTR path) const
+    bool Probe(LPCWSTR path, INT64 *size, INT64 *offset) const
     {
-        return (m_probe != nullptr) ? m_probe(m_unicodeToUtf8(path)) : 0;
+        return m_probe(m_unicodeToUtf8(path), size, offset);
     }
 
     LPCWSTR Path() const
@@ -36,7 +34,7 @@ public:
 private:
 
     LPCWSTR  m_path;
-    INT64(*m_probe)(LPCSTR);
+    bool(*m_probe)(LPCSTR, INT64*, INT64*);
     LPCSTR (*m_unicodeToUtf8)(LPCWSTR str);
 };
 

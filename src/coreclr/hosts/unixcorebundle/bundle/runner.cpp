@@ -31,16 +31,18 @@ void runner_t::unmap_host()
     }
 }
 
-int64_t runner_t::get_offset(const char *relative_path)
+bool runner_t::probe(const char *relative_path, int64_t *size, int64_t *offset)
 {
     for (file_entry_t& entry : m_manifest.files)
     {
         if (strcmp(entry.relative_path().c_str(), relative_path) == 0)
         {
-            return entry.offset();
+            *size = entry.size();
+            *offset = entry.offset();
+            return true;
         }
     }
-    return 0;
+    return false;
 }
 
 StatusCode runner_t::process()

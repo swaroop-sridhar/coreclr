@@ -215,12 +215,12 @@ STDAPI BinderAcquirePEImage(LPCWSTR   wszAssemblyPath,
         LPCWSTR realPath = wszAssemblyPath;
         INT64 bundleOffset = 0;
 
-        if (pDomain->BundleInfo != nullptr)
+        if (pDomain->HasBundle())
         {
-            bundleOffset = pDomain->BundleInfo->Probe(wszAssemblyPath);
-            if (bundleOffset != 0)
+            INT64 bundleSize = 0;
+            if (pDomain->BundleInfo()->Probe(wszAssemblyPath, &bundleSize, &bundleOffset))
             {
-                realPath = pDomain->BundleInfo->Path();
+                realPath = pDomain->BundleInfo()->Path();
             }
         }
 

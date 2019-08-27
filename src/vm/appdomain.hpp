@@ -2724,9 +2724,11 @@ public:
     size_t                    m_MemoryPressure;
 
     ArrayList m_NativeDllSearchDirectories;
-    const BundleInfo *BundleInfo;
-
+    const BundleInfo *m_BundleInfo;
     bool m_ForceTrivialWaitOperations;
+
+    bool HasBundle() { return m_BundleInfo != nullptr; }
+    const BundleInfo* BundleInfo() { return m_BundleInfo;  }
 
 public:
 

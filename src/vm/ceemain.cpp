@@ -862,7 +862,7 @@ void EEStartupHelper(COINITIEE fFlags, const BundleInfo* bundleInfo)
         // Fill in the Bundle Info, if any. This step must be done before
         // SystemDomain::Init() -- so that the location of corelib is available.
 
-        SystemDomain::System()->DefaultDomain()->BundleInfo = bundleInfo;
+        SystemDomain::System()->DefaultDomain()->m_BundleInfo = bundleInfo;
 
         // Start up the EE intializing all the global variables
         ECall::Init();
