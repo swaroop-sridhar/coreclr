@@ -184,7 +184,7 @@ int coreclr_initialize(
             int propertyCount,
             const char** propertyKeys,
             const char** propertyValues,
-            bool bundleProbe(const char* path, int64_t* size, int64_t* offset),
+            bool bundleProbe(const char*, int64_t*, int64_t*),
             void** hostHandle,
             unsigned int* domainId)
 {
