@@ -50,7 +50,7 @@ int main(const int argc, const char* argv[])
     }
 
     pal::char_t root_dir[PATH_MAX];
-    ::realpath(get_directory(exe_path), root_dir);
+    ::realpath(get_directory(exe_path).c_str(), root_dir);
     std::string app_path(root_dir);
     app_path.push_back(DIR_SEPARATOR);
     app_path.append(get_filename(exe_path.c_str()));
