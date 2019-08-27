@@ -1133,6 +1133,13 @@ PTR_PEImageLayout PEImage::CreateLayoutFlat(BOOL bPermitWriteableSections)
 
     PTR_PEImageLayout pFlatLayout = PEImageLayout::LoadFlat(GetFileHandle(),this);
 
+    if (!pFlatLayout->CheckNTHeaders())
+    {
+        pFlatLayout->Release();
+
+        return NULL;
+    }
+
     if (!bPermitWriteableSections
         && pFlatLayout->CheckNTHeaders()
         && pFlatLayout->HasWriteableSections())
