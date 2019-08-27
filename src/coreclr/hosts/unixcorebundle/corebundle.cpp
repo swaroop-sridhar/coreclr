@@ -21,7 +21,7 @@ static bundle::runner_t bundle_runner;
 
 bool probe_bundle(const pal::char_t* path, int64_t *size, int64_t *offset)
 {
-    return bundle_runner.get_offset(path, size, offset);
+    return bundle_runner.probe(path, size, offset);
 }
 
 int main(const int argc, const char* argv[])
@@ -49,7 +49,7 @@ int main(const int argc, const char* argv[])
         return bundle_status;
     }
 
-    pal::char root_dir[PATH_MAX];
+    pal::char_t root_dir[PATH_MAX];
     ::realpath(get_directory(exe_path), root_dir);
     std::string app_path(root_dir);
     app_path.push_back(DIR_SEPARATOR);
