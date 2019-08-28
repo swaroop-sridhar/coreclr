@@ -1162,13 +1162,26 @@ namespace BINDER_SPACE
                                                                 pBindResult));
             }
         }
-        else
+        else 
         {
             // Is assembly on TPA list?
-            SString &simpleName = pRequestedAssemblyName->GetSimpleName();
+            SString& simpleName = pRequestedAssemblyName->GetSimpleName();
+            ReleaseHolder<Assembly> pTPAAssembly;
+
+            hr = GetAssembly(simpleName,
+                TRUE,  // fIsInGAC
+                FALSE, // fExplicitBindToNativeImage
+                &pTPAAssembly);
+
+            if (TestCandidateRefMatchesDef(pRequestedAssemblyName, pTPAAssembly->GetAssemblyName(), true /*tpaListAssembly*/))
+            {
+                // We have found the requested assembly match on TPA with validation of the full-qualified name. Bind to it.
+                pBindResult->SetResult(pTPAAssembly);
+                GO_WITH_HRESULT(S_OK);
+            }
+
             SimpleNameToFileNameMap * tpaMap = pApplicationContext->GetTpaList();
             const SimpleNameToFileNameMapEntry *pTpaEntry = tpaMap->LookupPtr(simpleName.GetUnicode());
-            ReleaseHolder<Assembly> pTPAAssembly;
             if (pTpaEntry != nullptr)
             {
                 if (pTpaEntry->m_wszNIFileName != nullptr)
