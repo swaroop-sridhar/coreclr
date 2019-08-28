@@ -1164,22 +1164,32 @@ namespace BINDER_SPACE
         }
         else 
         {
-            // Is assembly on TPA list?
-            SString& simpleName = pRequestedAssemblyName->GetSimpleName();
             ReleaseHolder<Assembly> pTPAAssembly;
 
-            hr = GetAssembly(simpleName,
+            // Is assembly in the bundle? 
+            SString bundledName(pRequestedAssemblyName->GetSimpleName()); // Try other combinations
+            bundledName.Append(W(".dll")); // Try other combinations
+
+            hr = GetAssembly(bundledName,
                 TRUE,  // fIsInGAC
                 FALSE, // fExplicitBindToNativeImage
                 &pTPAAssembly);
 
-            if (TestCandidateRefMatchesDef(pRequestedAssemblyName, pTPAAssembly->GetAssemblyName(), true /*tpaListAssembly*/))
+            if (hr != HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND))
             {
-                // We have found the requested assembly match on TPA with validation of the full-qualified name. Bind to it.
-                pBindResult->SetResult(pTPAAssembly);
-                GO_WITH_HRESULT(S_OK);
+                // Any other error is fatal
+                IF_FAIL_GO(hr);
+
+                if (TestCandidateRefMatchesDef(pRequestedAssemblyName, pTPAAssembly->GetAssemblyName(), true /*tpaListAssembly*/))
+                {
+                    // We have found the requested assembly match on TPA with validation of the full-qualified name. Bind to it.
+                    pBindResult->SetResult(pTPAAssembly);
+                    GO_WITH_HRESULT(S_OK);
+                }
             }
 
+            // Is assembly on TPA list?
+            SString& simpleName = pRequestedAssemblyName->GetSimpleName();
             SimpleNameToFileNameMap * tpaMap = pApplicationContext->GetTpaList();
             const SimpleNameToFileNameMapEntry *pTpaEntry = tpaMap->LookupPtr(simpleName.GetUnicode());
             if (pTpaEntry != nullptr)
