@@ -1104,9 +1104,9 @@ CorUnix::InternalMapViewOfFile(
         goto InternalMapViewOfFileExit;
     }
 
-    if ( 0 != dwFileOffsetHigh || 0 != dwFileOffsetLow )
+    if ( 0 > dwFileOffsetHigh || 0 > dwFileOffsetLow )
     {
-        ASSERT( "dwFileOffsetHigh and dwFileOffsetLow are always 0.\n" );
+        ASSERT( "dwFileOffsetHigh and dwFileOffsetLow are always non-negative.\n" );
         palError = ERROR_INVALID_PARAMETER;
         goto InternalMapViewOfFileExit;
     }
@@ -1166,6 +1166,8 @@ CorUnix::InternalMapViewOfFile(
     {
         goto InternalMapViewOfFileExit;
     }
+
+    INT64 offset = (INT64)dwFileOffsetHigh | (INT64)dwFileOffsetLow;
 
     InternalEnterCriticalSection(pThread, &mapping_critsec);
 
