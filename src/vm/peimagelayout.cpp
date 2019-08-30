@@ -612,7 +612,7 @@ FlatImageLayout::FlatImageLayout(PEImage* pOwner)
     // If a size is not specified, load the whole file
     if (size == 0)
     {
-        COUNT_T size = SafeGetFileSize(hFile, NULL);
+        size = SafeGetFileSize(hFile, NULL);
         if (size == 0xffffffff && GetLastError() != NOERROR)
         {
             ThrowLastError();
