@@ -626,22 +626,13 @@ FlatImageLayout::FlatImageLayout(PEImage* pOwner)
         if (m_FileMap == NULL)
             ThrowLastError();
 
-        union
-        {
-            INT64 full;
-            struct
-            {
-                INT32 high;
-                INT32 low;
-            };
-        } theOffset;
-
+        union { INT64 full; struct { INT32 high; INT32 low; }; } theOffset;
         theOffset.full = offset;
         m_FileView.Assign(CLRMapViewOfFile(m_FileMap, FILE_MAP_READ, theOffset.high, theOffset.low, size));
         if (m_FileView == NULL)
             ThrowLastError();
     }
-    Init(m_FileView, size);
+    Init(m_FileView, (COUNT_T) size);
 }
 
 
