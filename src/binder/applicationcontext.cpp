@@ -252,7 +252,7 @@ namespace BINDER_SPACE
             {
                 break;
             }
-
+#if 0
 #ifndef CROSSGEN_COMPILE
             if (Path::IsRelative(fileName))
             {
@@ -278,7 +278,8 @@ namespace BINDER_SPACE
             {
                 GO_WITH_HRESULT(E_INVALIDARG);
             }
-
+#endif
+            SString::Iterator iSimpleNameStart = fileName.Begin();
             SString simpleName;
             bool isNativeImage = false;
 
