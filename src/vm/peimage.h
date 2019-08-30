@@ -103,8 +103,9 @@ public:
     static PTR_PEImage OpenImage(
         LPCWSTR pPath,
         MDInternalImportFlags flags = MDInternalImport_Default,
-        LPCWSTR pDebugPath = nullptr,
-        INT64 offset = 0);
+        LPCWSTR pBundlePath = nullptr,
+        INT64 bundleOffset = 0,
+        INT64 fileSize = 0);
 
 
     // clones the image with new flags (this is pretty much about cached / noncached difference)
@@ -150,9 +151,13 @@ public:
 
     // Accessors
     const SString &GetPath();
+    const SString &GetPathToLoad();
+
     BOOL IsFile();
     HANDLE GetFileHandle();
-    INT64 GetOffset() { LIMITED_METHOD_CONTRACT; return m_bundleOffset; }
+    INT64 GetOffset() const;
+    INT64 GetSize() const;
+
     void SetFileHandle(HANDLE hFile);
     HRESULT TryOpenFile();    
 
@@ -241,7 +246,7 @@ private:
     // Private routines
     // ------------------------------------------------------------
 
-    void  Init(LPCWSTR pPath, LPCWSTR pDebugPath, INT64 bundleOffset);
+    void  Init(LPCWSTR pPath, LPCWSTR pBundlePath, INT64 bundleOffset, INT64 fileSize);
     void  Init(IStream* pStream, UINT64 uStreamAsmId,
                DWORD dwModuleId, BOOL resourceFile);
 
@@ -274,14 +279,14 @@ private:
     // Instance members
     // ------------------------------------------------------------
 
-    SString     m_path;     // If this PE Image is embedded in a single-file bundle, 
-	                        // path poits to the entire bundle.
+    SString     m_path;     
     LONG        m_refCount;
 
     // The following two fields are only meaningful if this PE Image is 
     // embedded within a single-file bundle
-    SString     m_debugPath;    // Original path to the PE file
-    INT64       m_bundleOffset;  // Offset within the bundle where this PE file is found
+    SString     m_bundlePath;    // Path to the bundle containing the PE file.
+    INT64       m_bundleOffset;  // Offset within the bundle where this PE file is found.
+    INT64       m_fileSize;      // Size of the file within the bundle.
 
     // This variable will have the data of module name. 
     // It is only used by DAC to remap fusion loaded modules back to 

@@ -45,7 +45,7 @@ PEImageLayout* PEImageLayout::Load(PEImage* pOwner, BOOL bNTSafeLoad, BOOL bThro
     STANDARD_VM_CONTRACT;
 
 #if defined(CROSSGEN_COMPILE) || defined(FEATURE_PAL)
-    return PEImageLayout::Map(pOwner->GetFileHandle(), pOwner->GetOffset(), pOwner);
+    return PEImageLayout::Map(pOwner);
 #else
     PEImageLayoutHolder pAlloc(new LoadedImageLayout(pOwner,bNTSafeLoad,bThrowOnError));
     if (pAlloc->GetBase()==NULL)
@@ -54,13 +54,13 @@ PEImageLayout* PEImageLayout::Load(PEImage* pOwner, BOOL bNTSafeLoad, BOOL bThro
 #endif
 }
 
-PEImageLayout* PEImageLayout::LoadFlat(HANDLE hFile,PEImage* pOwner)
+PEImageLayout* PEImageLayout::LoadFlat(PEImage* pOwner)
 {
     STANDARD_VM_CONTRACT;
-    return new FlatImageLayout(hFile,pOwner);
+    return new FlatImageLayout(pOwner);
 }
 
-PEImageLayout* PEImageLayout::Map(HANDLE hFile, INT64 offset, PEImage* pOwner)
+PEImageLayout* PEImageLayout::Map(PEImage* pOwner)
 {
     CONTRACT(PEImageLayout*)
     {
@@ -73,11 +73,11 @@ PEImageLayout* PEImageLayout::Map(HANDLE hFile, INT64 offset, PEImage* pOwner)
     }
     CONTRACT_END;
 
-    PEImageLayoutHolder pAlloc(new MappedImageLayout(hFile, offset, pOwner));
+    PEImageLayoutHolder pAlloc(new MappedImageLayout(pOwner));
     if (pAlloc->GetBase()==NULL)
     {
         //cross-platform or a bad image
-        PEImageLayoutHolder pFlat(new FlatImageLayout(hFile, pOwner));
+        PEImageLayoutHolder pFlat(new FlatImageLayout(pOwner));
         if (!pFlat->CheckFormat())
             ThrowHR(COR_E_BADIMAGEFORMAT);
 
@@ -407,7 +407,7 @@ ConvertedImageLayout::ConvertedImageLayout(PEImageLayout* source)
 #endif
 }
 
-MappedImageLayout::MappedImageLayout(HANDLE hFile, INT64 offset, PEImage* pOwner)
+MappedImageLayout::MappedImageLayout(PEImage* pOwner)
 {
     CONTRACTL
     {
@@ -417,6 +417,9 @@ MappedImageLayout::MappedImageLayout(HANDLE hFile, INT64 offset, PEImage* pOwner
     CONTRACTL_END;
     m_Layout=LAYOUT_MAPPED;
     m_pOwner=pOwner;
+
+    HANDLE hFile = pOwner->GetFileHandle();
+    INT64 offset = pOwner->GetOffset();
 
     // If mapping was requested, try to do SEC_IMAGE mapping
     LOG((LF_LOADER, LL_INFO100, "PEImage: Opening OS mapped %S (hFile %p)\n", (LPCWSTR) GetPath(), hFile));
@@ -588,7 +591,7 @@ LoadedImageLayout::LoadedImageLayout(PEImage* pOwner, BOOL bNTSafeLoad, BOOL bTh
 }
 #endif // !CROSSGEN_COMPILE && !FEATURE_PAL
 
-FlatImageLayout::FlatImageLayout(HANDLE hFile, PEImage* pOwner)
+FlatImageLayout::FlatImageLayout(PEImage* pOwner)
 {
     CONTRACTL
     {
@@ -599,12 +602,21 @@ FlatImageLayout::FlatImageLayout(HANDLE hFile, PEImage* pOwner)
     CONTRACTL_END;
     m_Layout=LAYOUT_FLAT;
     m_pOwner=pOwner;
+
+    HANDLE hFile = pOwner->GetFileHandle();
+    INT64 offset = pOwner->GetOffset();
+    INT64 size = pOwner->GetSize();
+
     LOG((LF_LOADER, LL_INFO100, "PEImage: Opening flat %S\n", (LPCWSTR) GetPath()));
 
-    COUNT_T size = SafeGetFileSize(hFile, NULL);
-    if (size == 0xffffffff && GetLastError() != NOERROR)
+    // If a size is not specified, load the whole file
+    if (size == 0)
     {
-        ThrowLastError();
+        COUNT_T size = SafeGetFileSize(hFile, NULL);
+        if (size == 0xffffffff && GetLastError() != NOERROR)
+        {
+            ThrowLastError();
+        }
     }
 
     // It's okay if resource files are length zero
@@ -614,7 +626,18 @@ FlatImageLayout::FlatImageLayout(HANDLE hFile, PEImage* pOwner)
         if (m_FileMap == NULL)
             ThrowLastError();
 
-        m_FileView.Assign(CLRMapViewOfFile(m_FileMap, FILE_MAP_READ, 0, 0, 0));
+        union
+        {
+            INT64 full;
+            struct
+            {
+                INT32 high;
+                INT32 low;
+            };
+        } theOffset;
+
+        theOffset.full = offset;
+        m_FileView.Assign(CLRMapViewOfFile(m_FileMap, FILE_MAP_READ, theOffset.high, theOffset.low, size));
         if (m_FileView == NULL)
             ThrowLastError();
     }

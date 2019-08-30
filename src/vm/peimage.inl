@@ -33,6 +33,13 @@ inline const SString &PEImage::GetPath()
     return m_path;
 }
 
+inline const SString& PEImage::GetPathToLoad()
+{
+    LIMITED_METHOD_DAC_CONTRACT;
+
+    return !m_bundlePath.IsEmpty ? m_bundlePath : m_path;
+}
+
 inline void PEImage::SetModuleFileNameHintForDAC()
 {
     LIMITED_METHOD_DAC_CONTRACT;
@@ -66,12 +73,11 @@ inline const SString &PEImage::GetModuleFileNameHintForDAC()
 #endif 
 
 
-
 inline BOOL PEImage::IsFile()
 {
     WRAPPER_NO_CONTRACT;
 
-    return !m_path.IsEmpty();
+    return !GetPathToLoad().IsEmpty();
 }
 
 #ifndef DACCESS_COMPILE
@@ -420,7 +426,7 @@ inline CHECK PEImage::CheckFormat()
     CHECK_OK;
 }
 
-inline void  PEImage::Init(LPCWSTR pPath, LPCWSTR pDebugPath, INT64 offset)
+inline void  PEImage::Init(LPCWSTR pPath, LPCWSTR pBundlePath, INT64 bundleOffset, INT64 fileSize)
 {
     CONTRACTL
     {
@@ -430,8 +436,9 @@ inline void  PEImage::Init(LPCWSTR pPath, LPCWSTR pDebugPath, INT64 offset)
     }
     CONTRACTL_END;
     m_path = pPath;
-    m_debugPath = pDebugPath;
-    m_bundleOffset = offset;
+    m_bundlePath = pBundlePath;
+    m_bundleOffset = bundleOffset;
+    m_fileSize = fileSize;
     m_path.Normalize();
     SetModuleFileNameHintForDAC();
 }
@@ -464,23 +471,20 @@ inline PTR_PEImage PEImage::FindByPath(LPCWSTR pPath)
 }
 
 /* static */
-inline PTR_PEImage PEImage::OpenImage(LPCWSTR pPath, MDInternalImportFlags flags /* = MDInternalImport_Default */, LPCWSTR pDebugPath, INT64 offset)
+inline PTR_PEImage PEImage::OpenImage(LPCWSTR pPath, MDInternalImportFlags flags /* = MDInternalImport_Default */, LPCWSTR pBundlePath, INT64 bundleOffset, INT64 fileSize)
 {
     BOOL fUseCache = !((flags & MDInternalImport_NoCache) == MDInternalImport_NoCache);
-
-    pDebugPath = (pDebugPath != nullptr) ? pDebugPath : pPath;
 
     if (!fUseCache)
     {
         PEImageHolder pImage(new PEImage);
-        pImage->Init(pPath, pDebugPath, offset);
+        pImage->Init(pPath, pBundlePath, bundleOffset, fileSize);
         return dac_cast<PTR_PEImage>(pImage.Extract());
     }
 
     CrstHolder holder(&s_hashLock);
     
-    PEImage* found = FindByPath(pDebugPath);
-
+    PEImage* found = FindByPath(pPath);
 
     if (found == (PEImage*) INVALIDENTRY)
     {
@@ -495,7 +499,7 @@ inline PTR_PEImage PEImage::OpenImage(LPCWSTR pPath, MDInternalImportFlags flags
         if (flags &  MDInternalImport_TrustedNativeImage)
             pImage->SetIsTrustedNativeImage();
 #endif        
-        pImage->Init(pPath, pDebugPath, offset);
+        pImage->Init(pPath, pBundlePath, bundleOffset, fileSize);
 
         pImage->AddToHashMap();
         return dac_cast<PTR_PEImage>(pImage.Extract());
