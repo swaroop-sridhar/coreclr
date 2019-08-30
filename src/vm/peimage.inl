@@ -37,7 +37,7 @@ inline const SString& PEImage::GetPathToLoad()
 {
     LIMITED_METHOD_DAC_CONTRACT;
 
-    return !m_bundlePath.IsEmpty ? m_bundlePath : m_path;
+    return !m_bundlePath.IsEmpty() ? m_bundlePath : m_path;
 }
 
 inline void PEImage::SetModuleFileNameHintForDAC()
