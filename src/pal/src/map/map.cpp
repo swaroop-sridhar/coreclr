@@ -1090,6 +1090,8 @@ CorUnix::InternalMapViewOfFile(
     CFileMappingImmutableData *pImmutableData = NULL;
     CFileMappingProcessLocalData *pProcessLocalData = NULL;
     IDataLock *pProcessLocalDataLock = NULL;
+    INT64 offset = (INT64)dwFileOffsetHigh | (INT64)dwFileOffsetLow;
+
 #if ONE_SHARED_MAPPING_PER_FILEREGION_PER_PROCESS
     PMAPPED_VIEW_LIST pReusedMapping = NULL;
 #endif
@@ -1104,9 +1106,9 @@ CorUnix::InternalMapViewOfFile(
         goto InternalMapViewOfFileExit;
     }
 
-    if ( 0 > dwFileOffsetHigh || 0 > dwFileOffsetLow )
+    if ( offset < 0 )
     {
-        ASSERT( "dwFileOffsetHigh and dwFileOffsetLow are always non-negative.\n" );
+        ASSERT( "dwFileOffsetHigh | dwFileOffsetLow should be non-negative.\n" );
         palError = ERROR_INVALID_PARAMETER;
         goto InternalMapViewOfFileExit;
     }
@@ -1167,8 +1169,6 @@ CorUnix::InternalMapViewOfFile(
         goto InternalMapViewOfFileExit;
     }
 
-    INT64 offset = (INT64)dwFileOffsetHigh | (INT64)dwFileOffsetLow;
-
     InternalEnterCriticalSection(pThread, &mapping_critsec);
 
     if (FILE_MAP_COPY == dwDesiredAccess)
@@ -1187,7 +1187,7 @@ CorUnix::InternalMapViewOfFile(
             PROT_READ|PROT_WRITE,
             flags,
             pProcessLocalData->UnixFd,
-            0
+            offset
             );
     }
     else
