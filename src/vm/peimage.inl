@@ -468,6 +468,8 @@ inline PTR_PEImage PEImage::OpenImage(LPCWSTR pPath, MDInternalImportFlags flags
 {
     BOOL fUseCache = !((flags & MDInternalImport_NoCache) == MDInternalImport_NoCache);
 
+    pDebugPath = (pDebugPath != nullptr) ? pDebugPath : pPath;
+
     if (!fUseCache)
     {
         PEImageHolder pImage(new PEImage);
@@ -477,7 +479,7 @@ inline PTR_PEImage PEImage::OpenImage(LPCWSTR pPath, MDInternalImportFlags flags
 
     CrstHolder holder(&s_hashLock);
     
-    PEImage* found = FindByPath(pPath);
+    PEImage* found = FindByPath(pDebugPath);
 
 
     if (found == (PEImage*) INVALIDENTRY)

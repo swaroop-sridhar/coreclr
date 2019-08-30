@@ -116,8 +116,7 @@ bool GetEntrypointExecutableAbsolutePath(std::string& entrypointExecutable)
 
     if (execfn)
     {
-        entrypointExecutable.assign(execfn);
-        result = true;
+        result = GetAbsolutePath(execfn, entrypointExecutable);
     }
     else
 #endif
