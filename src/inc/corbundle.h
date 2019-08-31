@@ -11,8 +11,6 @@
 #ifndef _COR_BUNDLE_H_
 #define _COR_BUNDLE_H_
 
-#include "palclr.h"
-
 class BundleInfo
 {
 public:
@@ -23,13 +21,7 @@ public:
         m_unicodeToUtf8 = unicodeToUtf8;
     }
 
-    bool Probe(LPCWSTR path, INT64 *size, INT64 *offset) const
-    {
-        LPCWSTR fileName = wcsrchr(path, DIRECTORY_SEPARATOR_CHAR_W);
-        fileName = (fileName) ? fileName++ : path;
-
-        return m_probe(m_unicodeToUtf8(fileName), size, offset);
-    }
+    bool Probe(LPCWSTR path, INT64* size, INT64* offset) const;
 
     LPCWSTR Path() const
     {

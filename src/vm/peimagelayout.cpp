@@ -626,8 +626,8 @@ FlatImageLayout::FlatImageLayout(PEImage* pOwner)
         if (m_FileMap == NULL)
             ThrowLastError();
 
-        DWORD lowPart = offset;
-        DWORD highPart = offset >> 32;
+        DWORD lowPart = (DWORD) offset;
+        DWORD highPart = (DWORD)(offset >> 32);
         m_FileView.Assign(CLRMapViewOfFile(m_FileMap, FILE_MAP_READ, highPart, lowPart, size));
         if (m_FileView == NULL)
             ThrowLastError();
