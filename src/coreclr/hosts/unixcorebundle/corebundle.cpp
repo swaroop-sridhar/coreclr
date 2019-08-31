@@ -49,9 +49,12 @@ int main(const int argc, const char* argv[])
 
     std::string root_dir = get_directory(exe_path);
     std::string app_path(root_dir);
-    app_path.push_back(DIR_SEPARATOR);
     app_path.append(get_filename(exe_path.c_str()));
     app_path.append(".dll");
+
+    const char* exePath = exe_path.c_str();
+    const char* rootPath = root_dir.c_str();
+    const char* appPath = app_path.c_str();
 
     const char** app_argv = nullptr;
     int app_argc = argc - 1;
@@ -61,9 +64,9 @@ int main(const int argc, const char* argv[])
     }
 
     int exitCode = ExecuteManagedAssembly(
-                        exe_path.c_str(),
-                        root_dir.c_str(),
-                        app_path.c_str(),
+                        exePath,
+                        rootPath,
+                        appPath,
                         probe_bundle,
                         app_argc,
                         app_argv);

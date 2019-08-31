@@ -14,11 +14,10 @@
 class BundleInfo
 {
 public:
-    BundleInfo(LPCWSTR bundlePath, bool(*probe)(LPCSTR, INT64*, INT64*), LPCSTR (*unicodeToUtf8)(LPCWSTR))
+    BundleInfo(LPCWSTR bundlePath, bool(*probe)(LPCSTR, INT64*, INT64*))
     {
         m_path = bundlePath;
         m_probe = probe;
-        m_unicodeToUtf8 = unicodeToUtf8;
     }
 
     bool Probe(LPCWSTR path, INT64* size, INT64* offset) const;
@@ -32,7 +31,6 @@ private:
 
     LPCWSTR  m_path;
     bool(*m_probe)(LPCSTR, INT64*, INT64*);
-    LPCSTR (*m_unicodeToUtf8)(LPCWSTR str);
 };
 
 #endif // _COR_BUNDLE_H_

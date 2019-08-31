@@ -56,21 +56,6 @@ public:
     }
 };
 
-// Convert Unicode to 8 bit UTF8 string 
-static LPCSTR UnicodeToString(LPCWSTR str)
-{
-    int length = WideCharToMultiByte(CP_UTF8, 0, str, -1, NULL, 0, 0, 0);
-    ASSERTE_ALL_BUILDS(length != 0);
-
-    LPSTR result = new (nothrow) CHAR[length];
-    ASSERTE_ALL_BUILDS(result != NULL);
-
-    length = WideCharToMultiByte(CP_UTF8, 0, str, -1, result, length, 0, 0);
-    ASSERTE_ALL_BUILDS(length != 0);
-
-    return result;
-}
-
 // Convert 8 bit string to unicode
 static LPCWSTR StringToUnicode(LPCSTR str)
 {
@@ -231,7 +216,7 @@ int coreclr_initialize(
     hr = host->SetStartupFlags(startupFlags);
     IfFailRet(hr);
 
-    static BundleInfo bundleInfo(StringToUnicode(exePath), bundleProbe, UnicodeToString);
+    static BundleInfo bundleInfo(StringToUnicode(exePath), bundleProbe);
 
     hr = host->Start((bundleProbe != nullptr) ? &bundleInfo : nullptr);
     IfFailRet(hr);

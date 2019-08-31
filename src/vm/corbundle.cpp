@@ -11,12 +11,27 @@
 
 #include "common.h"
 #include "corbundle.h"
+#include <utilcode.h>
+#include <corhost.h>
 
+static LPCSTR UnicodeToUtf8(LPCWSTR str)
+{
+    int length = WideCharToMultiByte(CP_UTF8, 0, str, -1, NULL, 0, 0, 0);
+    _ASSERTE(length != 0);
+
+    LPSTR result = new (nothrow) CHAR[length];
+    _ASSERTE(result != NULL);
+
+    length = WideCharToMultiByte(CP_UTF8, 0, str, -1, result, length, 0, 0);
+    _ASSERTE(length != 0);
+
+    return result;
+}
 
 bool BundleInfo::Probe(LPCWSTR path, INT64* size, INT64* offset) const
 {
     LPCWSTR fileName = wcsrchr(path, DIRECTORY_SEPARATOR_CHAR_W);
     fileName = (fileName) ? fileName++ : path;
 
-    return m_probe(m_unicodeToUtf8(fileName), size, offset);
+    return m_probe(UnicodeToUtf8(fileName), size, offset);
 }
