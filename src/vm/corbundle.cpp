@@ -31,7 +31,7 @@ static LPCSTR UnicodeToUtf8(LPCWSTR str)
 bool BundleInfo::Probe(LPCWSTR path, INT64* size, INT64* offset) const
 {
     LPCWSTR fileName = wcsrchr(path, DIRECTORY_SEPARATOR_CHAR_W);
-    fileName = (fileName) ? fileName++ : path;
+    fileName = (fileName) ? fileName + 1 : path;
 
     return m_probe(UnicodeToUtf8(fileName), size, offset);
 }
