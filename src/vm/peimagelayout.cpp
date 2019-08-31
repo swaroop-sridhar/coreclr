@@ -420,6 +420,7 @@ MappedImageLayout::MappedImageLayout(PEImage* pOwner)
 
     HANDLE hFile = pOwner->GetFileHandle();
     INT64 offset = pOwner->GetOffset();
+    INT64 size = pOwner->GetSize();
 
     // If mapping was requested, try to do SEC_IMAGE mapping
     LOG((LF_LOADER, LL_INFO100, "PEImage: Opening OS mapped %S (hFile %p)\n", (LPCWSTR) GetPath(), hFile));
@@ -456,19 +457,22 @@ MappedImageLayout::MappedImageLayout(PEImage* pOwner)
         return;
     }
 
+    DWORD offsetLowPart = (DWORD)offset;
+    DWORD offsetHighPart = (DWORD)(offset >> 32);
+
 #ifdef _DEBUG
     // Force relocs by occuping the preferred base while the actual mapping is performed
     CLRMapViewHolder forceRelocs;
     if (PEDecoder::GetForceRelocs())
     {
-        forceRelocs.Assign(CLRMapViewOfFile(m_FileMap, 0, 0, 0, 0));
+        forceRelocs.Assign(CLRMapViewOfFile(m_FileMap, 0, offsetHighPart, offsetLowPart, size));
     }
 #endif // _DEBUG
 
-    m_FileView.Assign(CLRMapViewOfFile(m_FileMap, 0, 0, 0, 0));
+    m_FileView.Assign(CLRMapViewOfFile(m_FileMap, 0, offsetHighPart, offsetLowPart, size));
     if (m_FileView == NULL)
         ThrowLastError();
-    IfFailThrow(Init((void *) m_FileView));
+    IfFailThrow(Init((void *) m_FileView, offset));
 
 #ifdef CROSSGEN_COMPILE
     //Do base relocation for PE. Unlike LoadLibrary, MapViewOfFile will not do that for us even with SEC_IMAGE
@@ -632,6 +636,7 @@ FlatImageLayout::FlatImageLayout(PEImage* pOwner)
         if (m_FileView == NULL)
             ThrowLastError();
     }
+
     Init(m_FileView, (COUNT_T) size);
 }
 
