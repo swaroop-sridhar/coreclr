@@ -327,7 +327,6 @@ int ExecuteManagedAssembly(
 
     // Get just the path component of the managed assembly path
     std::string appPath;
-    //GetDirectory(currentExeAbsolutePath, appPath);
 
     std::string tpaList;
     if (strlen(managedAssemblyAbsolutePath) > 0)
