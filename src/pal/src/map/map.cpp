@@ -1210,7 +1210,7 @@ CorUnix::InternalMapViewOfFile(
                 prot,
                 flags,
                 pProcessLocalData->UnixFd,
-                0
+                offset
                 );
 
 #if ONE_SHARED_MAPPING_PER_FILEREGION_PER_PROCESS
