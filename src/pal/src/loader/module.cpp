@@ -1584,8 +1584,9 @@ static MODSTRUCT *LOADAddModule(NATIVE_LIBRARY_HANDLE dl_handle, LPCSTR libraryN
     } while (module != &exe_module);
 #endif
 
-    TRACE("Module doesn't exist : creating %s.\n", 
-          (libraryNameOrPath != nullptr) ? libraryNameOrPath : "nullptr");
+    _ASSERTE(libraryNameOrPath != nullptr && libraryNameOrPath[0] != '\0');
+	
+    TRACE("Module doesn't exist : creating %s.\n", libraryNameOrPath);
 
     module = LOADAllocModule(dl_handle, libraryNameOrPath);
     if (nullptr == module)
