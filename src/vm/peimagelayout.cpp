@@ -472,7 +472,7 @@ MappedImageLayout::MappedImageLayout(PEImage* pOwner)
     m_FileView.Assign(CLRMapViewOfFile(m_FileMap, 0, offsetHighPart, offsetLowPart, size));
     if (m_FileView == NULL)
         ThrowLastError();
-    IfFailThrow(Init((void *) m_FileView, (COUNT_T)offset));
+    IfFailThrow(Init((void *) m_FileView));
 
 #ifdef CROSSGEN_COMPILE
     //Do base relocation for PE. Unlike LoadLibrary, MapViewOfFile will not do that for us even with SEC_IMAGE
