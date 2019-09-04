@@ -1413,7 +1413,6 @@ INT64 PEImage::GetSize() const
     return m_fileSize;
 }
 
-
 HRESULT PEImage::TryOpenFile()
 {
     STANDARD_VM_CONTRACT;

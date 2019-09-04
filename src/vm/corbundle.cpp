@@ -32,10 +32,31 @@ static LPCSTR UnicodeToUtf8(LPCWSTR str)
 
 BundleInfo::BundleInfo(LPCWSTR bundlePath, bool(*probe)(LPCSTR, INT64*, INT64*))
 {
-    LIMITED_METHOD_CONTRACT;
-	
+    STANDARD_VM_CONTRACT;
+
     m_path = bundlePath;
     m_probe = probe;
+
+    // In this prototype, the bundle-base path is simply the directory containing 
+    // the single-file bundle. When the Probe() function searches within the bundle,
+    // it masks out the base_path from the assembly-path (if found).
+    //
+    //  For example: 
+    //  BundleInfo.Probe("lib.dll") => m_probe("lib.dll")
+    //  BundleInfo.Probe("path/to/exe/lib.dll") => m_probe("lib.dll")
+    //  BundleInfo.Probe("path/to/exe/and/some/more/lib.dll") => m_probe("and/some/more/lib.dll")
+    //
+    // This strategy obviously hides any actual files in path/to/exe from being loaded.
+    // 
+    // In the final implementation, we should set base_path to a known prefix, say "#\"
+    // and teach the host and other parts of the runtime to expect this kind of path.
+    // This is related to the question of what Assembly.Location is for bundled assemblies.
+
+    LPCWSTR pos = wcsrchr(bundlePath, DIRECTORY_SEPARATOR_CHAR_W);
+    _ASSERTE(pos != nullptr);
+
+    m_base_len = pos - bundlePath;
+    wcsncpy(m_base_path, bundlePath, m_base_len);
 }
 
 LPCWSTR BundleInfo::Path() const
@@ -49,8 +70,11 @@ bool BundleInfo::Probe(LPCWSTR path, INT64* size, INT64* offset) const
 {
     STANDARD_VM_CONTRACT;
 
-    LPCWSTR fileName = wcsrchr(path, DIRECTORY_SEPARATOR_CHAR_W);
-    fileName = (fileName) ? fileName + 1 : path;
+    // Skip over m_base_path, if any.
+    if (wcsncmp(m_base_path, path, m_base_len) == 0)
+    {
+        path += m_base_len + 1;
+    }
 
-    return m_probe(UnicodeToUtf8(fileName), size, offset);
+    return m_probe(UnicodeToUtf8(path), size, offset);
 }

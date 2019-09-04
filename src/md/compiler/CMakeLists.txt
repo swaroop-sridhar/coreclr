@@ -1,5 +1,3 @@
-set(CMAKE_INCLUDE_CURRENT_DIR ON)
-
 set(MDCOMPILER_SOURCES
   assemblymd.cpp
   assemblymd_emit.cpp
