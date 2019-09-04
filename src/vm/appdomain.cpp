@@ -1820,7 +1820,7 @@ void SystemDomain::Init()
         sizeof(MethodDesc),
         sizeof(FieldDesc),
         sizeof(Module)
-        ));
+    ));
 #endif // _DEBUG
 
     // The base domain is initialized in SystemDomain::Attach()
