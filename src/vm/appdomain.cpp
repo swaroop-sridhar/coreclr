@@ -1838,6 +1838,9 @@ void SystemDomain::Init()
     DWORD size = 0;
     AppDomain* pAppDomain = ::GetAppDomain();
 
+    // If we are running from a self-contained single-file bundle, the 
+    // runtime is contained within the bundle.
+    // So, skip computing the systemDirectory, and leave it set to empty-string.
     if (!pAppDomain->HasBundle())
     {
         // Get the install directory so we can find mscorlib

@@ -422,14 +422,15 @@ namespace BINDER_SPACE
     };
 
     /* static */
-    HRESULT AssemblyBinder::Startup()
+    HRESULT AssemblyBinder::Startup(bool isBundle)
     {
         HRESULT hr = S_OK;
  
        if (!BINDER_SPACE::fAssemblyBinderInitialized)
         {
+            
             g_BinderVariables = new Variables();
-            IF_FAIL_GO(g_BinderVariables->Init());
+            IF_FAIL_GO(g_BinderVariables->Init(isBundle));
 
             // Setup Debug log
             BINDER_LOG_STARTUP();
@@ -647,6 +648,9 @@ namespace BINDER_SPACE
 
         ReleaseHolder<Assembly> pSystemAssembly;
         StackSString sCoreLib;
+
+        // For normal runs, corelib is expected to be found in systemDirectory.
+        // For self-contained single-file bundles, corelib is expected within the bundle (systemDirectory is empty)
 
         if (!systemDirectory.IsEmpty())
         {
@@ -1165,31 +1169,43 @@ namespace BINDER_SPACE
         else 
         {
             ReleaseHolder<Assembly> pTPAAssembly;
+            SString &simpleName = pRequestedAssemblyName->GetSimpleName();
 
-            // Is assembly in the bundle? 
-            SString bundledName(pRequestedAssemblyName->GetSimpleName()); // Try other combinations
-            bundledName.Append(W(".dll")); // Try other combinations
-
-            hr = GetAssembly(bundledName,
-                TRUE,  // fIsInGAC
-                FALSE, // fExplicitBindToNativeImage
-                &pTPAAssembly);
-
-            if (hr != HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND))
+            // Is assembly in the bundle?
+            // Single-file bundle contents take precedence over TPA.
+            // Bundled assemblies are treated similar to TPAs.
+            if (g_BinderVariables->fIsBundle)
             {
-                // Any other error is fatal
-                IF_FAIL_GO(hr);
+                SString candidates[] = { W(".dll"), W(".ni.dll") };
 
-                if (TestCandidateRefMatchesDef(pRequestedAssemblyName, pTPAAssembly->GetAssemblyName(), true /*tpaListAssembly*/))
+                // Loop through the binding paths looking for a matching assembly
+                for (DWORD i = 0; i < 2; i++)
                 {
-                    // We have found the requested assembly match on TPA with validation of the full-qualified name. Bind to it.
-                    pBindResult->SetResult(pTPAAssembly);
-                    GO_WITH_HRESULT(S_OK);
+                    SString bundledName(simpleName);
+                    bundledName.Append(candidates[i]);
+
+                    hr = GetAssembly(bundledName,
+                        TRUE,  // fIsInGAC
+                        FALSE, // fExplicitBindToNativeImage
+                        &pTPAAssembly);
+
+                    if (hr != HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND))
+                    {
+                        // Any other error is fatal
+                        IF_FAIL_GO(hr);
+
+                        if (TestCandidateRefMatchesDef(pRequestedAssemblyName, pTPAAssembly->GetAssemblyName(), true /*tpaListAssembly*/))
+                        {
+                            // We have found the requested assembly match in the bundle with validation of the full-qualified name. 
+                            // Bind to it.
+                            pBindResult->SetResult(pTPAAssembly);
+                            GO_WITH_HRESULT(S_OK);
+                        }
+                    }
                 }
             }
 
             // Is assembly on TPA list?
-            SString& simpleName = pRequestedAssemblyName->GetSimpleName();
             SimpleNameToFileNameMap * tpaMap = pApplicationContext->GetTpaList();
             const SimpleNameToFileNameMapEntry *pTpaEntry = tpaMap->LookupPtr(simpleName.GetUnicode());
             if (pTpaEntry != nullptr)

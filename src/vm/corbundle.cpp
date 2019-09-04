@@ -16,6 +16,8 @@
 
 static LPCSTR UnicodeToUtf8(LPCWSTR str)
 {
+    STANDARD_VM_CONTRACT;
+
     int length = WideCharToMultiByte(CP_UTF8, 0, str, -1, NULL, 0, 0, 0);
     _ASSERTE(length != 0);
 
@@ -28,8 +30,25 @@ static LPCSTR UnicodeToUtf8(LPCWSTR str)
     return result;
 }
 
+BundleInfo::BundleInfo(LPCWSTR bundlePath, bool(*probe)(LPCSTR, INT64*, INT64*))
+{
+    LIMITED_METHOD_CONTRACT;
+	
+    m_path = bundlePath;
+    m_probe = probe;
+}
+
+LPCWSTR BundleInfo::Path() const
+{ 
+    LIMITED_METHOD_CONTRACT; 
+	
+    return m_path; 
+}
+
 bool BundleInfo::Probe(LPCWSTR path, INT64* size, INT64* offset) const
 {
+    STANDARD_VM_CONTRACT;
+
     LPCWSTR fileName = wcsrchr(path, DIRECTORY_SEPARATOR_CHAR_W);
     fileName = (fileName) ? fileName + 1 : path;
 

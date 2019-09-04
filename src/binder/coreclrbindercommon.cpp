@@ -15,13 +15,13 @@ using namespace BINDER_SPACE;
 // Init code
 //-----------------------------------------------------------------------------
 /* static */
-HRESULT CCoreCLRBinderHelper::Init()
+HRESULT CCoreCLRBinderHelper::Init(bool isBundle)
 {
     STANDARD_VM_CONTRACT;
     HRESULT hr = S_OK;
     EX_TRY
     {
-        hr = AssemblyBinder::Startup();
+        hr = AssemblyBinder::Startup(isBundle);
     }
     EX_CATCH_HRESULT(hr);
 

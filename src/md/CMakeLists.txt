@@ -2,7 +2,6 @@ if(NOT DEFINED ENV{ROOTFS_DIR})
   include_directories(SYSTEM /usr/local/include)
 endif()
 
-
 add_subdirectory(compiler)
 add_subdirectory(runtime)
 add_subdirectory(enc)

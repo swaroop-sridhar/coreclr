@@ -739,7 +739,7 @@ void EEStartupHelper(COINITIEE fFlags, const BundleInfo* bundleInfo)
 
         // Fusion
         // Initialize the general Assembly Binder infrastructure
-        IfFailGoLog(CCoreCLRBinderHelper::Init());
+        IfFailGoLog(CCoreCLRBinderHelper::Init(/*IsBundle?*/ bundleInfo != nullptr));
 
         if (g_pConfig != NULL)
         {

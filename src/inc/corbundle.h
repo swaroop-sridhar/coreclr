@@ -14,18 +14,9 @@
 class BundleInfo
 {
 public:
-    BundleInfo(LPCWSTR bundlePath, bool(*probe)(LPCSTR, INT64*, INT64*))
-    {
-        m_path = bundlePath;
-        m_probe = probe;
-    }
-
+    BundleInfo(LPCWSTR bundlePath, bool(*probe)(LPCSTR, INT64*, INT64*));
     bool Probe(LPCWSTR path, INT64* size, INT64* offset) const;
-
-    LPCWSTR Path() const
-    {
-        return m_path;
-    }
+    LPCWSTR Path() const;
 
 private:
 

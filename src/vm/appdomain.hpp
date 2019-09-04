@@ -1987,7 +1987,6 @@ public:
 
     PathIterator IterateNativeDllSearchDirectories();
     void SetNativeDllSearchDirectories(LPCWSTR paths);
-
     BOOL HasNativeDllSearchDirectories();
 
 public:

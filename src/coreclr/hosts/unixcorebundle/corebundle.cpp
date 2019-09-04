@@ -52,10 +52,6 @@ int main(const int argc, const char* argv[])
     app_path.append(get_filename(exe_path.c_str()));
     app_path.append(".dll");
 
-    const char* exePath = exe_path.c_str();
-    const char* rootPath = root_dir.c_str();
-    const char* appPath = app_path.c_str();
-
     const char** app_argv = nullptr;
     int app_argc = argc - 1;
     if (app_argc != 0)
@@ -64,9 +60,9 @@ int main(const int argc, const char* argv[])
     }
 
     int exitCode = ExecuteManagedAssembly(
-                        exePath,
-                        rootPath,
-                        appPath,
+                        exe_path.c_str(),
+                        root_dir.c_str(),
+                        app_path.c_str(),
                         probe_bundle,
                         app_argc,
                         app_argv);
