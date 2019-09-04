@@ -274,7 +274,7 @@ HRESULT InitializeEE(COINITIEE flags, const BundleInfo* bundleInfo)
 {
     WRAPPER_NO_CONTRACT;
 #ifdef FEATURE_EVENT_TRACE
-    if(!g_fEEComActivatedStartup)
+    if (!g_fEEComActivatedStartup)
         g_fEEOtherStartup = TRUE;
 #endif // FEATURE_EVENT_TRACE
     return EnsureEEStarted(flags, bundleInfo);
