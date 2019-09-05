@@ -14,6 +14,8 @@
 #include <utilcode.h>
 #include <corhost.h>
 
+BundleInfo *BundleInfo::AppBundle = nullptr;
+
 static LPCSTR UnicodeToUtf8(LPCWSTR str)
 {
     STANDARD_VM_CONTRACT;
@@ -33,6 +35,8 @@ static LPCSTR UnicodeToUtf8(LPCWSTR str)
 BundleInfo::BundleInfo(LPCWSTR bundlePath, bool(*probe)(LPCSTR, INT64*, INT64*))
 {
     STANDARD_VM_CONTRACT;
+
+    _ASSERTE(probe != nullptr);
 
     m_path = bundlePath;
     m_probe = probe;
@@ -57,13 +61,6 @@ BundleInfo::BundleInfo(LPCWSTR bundlePath, bool(*probe)(LPCSTR, INT64*, INT64*))
 
     m_base_len = pos - bundlePath;
     wcsncpy(m_base_path, bundlePath, m_base_len);
-}
-
-LPCWSTR BundleInfo::Path() const
-{ 
-    LIMITED_METHOD_CONTRACT; 
-	
-    return m_path; 
 }
 
 bool BundleInfo::Probe(LPCWSTR path, INT64* size, INT64* offset) const

@@ -216,9 +216,13 @@ int coreclr_initialize(
     hr = host->SetStartupFlags(startupFlags);
     IfFailRet(hr);
 
-    static BundleInfo bundleInfo(StringToUnicode(exePath), bundleProbe);
+    if (bundleProbe != nullptr)
+    {
+        static BundleInfo bundleInfo(StringToUnicode(exePath), bundleProbe);
+        BundleInfo::AppBundle = &bundleInfo;
+    }
 
-    hr = host->Start((bundleProbe != nullptr) ? &bundleInfo : nullptr);
+    hr = host->Start();
     IfFailRet(hr);
 
     hr = host->CreateAppDomainWithManager(
