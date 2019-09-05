@@ -279,7 +279,7 @@ private:
     // Instance members
     // ------------------------------------------------------------
 
-    SString     m_path;     
+    SString     m_path;
     LONG        m_refCount;
 
     // The following two fields are only meaningful if this PE Image is 

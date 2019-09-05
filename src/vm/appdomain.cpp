@@ -32,7 +32,7 @@
 #include "comdelegate.h"
 #include "siginfo.hpp"
 #include "typekey.h"
-
+#include "corbundle.h"
 #include "caparser.h"
 #include "ecall.h"
 #include "finalizerthread.h"
@@ -1841,7 +1841,7 @@ void SystemDomain::Init()
     // If we are running from a self-contained single-file bundle, the 
     // runtime is contained within the bundle.
     // So, skip computing the systemDirectory, and leave it set to empty-string.
-    if (!pAppDomain->HasBundle())
+    if (!BundleInfo::AppIsBundle())
     {
         // Get the install directory so we can find mscorlib
         hr = GetInternalSystemDirectory(NULL, &size);
