@@ -16,7 +16,10 @@ class BundleInfo
 public:
     BundleInfo(LPCWSTR bundlePath, bool(*probe)(LPCSTR, INT64*, INT64*));
     bool Probe(LPCWSTR path, INT64* size, INT64* offset) const;
-    LPCWSTR Path() const;
+    LPCWSTR Path() const { LIMITED_METHOD_CONTRACT; return m_path; }
+    
+    static BundleInfo* AppBundle; // The BundleInfo for the current app, initialized by coreclr_initialize.
+    static bool AppIsBundle() { LIMITED_METHOD_CONTRACT; return AppBundle != nullptr; }
 
 private:
 

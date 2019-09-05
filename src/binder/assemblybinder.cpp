@@ -14,7 +14,7 @@
 
 #include "assemblybinder.hpp"
 #include "assemblyname.hpp"
-
+#include "corbundle.h"
 #include "assembly.hpp"
 #include "applicationcontext.hpp"
 #include "loadcontext.hpp"
@@ -422,15 +422,14 @@ namespace BINDER_SPACE
     };
 
     /* static */
-    HRESULT AssemblyBinder::Startup(bool isBundle)
+    HRESULT AssemblyBinder::Startup()
     {
         HRESULT hr = S_OK;
  
        if (!BINDER_SPACE::fAssemblyBinderInitialized)
         {
-            
             g_BinderVariables = new Variables();
-            IF_FAIL_GO(g_BinderVariables->Init(isBundle));
+            IF_FAIL_GO(g_BinderVariables->Init());
 
             // Setup Debug log
             BINDER_LOG_STARTUP();
@@ -1174,7 +1173,7 @@ namespace BINDER_SPACE
             // Is assembly in the bundle?
             // Single-file bundle contents take precedence over TPA.
             // Bundled assemblies are treated similar to TPAs.
-            if (g_BinderVariables->fIsBundle)
+            if (BundleInfo::AppIsBundle())
             {
                 SString candidates[] = { W(".dll"), W(".ni.dll") };
 

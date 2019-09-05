@@ -19,7 +19,7 @@
 #include "domainfile.h"
 #include "holder.h"
 #include "../binder/inc/assemblybinder.hpp"
-
+#include "corbundle.h"
 #ifdef FEATURE_PREJIT
 #include "compile.h"
 #endif
@@ -216,11 +216,11 @@ STDAPI BinderAcquirePEImage(LPCWSTR   wszAssemblyPath,
         INT64 bundleOffset = 0;
         INT64 bundleSize = 0;
 
-        if (pDomain->HasBundle())
+        if (BundleInfo::AppIsBundle())
         {
-            if (pDomain->BundleInfo()->Probe(wszAssemblyPath, &bundleSize, &bundleOffset))
+            if (BundleInfo::AppBundle->Probe(wszAssemblyPath, &bundleSize, &bundleOffset))
             {
-                bundlePath = pDomain->BundleInfo()->Path();
+                bundlePath = BundleInfo::AppBundle->Path();
             }
         }
 

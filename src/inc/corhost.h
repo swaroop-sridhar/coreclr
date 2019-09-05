@@ -55,7 +55,7 @@ protected:
     STDMETHODIMP_(ULONG) AddRef(void);
 
     // Starts the runtime. This is equivalent to CoInitializeCor()
-    STDMETHODIMP Start(const BundleInfo *bundleInfo);
+    STDMETHODIMP Start();
 
     STDMETHODIMP MapFile(                       // Return code.
         HANDLE     hFile,                       // [in]  Handle for file
@@ -134,7 +134,7 @@ public:
 #endif // FEATURE_PAL    
 
     // Starts the runtime. This is equivalent to CoInitializeCor().
-    STDMETHODIMP Start(const BundleInfo *bundleInfo);
+    STDMETHODIMP Start();
     STDMETHODIMP Stop();
 
     STDMETHODIMP ExecuteInAppDomain(DWORD dwAppDomainId,
